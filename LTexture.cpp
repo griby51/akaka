@@ -61,7 +61,7 @@ void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* cen
 }
 
 void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue){
-    SDL_SetTextureColorMod(mTexture, red, green, blue);
+    if(!SDL_SetTextureColorMod(mTexture, red, green, blue)) printf("Error while changing color : %s\n", SDL_GetError());
 }
 
 void LTexture::setBlendMode(SDL_BlendMode blending){
