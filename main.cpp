@@ -42,6 +42,7 @@ SDL_Rect gCactusManRect;
 const int PLAYER_NUMBER = 2;
 Player player[PLAYER_NUMBER];
 
+
 LTexture gSpriteSheetTexture;
 LTexture gPlayer2Texture;
 LTexture gMortar;
@@ -60,6 +61,11 @@ Projectile projectiles[PROJECTILE_ARRAY_SIZE];
 
 bool init(){
     bool success = true;
+
+    
+    for(int i = 0; i < PLAYER_NUMBER; i++){
+        player[i].init(&g_config);
+    }
 
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0){
         printf("SDL could not initialize : %s\n", SDL_GetError());
@@ -194,6 +200,8 @@ void close(){
 }
 
 int main(int argc, char* args[]){
+
+    printf("%hhu,%hhu,%hhu,%hhu", test.r, test.g, test.b, test.a);
 
     g_config.save();
     if(!init()){

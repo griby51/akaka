@@ -1,10 +1,18 @@
 #include "Player.hpp"
 
-Player::Player(){
+void Player::init(GameConfig* config){
     x = 0;
     y = 0;
     vx = 0;
     vy = 0;
+    g_config = config;
+    JETPACK_FORCE = g_config->getFloat("JETPACK_FORCE", 1000.0f);
+    MAX_VX = g_config->getFloat("MAX_VX", 1000.0f);
+    ACCELERATION = g_config->getFloat("ACCELERATION", 1000.0f);
+    DECELERATION = g_config->getFloat("DECELERATION", 0.50f);
+    GRAVITY_FORCE = g_config->getFloat("GRAVITY_FORCE", -500.0f);
+    BOUNCE = g_config->getBool("BOUNCE", true);
+    BOUNCE_RESTITUTION = g_config->getFloat("BOUNCE_RESTITUTION", 0.8f);
 }
 
 void Player::setPos(float posX, float posY){
@@ -50,7 +58,7 @@ int Player::getScore(){
 }
 
 void Player::update(float deltaTime){
-    vx = (vx + (acceleration * deltaTime * dir)) * (1 - ((1 - deceleration) * deltaTime));
+    vx = (vx + (ACCELERATION * deltaTime * dir)) * (1 - ((1 - DECELERATION) * deltaTime));
 
     if(vx > MAX_VX) vx = MAX_VX;
     if (vx < -MAX_VX) vx = -MAX_VX;

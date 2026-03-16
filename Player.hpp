@@ -1,10 +1,10 @@
 #pragma once
 #include <SDL2/SDL.h>
-
+#include "Config.hpp"
 
 class Player{
     public:
-        Player();
+        void init(GameConfig* config);
 
         void render();
         void setPos(float posX, float posY);
@@ -32,18 +32,20 @@ class Player{
         int score;
         int dir;
 
+        GameConfig* g_config;
         int distanceBetweenColliderXAnd0;
         int distanceBetweenColliderYAnd0;
 
         float jetpackThrust = 0.0f;
 
-        const float JETPACK_FORCE = 1000.0f;
-        const float MAX_VY = 100.0f;
-        const float MAX_VX = 1000.0f;
-        const float acceleration = 1000.0f;
-        const float deceleration = 0.50f;
-        const float GRAVITY_FORCE = -500.0f;
-        const float BOUNCE_RESTITUTION = 0.8f; 
+        float JETPACK_FORCE;
+        float MAX_VY;
+        float MAX_VX;
+        float ACCELERATION;
+        float DECELERATION;
+        float GRAVITY_FORCE;
+        float BOUNCE_RESTITUTION; 
+        bool BOUNCE;
 
         int SCREEN_WIDTH, SCREEN_HEIGHT;
 };
