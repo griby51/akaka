@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include "Config.hpp"
 #include <stdio.h>
 #include <string>
 #include <sstream>
@@ -9,13 +10,19 @@
 #include "Projectile.hpp"
 #include "Dot.hpp"
 #include "Player.hpp"
+#include "Particle.hpp"
 #include "CollisionSystem.hpp"
+#include <iostream>
 
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+
+GameConfig g_config("config.ini");
+int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
+int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
+
+const int JOYSTICK_DEAD_ZONE = 8000;
 
 const int GLOBAL_SPEED = 5;
 
@@ -26,9 +33,11 @@ void close();
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 
+SDL_Joystick* gGameController = NULL;
 SDL_Rect gSpritesClips[2];
 SDL_Rect gProjectileRect;
 SDL_Rect gPlayer2Clip;
+SDL_Rect gCactusManRect;
 
 const int PLAYER_NUMBER = 2;
 Player player[PLAYER_NUMBER];
@@ -52,7 +61,7 @@ Projectile projectiles[PROJECTILE_ARRAY_SIZE];
 bool init(){
     bool success = true;
 
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0){
         printf("SDL could not initialize : %s\n", SDL_GetError());
         success = false;
     }
@@ -78,6 +87,15 @@ bool init(){
                     success = false;
                 }
 
+            }
+        }
+        if(SDL_NumJoysticks() < 1){
+            printf("No joysticks conneceted");
+        }
+        else{
+            gGameController = SDL_JoystickOpen(0);
+            if(gGameController == NULL){
+                printf("Warning : Unable to open game controller ! SDL Error : %s\n", SDL_GetError());
             }
         }
     }
@@ -176,6 +194,8 @@ void close(){
 }
 
 int main(int argc, char* args[]){
+
+    g_config.save();
     if(!init()){
         printf("Failed to init");
         return -1;
@@ -196,6 +216,9 @@ int main(int argc, char* args[]){
     srand(time(0));
 
     bool quit = false;
+
+    int xJoystickDir = 0;
+    int yJoystickDir = 0;
 
     for (int i = 0; i<PLAYER_NUMBER; i++){
         player[i].setScreenSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -225,13 +248,14 @@ int main(int argc, char* args[]){
 
     int currentProj = 0;
 
-    for (int i = 0; i <= PROJECTILE_ARRAY_SIZE; i++){
+    for (int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
         projectiles[i].setPos(10000, 10000);
         projectiles[i].setCollider(0, 0, 16, 16);
     };
 
     int randomProjectilePos = rand() % SCREEN_HEIGHT;
     int countedFrames = 0;
+
     // fpsTimer.start();
 
     projectileTimer.start();
@@ -256,8 +280,22 @@ int main(int argc, char* args[]){
             if(e.type == SDL_QUIT){
                 quit = true;
             }
+            else if(e.type == SDL_JOYAXISMOTION){
+                if(e.jaxis.which == 0){
+                    if(e.jaxis.axis == 0){
+                        if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
+                            xJoystickDir = -1;
+                        }
+                        else if(e.jaxis.value > JOYSTICK_DEAD_ZONE){
+                            xJoystickDir =1;
+                        }else{
+                            xJoystickDir = 0;
+                        }
+                    }
+                    //printf("Gamepad : %i\n", xJoystickDir);
+                }
+            }
         }
-
         float deltaTime = deltaTimer.getTicks() / 1000.0;
         if(deltaTime > 0.05) deltaTime = 0.05;
 
@@ -282,6 +320,8 @@ int main(int argc, char* args[]){
 
             if (currentProj++ >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
         }
+
+
 
         if(mortarTimer.getTicks() >= randomMortarSpawnTicks){
             randomMortarSpawnTicks = rand() % 3000 + 5000;
@@ -310,6 +350,19 @@ int main(int argc, char* args[]){
             player[1].jetpack();
         }
 
+        if (xJoystickDir == -1){
+            player[0].move(-1);
+        }
+        if (xJoystickDir == 1){
+            player[0].move(1);
+        }
+
+        if(gGameController && SDL_JoystickGetAttached(gGameController)){
+            if(SDL_JoystickGetButton(gGameController, 0)){
+                player[0].jetpack();
+            }
+        }
+
         SDL_SetRenderDrawColor(gRenderer, 135, 206, 235, 0xFF);
         SDL_RenderClear(gRenderer);
 
@@ -318,7 +371,7 @@ int main(int argc, char* args[]){
         for(int i = 0; i < PLAYER_NUMBER; i++){
             if(i == 0) gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
             else gPlayer2Texture.render(player[i].getX(), player[i].getY(), &gPlayer2Clip);
-            player[i].drawCollider(gRenderer, &WHITE);
+            //player[i].drawCollider(gRenderer, &WHITE);
         }
 
         bool mortarOnScreen = (mortarX > -30) && mortarX < SCREEN_WIDTH;
@@ -330,7 +383,7 @@ int main(int argc, char* args[]){
                 mortarProjectileTimer.start();
                 projectiles[currentProj].setPos(mortarX, mortarY);
                 projectiles[currentProj].setVelocity(-2*GLOBAL_SPEED, -GLOBAL_SPEED);
-                if (currentProj++ >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
+                if (currentProj++ > PROJECTILE_ARRAY_SIZE) currentProj = 0;
             }
 
             gMortar.render(mortarX, mortarY, NULL, 0.0, NULL, SDL_FLIP_HORIZONTAL);
@@ -338,26 +391,26 @@ int main(int argc, char* args[]){
 
         mortarX -= GLOBAL_SPEED;
 
-        for (int i = 0; i<=PROJECTILE_ARRAY_SIZE; i++){ 
+        for (int i = 0; i<PROJECTILE_ARRAY_SIZE; i++){ 
             projectiles[i].update();
             bool isInScreen = (
-                (projectiles[i].getX() > 0 - gProjectileRect.w) && 
-                (projectiles[i].getX() < SCREEN_WIDTH) && 
-                (projectiles[i].getY() > 0 - gProjectileRect.h) && 
-                (projectiles[i].getY() < SCREEN_HEIGHT)
-            );
+                    (projectiles[i].getX() > 0 - gProjectileRect.w) && 
+                    (projectiles[i].getX() < SCREEN_WIDTH) && 
+                    (projectiles[i].getY() > 0 - gProjectileRect.h) && 
+                    (projectiles[i].getY() < SCREEN_HEIGHT)
+                    );
 
             if (isInScreen){
                 gProjectile.render(projectiles[i].getX(), projectiles[i].getY(), &gProjectileRect);
-                projectiles[i].drawCollider(gRenderer, &RED);
+                //projectiles[i].drawCollider(gRenderer, &RED);
 
                 for (int j = 0; j < PLAYER_NUMBER; j++)
-                if(Collision::collide(&projectiles[i].collider, &player[j].collider)){
-                    if (collisionTimer.getTicks() > 500){
-                        collisionTimer.start();
-                        player[j].updateScore(-100);
+                    if(Collision::collide(&projectiles[i].collider, &player[j].collider)){
+                        if (collisionTimer.getTicks() > 500){
+                            collisionTimer.start();
+                            player[j].updateScore(-100);
+                        }
                     }
-                }
             }
         }
 
@@ -366,12 +419,12 @@ int main(int argc, char* args[]){
         }
 
         if (scoreTimer.getTicks() >= 50){
-                scoreTimer.start();
-                for (int i = 0; i < PLAYER_NUMBER; i++){
-                    player[i].updateScore(1);
-                }
-                std::string scoreText = "Score Player 1 : " + std::to_string(player[0].getScore()) + "                          Player 2 : " + std::to_string(player[1].getScore());
-                gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);
+            scoreTimer.start();
+            for (int i = 0; i < PLAYER_NUMBER; i++){
+                player[i].updateScore(1);
+            }
+            std::string scoreText = "Score Player 1 : " + std::to_string(player[0].getScore()) + "                          Player 2 : " + std::to_string(player[1].getScore());
+            gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);
         }
 
         gScoreTexture.render((SCREEN_WIDTH - gScoreTexture.getWidth()) / 2, 50);
