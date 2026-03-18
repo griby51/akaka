@@ -19,10 +19,14 @@ GameConfig g_config("config.ini");
 int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
 int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 
+GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
+ParticleConfig thrustParticleConfig;
+
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 
 const int JOYSTICK_DEAD_ZONE = 8000;
+const int THRUST_PARTICLE_NUMBER = 500;
 
 const int GLOBAL_SPEED = 5;
 
@@ -41,6 +45,7 @@ SDL_Rect gCactusManRect;
 
 const int PLAYER_NUMBER = 2;
 Player player[PLAYER_NUMBER];
+Particle thrustParticles[THRUST_PARTICLE_NUMBER];
 
 
 LTexture gSpriteSheetTexture;
@@ -200,15 +205,20 @@ void close(){
 }
 
 int main(int argc, char* args[]){
-
-    printf("%hhu,%hhu,%hhu,%hhu", test.r, test.g, test.b, test.a);
-
-    g_config.save();
+    
     if(!init()){
         printf("Failed to init");
         return -1;
     }
+    
+thrustParticleConfig.load(thrustParticleGameConfig);
 
+    for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        thrustParticles[i].init(&thrustParticleConfig);
+    };
+    g_config.save();
+
+    SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     gSpriteSheetTexture.setRenderer(gRenderer);
     gPlayer2Texture.setRenderer(gRenderer);
     gMortar.setRenderer(gRenderer);
@@ -243,6 +253,8 @@ int main(int argc, char* args[]){
     LTimer collisionTimer;
     LTimer scoreTimer;
     LTimer deltaTimer;
+    LTimer player1ParticleTimer;
+    LTimer player2ParticleTimer;
 
     std::stringstream timeText;
     scoreTimer.start();
@@ -269,6 +281,8 @@ int main(int argc, char* args[]){
     projectileTimer.start();
     mortarTimer.start();
     collisionTimer.start();
+    player1ParticleTimer.start();
+    player2ParticleTimer.start();
 
     int randomBaseProjectileSpawnTicks = rand() % 3000;
     int randomMortarSpawnTicks = rand() % 20000;
@@ -277,6 +291,8 @@ int main(int argc, char* args[]){
 
     int mortarX = 10000;
     int mortarY = SCREEN_HEIGHT - gMortar.getHeight();
+
+    int currentThrustParticle = 0;
 
     int scrollingOffset = 0;
 
@@ -346,6 +362,11 @@ int main(int argc, char* args[]){
         }
         if(currentKeyStates[SDL_SCANCODE_SPACE]){
             player[0].jetpack();
+            if(player1ParticleTimer.getTicks() >= 20){
+                thrustParticles[currentThrustParticle].setPos(player[0].getX(), player[0].getY());
+                thrustParticles[currentThrustParticle].reset();
+                currentThrustParticle = (currentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
+            }
         }
 
         if(currentKeyStates[SDL_SCANCODE_L]){
@@ -426,6 +447,10 @@ int main(int argc, char* args[]){
             player[i].update(deltaTime);
         }
 
+        for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+            thrustParticles[i].update(deltaTime);
+        }
+
         if (scoreTimer.getTicks() >= 50){
             scoreTimer.start();
             for (int i = 0; i < PLAYER_NUMBER; i++){
@@ -433,6 +458,10 @@ int main(int argc, char* args[]){
             }
             std::string scoreText = "Score Player 1 : " + std::to_string(player[0].getScore()) + "                          Player 2 : " + std::to_string(player[1].getScore());
             gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);
+        }
+
+        for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+            thrustParticles[i].render(gRenderer);
         }
 
         gScoreTexture.render((SCREEN_WIDTH - gScoreTexture.getWidth()) / 2, 50);

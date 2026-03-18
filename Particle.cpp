@@ -37,9 +37,64 @@ void ParticleConfig::setColorFrameList(){
             }
         }
     }
+
+    int tableSize = colorFrameList.size();
+    printf("Table size: %i\n", tableSize);
+}
+
+int ParticleConfig::getMaxTime(){
+    return keyframes.back().time;
 }
 
 SDL_Color ParticleConfig::getCurrentColor(int currentTime){
     SDL_Color color = colorFrameList[currentTime];
     return color;
 }
+
+void Particle::init(ParticleConfig* particleConfig){
+    particleRect.x = 10000;
+    particleRect.y = 10000;
+    particleRect.w = 10;
+    particleRect.h = 10;
+    config = particleConfig;
+    maxLifeTime = static_cast<float>(config->getMaxTime());
+    isAlive = false;
+}
+
+void Particle::setPos(int posX, int posY){
+    particleRect.x = posX;
+    particleRect.y = posY;
+}
+
+void Particle::reset(){
+    lifeTime = 0.0f;
+    isAlive = true;
+}
+
+void Particle::update(float deltaTime){
+   if(!isAlive) return;
+   if(!((lifeTime+=(deltaTime*1000.0f)) <= maxLifeTime)){
+       isAlive = false;
+       return;
+   };
+   intCurrentTime = static_cast<int>(lifeTime);
+}
+
+int Particle::getX(){
+    return particleRect.x;
+}
+
+int Particle::getY(){
+    return particleRect.y;
+}
+
+void Particle::render(SDL_Renderer* renderer){
+    if(!isAlive){
+        return;
+    };
+    SDL_Color color = config->getCurrentColor(intCurrentTime);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &particleRect);
+}
+
+
