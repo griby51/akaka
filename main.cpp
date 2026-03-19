@@ -64,6 +64,12 @@ SDL_Color WHITE = {255, 255, 255, 255};
 const int PROJECTILE_ARRAY_SIZE = 20;
 Projectile projectiles[PROJECTILE_ARRAY_SIZE];
 
+void playerThrust(int playerNumber);
+
+LTimer playerParticleTimer[PLAYER_NUMBER];
+
+int currentThrustParticle = 0;
+
 bool init(){
     bool success = true;
 
@@ -211,7 +217,7 @@ int main(int argc, char* args[]){
         return -1;
     }
     
-thrustParticleConfig.load(thrustParticleGameConfig);
+    thrustParticleConfig.load(thrustParticleGameConfig);
 
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].init(&thrustParticleConfig);
@@ -253,8 +259,6 @@ thrustParticleConfig.load(thrustParticleGameConfig);
     LTimer collisionTimer;
     LTimer scoreTimer;
     LTimer deltaTimer;
-    LTimer player1ParticleTimer;
-    LTimer player2ParticleTimer;
 
     std::stringstream timeText;
     scoreTimer.start();
@@ -264,6 +268,7 @@ thrustParticleConfig.load(thrustParticleGameConfig);
 
     for(int i = 0; i < PLAYER_NUMBER; i++){
         player[i].setCollider(0, 0, 32, 32);
+        playerParticleTimer[i].start();
     }
 
     int currentProj = 0;
@@ -281,8 +286,6 @@ thrustParticleConfig.load(thrustParticleGameConfig);
     projectileTimer.start();
     mortarTimer.start();
     collisionTimer.start();
-    player1ParticleTimer.start();
-    player2ParticleTimer.start();
 
     int randomBaseProjectileSpawnTicks = rand() % 3000;
     int randomMortarSpawnTicks = rand() % 20000;
@@ -292,7 +295,6 @@ thrustParticleConfig.load(thrustParticleGameConfig);
     int mortarX = 10000;
     int mortarY = SCREEN_HEIGHT - gMortar.getHeight();
 
-    int currentThrustParticle = 0;
 
     int scrollingOffset = 0;
 
@@ -361,12 +363,7 @@ thrustParticleConfig.load(thrustParticleGameConfig);
             player[0].move(-1);
         }
         if(currentKeyStates[SDL_SCANCODE_SPACE]){
-            player[0].jetpack();
-            if(player1ParticleTimer.getTicks() >= 20){
-                thrustParticles[currentThrustParticle].setPos(player[0].getX(), player[0].getY());
-                thrustParticles[currentThrustParticle].reset();
-                currentThrustParticle = (currentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
-            }
+            playerThrust(0);
         }
 
         if(currentKeyStates[SDL_SCANCODE_L]){
@@ -376,7 +373,7 @@ thrustParticleConfig.load(thrustParticleGameConfig);
             player[1].move(-1);
         }
         if(currentKeyStates[SDL_SCANCODE_K]){
-            player[1].jetpack();
+            playerThrust(1);
         }
 
         if (xJoystickDir == -1){
@@ -388,7 +385,7 @@ thrustParticleConfig.load(thrustParticleGameConfig);
 
         if(gGameController && SDL_JoystickGetAttached(gGameController)){
             if(SDL_JoystickGetButton(gGameController, 0)){
-                player[0].jetpack();
+                playerThrust(0);
             }
         }
 
@@ -398,8 +395,15 @@ thrustParticleConfig.load(thrustParticleGameConfig);
         gBGTexture.render(scrollingOffset, 0);
         gBGTexture.render(scrollingOffset + gBGTexture.getWidth(), 0);
         for(int i = 0; i < PLAYER_NUMBER; i++){
-            if(i == 0) gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
-            else gPlayer2Texture.render(player[i].getX(), player[i].getY(), &gPlayer2Clip);
+            if(i == 0){
+                gSpriteSheetTexture.setColor(100, 100, 255);
+                gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
+            }
+            else{
+                gSpriteSheetTexture.setColor(255, 100, 100);
+                gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
+            }
+
             //player[i].drawCollider(gRenderer, &WHITE);
         }
 
@@ -481,4 +485,15 @@ thrustParticleConfig.load(thrustParticleGameConfig);
     close();
 
     return 0;
+}
+
+void playerThrust(int playerNumber){
+    player[playerNumber].jetpack();
+    if(playerParticleTimer[playerNumber].getTicks() >= 20){
+        playerParticleTimer[playerNumber].start();
+        thrustParticles[currentThrustParticle].setPos(player[playerNumber].getX() + 5, player[playerNumber].getY() + 25);
+        thrustParticles[currentThrustParticle].reset();
+        currentThrustParticle = (currentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
+        printf("Current thrust particle : %i\n", currentThrustParticle);
+    }
 }

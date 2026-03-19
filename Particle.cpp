@@ -76,12 +76,19 @@ void Particle::setPos(int posX, int posY){
 
 void Particle::reset(){
     lifeTime = 0.0f;
+    intCurrentTime = 0;
     isAlive = true;
-     vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
-     vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
-     size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
-     particleRect.w = size;
-     particleRect.h = size;
+    if(!(config->vxSpread == 0)){
+        vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
+    }
+    if(!(config->vyMax == config->vyMin)){
+        vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
+    }
+    if(!(config->sizeMax == config->sizeMin)){
+        size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
+    }
+    particleRect.w = size;
+    particleRect.h = size;
 }
 
 void Particle::update(float deltaTime){
