@@ -14,6 +14,14 @@ class ParticleConfig{
         void load(GameConfig& config);
         SDL_Color getCurrentColor(int currentTime);
         int getMaxTime();
+        float growRate;
+        float friction;
+        float riseForce;
+        int vxSpread;
+        int vyMin;
+        int vyMax;
+        int sizeMin;
+        int sizeMax;
 
     private:
         void setColorFrameList();
@@ -36,6 +44,12 @@ class Particle{
         SDL_Rect particleRect;
         int vx = 0;
         int vy = 0;
+        float size = 10;
+        float growRate;
+        float friction;
+        float riseForce;
+        int vxSpread;
+        int vyMin, vyMax;
         float lifeTime = 0;
         float maxLifeTime;
         int intCurrentTime = 0;

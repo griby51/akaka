@@ -12,6 +12,14 @@ void ParticleConfig::load(GameConfig& config){
                 &kf.r, &kf.g, &kf.b, &kf.a, &kf.time);
         keyframes.push_back(kf);
     }
+    growRate = config.getFloat("growRate", 0.0f);
+    friction = config.getFloat("friction", 0.0f);
+    riseForce = config.getFloat("riseForce", 0.0f);
+    vxSpread = config.getInt("vxSpread", 0);
+    vyMin = config.getInt("vyMin", 0);
+    vyMax = config.getInt("vyMax", 0);
+    sizeMin = config.getInt("sizeMin", 10);
+    sizeMax = config.getInt("sizeMax" ,10);
 
     setColorFrameList();
 }
@@ -69,6 +77,11 @@ void Particle::setPos(int posX, int posY){
 void Particle::reset(){
     lifeTime = 0.0f;
     isAlive = true;
+     vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
+     vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
+     size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
+     particleRect.w = size;
+     particleRect.h = size;
 }
 
 void Particle::update(float deltaTime){
@@ -78,6 +91,14 @@ void Particle::update(float deltaTime){
        return;
    };
    intCurrentTime = static_cast<int>(lifeTime);
+
+   particleRect.x += vx;
+   particleRect.y += vy;
+   vy -= config->riseForce;
+   vx *= config->friction;
+   size += config->growRate;
+   particleRect.w = (int)size;
+   particleRect.h = (int)size;
 }
 
 int Particle::getX(){
