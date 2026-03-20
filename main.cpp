@@ -341,10 +341,10 @@ int main(int argc, char* args[]){
             randomBaseProjectileSpawnTicks = rand() % 1000;
             randomProjectilePos = rand() % SCREEN_HEIGHT;
             projectileTimer.start();
+            if (currentProj >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
             projectiles[currentProj].setPos(SCREEN_WIDTH, randomProjectilePos);
             projectiles[currentProj].setVelocity(-8, 0);
-
-            if (currentProj++ >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
+            currentProj++;
         }
 
 
@@ -414,9 +414,10 @@ int main(int argc, char* args[]){
                 mortarProjectileTimer.start();
             }else if(mortarProjectileTimer.getTicks() >= 500){
                 mortarProjectileTimer.start();
+                if (currentProj >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
                 projectiles[currentProj].setPos(mortarX, mortarY);
                 projectiles[currentProj].setVelocity(-2*GLOBAL_SPEED, -GLOBAL_SPEED);
-                if (currentProj++ > PROJECTILE_ARRAY_SIZE) currentProj = 0;
+                currentProj++;
             }
 
             gMortar.render(mortarX, mortarY, NULL, 0.0, NULL, SDL_FLIP_HORIZONTAL);
@@ -490,10 +491,10 @@ int main(int argc, char* args[]){
 void playerThrust(int playerNumber){
     player[playerNumber].jetpack();
     if(playerParticleTimer[playerNumber].getTicks() >= 20){
+        printf("Current thrust particle : %i\n", currentThrustParticle);
         playerParticleTimer[playerNumber].start();
         thrustParticles[currentThrustParticle].setPos(player[playerNumber].getX() + 5, player[playerNumber].getY() + 25);
         thrustParticles[currentThrustParticle].reset();
         currentThrustParticle = (currentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
-        printf("Current thrust particle : %i\n", currentThrustParticle);
     }
 }

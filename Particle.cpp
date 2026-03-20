@@ -33,7 +33,7 @@ void ParticleConfig::setColorFrameList(){
             ColorKeyframe& a = keyframes[i];
             ColorKeyframe& b = keyframes[i + 1];
 
-            if(t >= a.time && t <= b.time){
+            if(t >= a.time && t < b.time){
                 float pct = (float)(t - a.time) / (b.time - a.time);
                 SDL_Color color;
                 color.r = a.r + pct * (b.r - a.r);
@@ -51,7 +51,7 @@ void ParticleConfig::setColorFrameList(){
 }
 
 int ParticleConfig::getMaxTime(){
-    return keyframes.back().time;
+    return keyframes.back().time - 1;
 }
 
 SDL_Color ParticleConfig::getCurrentColor(int currentTime){
@@ -78,6 +78,7 @@ void Particle::reset(){
     lifeTime = 0.0f;
     intCurrentTime = 0;
     isAlive = true;
+    printf("config ptr : %p\n", config);
     if(!(config->vxSpread == 0)){
         vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
     }
