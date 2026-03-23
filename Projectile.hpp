@@ -8,6 +8,7 @@ class Projectile{
         void update();
 
         int getX(), getY(), getVelX(), getVelY();
+        bool isInScreen = false;
 
         void setPos(int posX, int posY);
         void setVelocity(int vx, int vy);

@@ -40,6 +40,7 @@ class Particle{
         int getY();
         void render(SDL_Renderer* renderer);
         bool isAlive = false;
+        void setGlobalSpeed(float _globalSpeed = 1);
     private:
         SDL_Rect particleRect;
         int vx = 0;
@@ -54,4 +55,5 @@ class Particle{
         float maxLifeTime;
         int intCurrentTime = 0;
         ParticleConfig* config;
+        float globalSpeed;
 };

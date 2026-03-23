@@ -28,11 +28,13 @@ const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 const int JOYSTICK_DEAD_ZONE = 8000;
 const int THRUST_PARTICLE_NUMBER = 500;
 
-const int GLOBAL_SPEED = 5;
+const float GLOBAL_SPEED = 5;
 
 bool init();
 bool loadMedia();
 void close();
+void update(float deltaTime);
+void render();
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
@@ -50,7 +52,6 @@ Particle thrustParticles[THRUST_PARTICLE_NUMBER];
 
 LTexture gSpriteSheetTexture;
 LTexture gPlayer2Texture;
-LTexture gMortar;
 LTexture gProjectile;
 LTexture gDotTexture;
 LTexture gBGTexture;
@@ -69,7 +70,22 @@ void playerThrust(int playerNumber);
 LTimer playerParticleTimer[PLAYER_NUMBER];
 
 int currentThrustParticle = 0;
+int randomBaseProjectileSpawnTicks = rand() % 3000;
 
+int randomProjectilePos = rand() % SCREEN_HEIGHT;
+
+int scrollingOffset = 0;
+
+Dot dot;
+int currentProj = 0;
+
+LTimer capTimer;
+LTimer projectileTimer;
+LTimer collisionTimer;
+LTimer scoreTimer;
+LTimer deltaTimer;
+
+std::stringstream timeText;
 bool init(){
     bool success = true;
 
@@ -144,11 +160,6 @@ bool loadMedia(){
         success = false;
     }
 
-    if(!gMortar.loadFromeFile("HeavyMortar.png")){
-        printf("Failed to load Heavy Mortar texture\n");
-        success = false;
-    }
-
     if(!gProjectile.loadFromeFile("cannonbob.png")){
         printf("Failed to laod cannonbob texture");
         success = false;
@@ -193,7 +204,6 @@ bool loadMedia(){
 
 void close(){
     gSpriteSheetTexture.free();
-    gMortar.free();
     gProjectile.free();
     gDotTexture.free();
     gBGTexture.free();
@@ -221,13 +231,14 @@ int main(int argc, char* args[]){
 
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].init(&thrustParticleConfig);
+        thrustParticles[i].setGlobalSpeed(GLOBAL_SPEED);
+
     };
     g_config.save();
 
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     gSpriteSheetTexture.setRenderer(gRenderer);
     gPlayer2Texture.setRenderer(gRenderer);
-    gMortar.setRenderer(gRenderer);
     gProjectile.setRenderer(gRenderer);
     gDotTexture.setRenderer(gRenderer);
     gBGTexture.setRenderer(gRenderer);
@@ -252,15 +263,6 @@ int main(int argc, char* args[]){
 
     // LTimer fpsTimer;
 
-    LTimer capTimer;
-    LTimer projectileTimer;
-    LTimer mortarTimer;
-    LTimer mortarProjectileTimer;
-    LTimer collisionTimer;
-    LTimer scoreTimer;
-    LTimer deltaTimer;
-
-    std::stringstream timeText;
     scoreTimer.start();
 
     player[0].setPos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4);
@@ -271,35 +273,14 @@ int main(int argc, char* args[]){
         playerParticleTimer[i].start();
     }
 
-    int currentProj = 0;
 
     for (int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
         projectiles[i].setPos(10000, 10000);
         projectiles[i].setCollider(0, 0, 16, 16);
     };
 
-    int randomProjectilePos = rand() % SCREEN_HEIGHT;
-    int countedFrames = 0;
-
-    // fpsTimer.start();
-
     projectileTimer.start();
-    mortarTimer.start();
     collisionTimer.start();
-
-    int randomBaseProjectileSpawnTicks = rand() % 3000;
-    int randomMortarSpawnTicks = rand() % 20000;
-
-    randomMortarSpawnTicks = 3000;
-
-    int mortarX = 10000;
-    int mortarY = SCREEN_HEIGHT - gMortar.getHeight();
-
-
-    int scrollingOffset = 0;
-
-    Dot dot;
-
 
     while(!quit){
         while(SDL_PollEvent(&e) != 0){
@@ -325,35 +306,10 @@ int main(int argc, char* args[]){
         float deltaTime = deltaTimer.getTicks() / 1000.0;
         if(deltaTime > 0.05) deltaTime = 0.05;
 
-        dot.move();
-
-        scrollingOffset -= GLOBAL_SPEED;
-
-        if (scrollingOffset < -gBGTexture.getWidth()){
-            scrollingOffset = 0;
-        }
 
         // float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
         // if (avgFPS > 2000000) avgFPS = 0;
         // // printf("FPS : %g\n", avgFPS);
-
-        if(projectileTimer.getTicks() >= randomBaseProjectileSpawnTicks){
-            randomBaseProjectileSpawnTicks = rand() % 1000;
-            randomProjectilePos = rand() % SCREEN_HEIGHT;
-            projectileTimer.start();
-            if (currentProj >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
-            projectiles[currentProj].setPos(SCREEN_WIDTH, randomProjectilePos);
-            projectiles[currentProj].setVelocity(-8, 0);
-            currentProj++;
-        }
-
-
-
-        if(mortarTimer.getTicks() >= randomMortarSpawnTicks){
-            randomMortarSpawnTicks = rand() % 3000 + 5000;
-            mortarTimer.start();
-            mortarX = SCREEN_WIDTH;
-        }
 
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         if(currentKeyStates[SDL_SCANCODE_D]){
@@ -388,92 +344,8 @@ int main(int argc, char* args[]){
                 playerThrust(0);
             }
         }
-
-        SDL_SetRenderDrawColor(gRenderer, 135, 206, 235, 0xFF);
-        SDL_RenderClear(gRenderer);
-
-        gBGTexture.render(scrollingOffset, 0);
-        gBGTexture.render(scrollingOffset + gBGTexture.getWidth(), 0);
-        for(int i = 0; i < PLAYER_NUMBER; i++){
-            if(i == 0){
-                gSpriteSheetTexture.setColor(100, 100, 255);
-                gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
-            }
-            else{
-                gSpriteSheetTexture.setColor(255, 100, 100);
-                gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
-            }
-
-            //player[i].drawCollider(gRenderer, &WHITE);
-        }
-
-        bool mortarOnScreen = (mortarX > -30) && mortarX < SCREEN_WIDTH;
-
-        if(mortarOnScreen){
-            if(!mortarProjectileTimer.isStarted() || mortarProjectileTimer.isPaused()){
-                mortarProjectileTimer.start();
-            }else if(mortarProjectileTimer.getTicks() >= 500){
-                mortarProjectileTimer.start();
-                if (currentProj >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
-                projectiles[currentProj].setPos(mortarX, mortarY);
-                projectiles[currentProj].setVelocity(-2*GLOBAL_SPEED, -GLOBAL_SPEED);
-                currentProj++;
-            }
-
-            gMortar.render(mortarX, mortarY, NULL, 0.0, NULL, SDL_FLIP_HORIZONTAL);
-        }
-
-        mortarX -= GLOBAL_SPEED;
-
-        for (int i = 0; i<PROJECTILE_ARRAY_SIZE; i++){ 
-            projectiles[i].update();
-            bool isInScreen = (
-                    (projectiles[i].getX() > 0 - gProjectileRect.w) && 
-                    (projectiles[i].getX() < SCREEN_WIDTH) && 
-                    (projectiles[i].getY() > 0 - gProjectileRect.h) && 
-                    (projectiles[i].getY() < SCREEN_HEIGHT)
-                    );
-
-            if (isInScreen){
-                gProjectile.render(projectiles[i].getX(), projectiles[i].getY(), &gProjectileRect);
-                //projectiles[i].drawCollider(gRenderer, &RED);
-
-                for (int j = 0; j < PLAYER_NUMBER; j++)
-                    if(Collision::collide(&projectiles[i].collider, &player[j].collider)){
-                        if (collisionTimer.getTicks() > 500){
-                            collisionTimer.start();
-                            player[j].updateScore(-100);
-                        }
-                    }
-            }
-        }
-
-        for (int i = 0; i < PLAYER_NUMBER; i++){
-            player[i].update(deltaTime);
-        }
-
-        for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
-            thrustParticles[i].update(deltaTime);
-        }
-
-        if (scoreTimer.getTicks() >= 50){
-            scoreTimer.start();
-            for (int i = 0; i < PLAYER_NUMBER; i++){
-                player[i].updateScore(1);
-            }
-            std::string scoreText = "Score Player 1 : " + std::to_string(player[0].getScore()) + "                          Player 2 : " + std::to_string(player[1].getScore());
-            gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);
-        }
-
-        for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
-            thrustParticles[i].render(gRenderer);
-        }
-
-        gScoreTexture.render((SCREEN_WIDTH - gScoreTexture.getWidth()) / 2, 50);
-
-        SDL_RenderPresent(gRenderer);
-
-        ++countedFrames;
+        update(deltaTime);
+        render();
 
         deltaTimer.start();
 
@@ -491,10 +363,102 @@ int main(int argc, char* args[]){
 void playerThrust(int playerNumber){
     player[playerNumber].jetpack();
     if(playerParticleTimer[playerNumber].getTicks() >= 20){
-        printf("Current thrust particle : %i\n", currentThrustParticle);
         playerParticleTimer[playerNumber].start();
         thrustParticles[currentThrustParticle].setPos(player[playerNumber].getX() + 5, player[playerNumber].getY() + 25);
         thrustParticles[currentThrustParticle].reset();
         currentThrustParticle = (currentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
     }
+}
+
+void update(float deltaTime){
+
+    dot.move();
+
+    scrollingOffset -= GLOBAL_SPEED;
+
+    if (scrollingOffset < -gBGTexture.getWidth()){
+            scrollingOffset = 0;
+    }
+    if(projectileTimer.getTicks() >= randomBaseProjectileSpawnTicks){
+        randomBaseProjectileSpawnTicks = rand() % 1000;
+        randomProjectilePos = rand() % SCREEN_HEIGHT;
+        projectileTimer.start();
+        if (currentProj >= PROJECTILE_ARRAY_SIZE) currentProj = 0;
+        projectiles[currentProj].setPos(SCREEN_WIDTH, randomProjectilePos);
+        projectiles[currentProj].setVelocity(-8, 0);
+        currentProj++;
+    }
+    for (int i = 0; i<PROJECTILE_ARRAY_SIZE; i++){ 
+        projectiles[i].update();
+        bool isInScreen = (
+                (projectiles[i].getX() > 0 - gProjectileRect.w) && 
+                (projectiles[i].getX() < SCREEN_WIDTH) && 
+                (projectiles[i].getY() > 0 - gProjectileRect.h) && 
+                (projectiles[i].getY() < SCREEN_HEIGHT)
+            );
+        projectiles[i].isInScreen = isInScreen;
+
+        if (isInScreen){
+
+            for (int j = 0; j < PLAYER_NUMBER; j++){
+                if(Collision::collide(&projectiles[i].collider, &player[j].collider)){
+                    if (collisionTimer.getTicks() > 500){
+                        collisionTimer.start();
+                        player[j].updateScore(-100);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < PLAYER_NUMBER; i++){
+        player[i].update(deltaTime);
+    }
+
+    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        thrustParticles[i].update(deltaTime);
+    }
+
+    if (scoreTimer.getTicks() >= 50){
+        scoreTimer.start();
+        for (int i = 0; i < PLAYER_NUMBER; i++){
+            player[i].updateScore(1);
+        }
+    }
+
+}
+
+void render(){
+
+    SDL_SetRenderDrawColor(gRenderer, 135, 206, 235, 0xFF);
+    SDL_RenderClear(gRenderer);
+
+    gBGTexture.render(scrollingOffset, 0);
+    gBGTexture.render(scrollingOffset + gBGTexture.getWidth(), 0);
+
+    for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        thrustParticles[i].render(gRenderer);
+    }
+
+    for(int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
+        if (projectiles[i].isInScreen){
+            gProjectile.render(projectiles[i].getX(), projectiles[i].getY(), &gProjectileRect);
+        }    
+    }
+    std::string scoreText="";
+    for(int i = 0; i < PLAYER_NUMBER; i++){
+        if(i == 0){
+            gSpriteSheetTexture.setColor(100, 100, 255);
+            gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
+        }
+        else{
+            gSpriteSheetTexture.setColor(255, 100, 100);
+            gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
+        }
+        scoreText += "Player " + std::to_string((i+1)) + " : " + std::to_string(player[i].getScore()) + "        ";
+    }
+    gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);  
+    gScoreTexture.render(20, 20);
+
+    SDL_RenderPresent(gRenderer);
 }

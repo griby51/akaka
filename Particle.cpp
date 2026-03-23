@@ -78,7 +78,6 @@ void Particle::reset(){
     lifeTime = 0.0f;
     intCurrentTime = 0;
     isAlive = true;
-    printf("config ptr : %p\n", config);
     if(!(config->vxSpread == 0)){
         vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
     }
@@ -104,6 +103,7 @@ void Particle::update(float deltaTime){
    particleRect.y += vy;
    vy -= config->riseForce;
    vx *= config->friction;
+   // particleRect.x -= globalSpeed*globalSpeed;
    size += config->growRate;
    particleRect.w = (int)size;
    particleRect.h = (int)size;
@@ -126,4 +126,7 @@ void Particle::render(SDL_Renderer* renderer){
     SDL_RenderFillRect(renderer, &particleRect);
 }
 
+void Particle::setGlobalSpeed(float _globalSpeed){
+    globalSpeed = _globalSpeed;
+}
 
