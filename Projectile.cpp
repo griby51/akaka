@@ -45,7 +45,6 @@ void Projectile::setCollider(int colX, int colY, int colW, int colH){
 }
 
 void Projectile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){
-
     SDL_SetRenderDrawColor(renderer, color->r, color->g, color->b, color->a);
     SDL_RenderDrawRect(renderer, &collider);
 }

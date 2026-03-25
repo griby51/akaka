@@ -23,6 +23,7 @@ class Projectile{
         int x, y;
         int vx, vy;
 
+        float velocity = 10;
         int distanceBetweenColliderXAnd0;
         int distanceBetweenColliderYAnd0;
 };

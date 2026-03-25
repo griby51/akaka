@@ -12,6 +12,7 @@
 #include "Player.hpp"
 #include "Particle.hpp"
 #include "CollisionSystem.hpp"
+#include "Missile.hpp"
 #include <iostream>
 
 
@@ -21,6 +22,8 @@ int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 
 GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
 ParticleConfig thrustParticleConfig;
+
+GameConfig missileConfig("missileConfig.ini");
 
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
@@ -56,6 +59,7 @@ LTexture gProjectile;
 LTexture gDotTexture;
 LTexture gBGTexture;
 LTexture gScoreTexture;
+LTexture gMissileTexture;
 
 TTF_Font* gScoreFont = NULL;
 
@@ -85,6 +89,7 @@ LTimer collisionTimer;
 LTimer scoreTimer;
 LTimer deltaTimer;
 
+Missile missile;
 std::stringstream timeText;
 bool init(){
     bool success = true;
@@ -148,6 +153,11 @@ bool loadMedia(){
             printf("Failed to render text texure !\n");
             success = false;
         }
+    }
+
+    if(!gMissileTexture.loadFromeFile("missile00.png")){
+        printf("Failed to load missile texture !\n");
+        success = false;
     }
 
     if(!gDotTexture.loadFromeFile("dot.bmp")){
@@ -243,6 +253,7 @@ int main(int argc, char* args[]){
     gDotTexture.setRenderer(gRenderer);
     gBGTexture.setRenderer(gRenderer);
     gScoreTexture.setRenderer(gRenderer);
+    gMissileTexture.setRenderer(gRenderer);
 
     if(!loadMedia()){
         printf("Failed to load media");
@@ -282,6 +293,11 @@ int main(int argc, char* args[]){
     projectileTimer.start();
     collisionTimer.start();
 
+    missile.init(&thrustParticleConfig, missileConfig);
+    missile.setPos(SCREEN_WIDTH + 100, SCREEN_HEIGHT / 2);
+    missile.setTarget(&player[0].collider);
+    missile.reset();
+
     while(!quit){
         while(SDL_PollEvent(&e) != 0){
             if(e.type == SDL_QUIT){
@@ -310,6 +326,7 @@ int main(int argc, char* args[]){
         // float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
         // if (avgFPS > 2000000) avgFPS = 0;
         // // printf("FPS : %g\n", avgFPS);
+
 
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         if(currentKeyStates[SDL_SCANCODE_D]){
@@ -425,6 +442,7 @@ void update(float deltaTime){
             player[i].updateScore(1);
         }
     }
+    missile.update(deltaTime);
 
 }
 
@@ -439,6 +457,8 @@ void render(){
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].render(gRenderer);
     }
+
+    missile.renderParticles(gRenderer);
 
     for(int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
         if (projectiles[i].isInScreen){
@@ -457,6 +477,7 @@ void render(){
         }
         scoreText += "Player " + std::to_string((i+1)) + " : " + std::to_string(player[i].getScore()) + "        ";
     }
+    gMissileTexture.render(missile.getX(), missile.getY(), NULL, missile.getAngleInDegree() + 90);
     gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);  
     gScoreTexture.render(20, 20);
 
