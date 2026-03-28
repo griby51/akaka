@@ -24,10 +24,11 @@ private:
     float precision = 3.0f;
     double angle = 0.0f;
     float velocity = 700.0f;
+    float currentVelocity = velocity;
     static const int PARTICLE_NUMBER = 500;
     int particleSpawnTicks = 5;
     int currentParticle = 0;
     LTimer particleTimer;
     Particle particles[PARTICLE_NUMBER];
-
+    SDL_Point particleOffset;
 };

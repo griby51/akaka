@@ -40,15 +40,28 @@ void Missile::update(float deltaTime){
     }else{
         angle += precision*deltaTime;
     }
-    vx = std::cos(angle) * velocity;
-    vy = std::sin(angle) * velocity;
+
+    float turnRatio = (std::abs(diff) / M_PI);
+    float targetVelocity = velocity * std::max(0.0f, turnRatio);
+
+    float lerpSpeed = 3.0f;
+    currentVelocity += (targetVelocity - currentVelocity) * lerpSpeed * deltaTime;
+
+    vx = std::cos(angle) * currentVelocity;
+    vy = std::sin(angle) * currentVelocity;
 
     x+=vx * deltaTime;
     y+=vy * deltaTime;
 
+    float centerX = x + 16;
+    float centerY = y + 16;
+
+    float backX = centerX - std::cos(angle) * 16;
+    float backY = centerY - std::sin(angle) * 16;
+
     if(particleTimer.getTicks() >= particleSpawnTicks){
         particleTimer.start();
-        particles[currentParticle].setPos(x, y);
+        particles[currentParticle].setPos(backX, backY);
         particles[currentParticle].reset();
         currentParticle = (currentParticle + 1) % PARTICLE_NUMBER;
     }
