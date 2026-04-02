@@ -19,6 +19,7 @@ GameConfig g_config("config.ini");
 int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
 int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 bool missileEnabled = g_config.getBool("missileEnabled", true);
+int PLAYER_NUMBER = g_config.getInt("PLAYER_NUMBER", 1);
 
 GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
 ParticleConfig thrustParticleConfig;
@@ -48,10 +49,9 @@ SDL_Rect gProjectileRect;
 SDL_Rect gPlayer2Clip;
 SDL_Rect gCactusManRect;
 
-const int PLAYER_NUMBER = 2;
-Player player[PLAYER_NUMBER];
+std::vector<Player> player(PLAYER_NUMBER);
 ThrustParticle thrustParticles[THRUST_PARTICLE_NUMBER];
-
+int randomBaseProjectileSpawnTicks = rand() % 3000;
 
 LTexture gSpriteSheetTexture;
 LTexture gPlayer2Texture;
@@ -71,11 +71,9 @@ Projectile projectiles[PROJECTILE_ARRAY_SIZE];
 
 void playerThrust(int playerNumber);
 
-LTimer playerParticleTimer[PLAYER_NUMBER];
+std::vector<LTimer> playerParticleTimer(PLAYER_NUMBER);
 
 int currentThrustParticle = 0;
-int randomBaseProjectileSpawnTicks = rand() % 3000;
-
 int randomProjectilePos = rand() % SCREEN_HEIGHT;
 
 int scrollingOffset = 0;
@@ -274,8 +272,9 @@ int main(int argc, char* args[]){
 
     scoreTimer.start();
 
-    player[0].setPos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4);
-    player[1].setPos(SCREEN_WIDTH / 2, (SCREEN_HEIGHT / 4) * 3);
+    for (int i = 0; i < PLAYER_NUMBER; i++){
+        player[i].setPos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4);
+    }
 
     for(int i = 0; i < PLAYER_NUMBER; i++){
         player[i].setCollider(0, 0, 32, 32);
@@ -337,14 +336,28 @@ int main(int argc, char* args[]){
             playerThrust(0);
         }
 
-        if(currentKeyStates[SDL_SCANCODE_L]){
-            player[1].move(1);
+        if(PLAYER_NUMBER > 1){
+            if(currentKeyStates[SDL_SCANCODE_L]){
+                player[1].move(1);
+            }
+            if(currentKeyStates[SDL_SCANCODE_J]){
+                player[1].move(-1);
+            }
+            if(currentKeyStates[SDL_SCANCODE_K]){
+                playerThrust(1);
+            }
         }
-        if(currentKeyStates[SDL_SCANCODE_J]){
-            player[1].move(-1);
-        }
-        if(currentKeyStates[SDL_SCANCODE_K]){
-            playerThrust(1);
+
+        if(PLAYER_NUMBER > 2){
+            if(currentKeyStates[SDL_SCANCODE_KP_6]){
+                player[2].move(1);
+            }
+            if(currentKeyStates[SDL_SCANCODE_KP_4]){
+                player[2].move(-1);
+            }
+            if(currentKeyStates[SDL_SCANCODE_KP_5]){
+                playerThrust(2);
+            }
         }
 
         if (xJoystickDir == -1){
@@ -468,12 +481,13 @@ void render(){
     for(int i = 0; i < PLAYER_NUMBER; i++){
         if(i == 0){
             gSpriteSheetTexture.setColor(100, 100, 255);
-            gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
         }
-        else{
+        else if(i == 1){
             gSpriteSheetTexture.setColor(255, 100, 100);
-            gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
+        }else if(i == 2){
+            gSpriteSheetTexture.setColor(100, 255, 100);
         }
+        gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
         scoreText += "Player " + std::to_string((i+1)) + " : " + std::to_string(player[i].getScore()) + "        ";
     }
     if(missileEnabled){
