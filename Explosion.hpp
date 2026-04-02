@@ -1,14 +1,15 @@
 #pragma once
-
 #include <SDL2/SDL.h>
+#include "Particle.hpp"
 
-struct Particle{
-    float x, y;
-    float vx, vy;
-    float life;
-
-    Particle(float px, float py);
+class Explosion{
+public:
+    void trigger(int x, int y);
     void update(float deltaTime);
-    bool dead() const;
-    void draw(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer);
+    bool isAlive();
+protected:
+    ExplosionParticle debris[30];
+    EmberParticle embers[50];
+    SmokeParticle smoke[10];
 }

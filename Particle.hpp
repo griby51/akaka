@@ -30,32 +30,6 @@ class ParticleConfig{
         std::vector<SDL_Color> colorFrameList;
 };
 
-//class Particle{
-//    public:
-//        void init(ParticleConfig* particleConfig);
-//        void setPos(int posX, int posY);
-//        void reset();
-//        void update(float deltaTime);
-//        int getX();
-//        int getY();
-//        void render(SDL_Renderer* renderer);
-//        bool isAlive = false;
-//    private:
-//        SDL_Rect particleRect;
-//        int vx = 0;
-//        int vy = 0;
-//        float size = 10;
-//        float growRate;
-//        float friction;
-//        float riseForce;
-//        int vxSpread;
-//        int vyMin, vyMax;
-//        float lifeTime = 0;
-//        float maxLifeTime;
-//        int intCurrentTime = 0;
-//        ParticleConfig* config;
-//};
-
 class Particle{
 public:
     bool isAlive = false;
@@ -93,3 +67,20 @@ private:
     ParticleConfig* config;
 };
 
+
+class ExplosionParticle : public Particle{
+public:
+    void init();
+    void reset() override;
+    void update(float deltaTime) override;
+    void render(SDL_Renderer* renderer) override;
+
+private:
+    float vx, vy;
+    float friction;
+    float angle;
+    float gravity;
+    float lifeTime;
+    SDL_Color startColor, middleColor, endColor;
+
+};
