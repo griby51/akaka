@@ -29,6 +29,6 @@ private:
     int particleSpawnTicks = 5;
     int currentParticle = 0;
     LTimer particleTimer;
-    Particle particles[PARTICLE_NUMBER];
+    ThrustParticle particles[PARTICLE_NUMBER];
     SDL_Point particleOffset;
 };

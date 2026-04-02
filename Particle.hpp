@@ -30,30 +30,66 @@ class ParticleConfig{
         std::vector<SDL_Color> colorFrameList;
 };
 
+//class Particle{
+//    public:
+//        void init(ParticleConfig* particleConfig);
+//        void setPos(int posX, int posY);
+//        void reset();
+//        void update(float deltaTime);
+//        int getX();
+//        int getY();
+//        void render(SDL_Renderer* renderer);
+//        bool isAlive = false;
+//    private:
+//        SDL_Rect particleRect;
+//        int vx = 0;
+//        int vy = 0;
+//        float size = 10;
+//        float growRate;
+//        float friction;
+//        float riseForce;
+//        int vxSpread;
+//        int vyMin, vyMax;
+//        float lifeTime = 0;
+//        float maxLifeTime;
+//        int intCurrentTime = 0;
+//        ParticleConfig* config;
+//};
+
 class Particle{
-    public:
-        void init(ParticleConfig* particleConfig);
-        void setPos(int posX, int posY);
-        void reset();
-        void update(float deltaTime);
-        int getX();
-        int getY();
-        void render(SDL_Renderer* renderer);
-        bool isAlive = false;
-        void setGlobalSpeed(float _globalSpeed = 1);
-    private:
-        SDL_Rect particleRect;
-        int vx = 0;
-        int vy = 0;
-        float size = 10;
-        float growRate;
-        float friction;
-        float riseForce;
-        int vxSpread;
-        int vyMin, vyMax;
-        float lifeTime = 0;
-        float maxLifeTime;
-        int intCurrentTime = 0;
-        ParticleConfig* config;
-        float globalSpeed;
+public:
+    bool isAlive = false;
+    void setPos(int posX, int posY);
+    int getX();
+    int getY();
+    
+    virtual void render(SDL_Renderer* renderer) = 0;
+    virtual void reset() = 0;
+    virtual void update(float deltaTime) = 0;
+protected:
+    SDL_Rect particleRect;
+    float size = 10;
+    float fx, fy;
+    float lifeTime = 0;
+    float maxLifeTime;
+    int intCurrentTime = 0;
 };
+
+class ThrustParticle : public Particle{
+public:
+    void init(ParticleConfig* config);
+    void reset() override;
+    void update(float deltaTime) override;
+    void render(SDL_Renderer* renderer) override;
+
+private:
+    float vx = 0;
+    float vy = 0;
+
+    float growRate;
+    float friction;
+    float riseForce;
+    float vyMin, vyMax;
+    ParticleConfig* config;
+};
+

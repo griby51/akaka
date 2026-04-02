@@ -13,12 +13,12 @@
 #include "Particle.hpp"
 #include "CollisionSystem.hpp"
 #include "Missile.hpp"
-#include <iostream>
 
 
 GameConfig g_config("config.ini");
 int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
 int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
+bool missileEnabled = g_config.getBool("missileEnabled", true);
 
 GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
 ParticleConfig thrustParticleConfig;
@@ -50,7 +50,7 @@ SDL_Rect gCactusManRect;
 
 const int PLAYER_NUMBER = 2;
 Player player[PLAYER_NUMBER];
-Particle thrustParticles[THRUST_PARTICLE_NUMBER];
+ThrustParticle thrustParticles[THRUST_PARTICLE_NUMBER];
 
 
 LTexture gSpriteSheetTexture;
@@ -241,8 +241,6 @@ int main(int argc, char* args[]){
 
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].init(&thrustParticleConfig);
-        thrustParticles[i].setGlobalSpeed(GLOBAL_SPEED);
-
     };
     g_config.save();
 
@@ -457,8 +455,9 @@ void render(){
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].render(gRenderer);
     }
-
-    missile.renderParticles(gRenderer);
+    if(missileEnabled){
+        missile.renderParticles(gRenderer);
+    }
 
     for(int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
         if (projectiles[i].isInScreen){
@@ -477,7 +476,9 @@ void render(){
         }
         scoreText += "Player " + std::to_string((i+1)) + " : " + std::to_string(player[i].getScore()) + "        ";
     }
-    gMissileTexture.render(missile.getX(), missile.getY(), NULL, missile.getAngleInDegree() + 90);
+    if(missileEnabled){
+        gMissileTexture.render(missile.getX(), missile.getY(), NULL, missile.getAngleInDegree() + 90);
+    }
     gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);  
     gScoreTexture.render(20, 20);
 

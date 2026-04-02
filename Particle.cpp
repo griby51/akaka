@@ -59,54 +59,11 @@ SDL_Color ParticleConfig::getCurrentColor(int currentTime){
     return color;
 }
 
-void Particle::init(ParticleConfig* particleConfig){
-    particleRect.x = 10000;
-    particleRect.y = 10000;
-    particleRect.w = 10;
-    particleRect.h = 10;
-    config = particleConfig;
-    maxLifeTime = static_cast<float>(config->getMaxTime());
-    isAlive = false;
-}
-
 void Particle::setPos(int posX, int posY){
     particleRect.x = posX;
     particleRect.y = posY;
-}
-
-void Particle::reset(){
-    lifeTime = 0.0f;
-    intCurrentTime = 0;
-    isAlive = true;
-    if(!(config->vxSpread == 0)){
-        vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
-    }
-    if(!(config->vyMax == config->vyMin)){
-        vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
-    }
-    if(!(config->sizeMax == config->sizeMin)){
-        size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
-    }
-    particleRect.w = size;
-    particleRect.h = size;
-}
-
-void Particle::update(float deltaTime){
-   if(!isAlive) return;
-   if(!((lifeTime+=(deltaTime*1000.0f)) <= maxLifeTime)){
-       isAlive = false;
-       return;
-   };
-   intCurrentTime = static_cast<int>(lifeTime);
-
-   particleRect.x += vx;
-   particleRect.y += vy;
-   vy -= config->riseForce;
-   vx *= config->friction;
-   // particleRect.x -= globalSpeed*globalSpeed;
-   size += config->growRate;
-   particleRect.w = (int)size;
-   particleRect.h = (int)size;
+    fx = posX;
+    fy = posY;
 }
 
 int Particle::getX(){
@@ -117,7 +74,63 @@ int Particle::getY(){
     return particleRect.y;
 }
 
-void Particle::render(SDL_Renderer* renderer){
+void ThrustParticle::init(ParticleConfig* particleConfig){
+    particleRect.x = 10000;
+    particleRect.y = 10000;
+    particleRect.w = 10;
+    particleRect.h = 10;
+    config = particleConfig;
+
+    maxLifeTime = static_cast<float>(config->getMaxTime());
+    isAlive = false;
+}
+
+void ThrustParticle::reset(){
+    lifeTime = 0.0f;
+    intCurrentTime = 0;
+    isAlive = true;
+    if(!(config->vxSpread == 0)){
+        vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
+    }
+
+    if(!(config->vyMax == config->vyMin)){
+        vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
+    }else{
+        vy = config->vyMax;
+    }
+
+    if(!(config->sizeMax == config->sizeMin)){
+        size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
+    }else{
+        size = config->sizeMax;
+    }
+
+    particleRect.w = size;
+    particleRect.h = size;
+}
+
+void ThrustParticle::update(float deltaTime){
+    if(!isAlive) return;
+    if(!((lifeTime+=(deltaTime*1000.0f)) <= maxLifeTime)){
+        isAlive = false;
+        return;
+    };
+    intCurrentTime = static_cast<int>(lifeTime);
+
+    fx+=vx;
+    fy+=vy;
+
+    particleRect.x = fx;
+    particleRect.y = fy;
+    vy -= config->riseForce;
+    vx *= config->friction;
+
+    size += config->growRate;
+    particleRect.w = (int)size;
+    particleRect.h = (int)size;
+}
+
+void ThrustParticle::render(SDL_Renderer* renderer){
     if(!isAlive){
         return;
     };
@@ -125,8 +138,3 @@ void Particle::render(SDL_Renderer* renderer){
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderer, &particleRect);
 }
-
-void Particle::setGlobalSpeed(float _globalSpeed){
-    globalSpeed = _globalSpeed;
-}
-
