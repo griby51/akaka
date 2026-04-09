@@ -70,17 +70,18 @@ private:
 
 class ExplosionParticle : public Particle{
 public:
-    void init();
+    void init(ParticleConfig* _colorsConfig);
     void reset() override;
     void update(float deltaTime) override;
     void render(SDL_Renderer* renderer) override;
 
 private:
     float vx, vy;
+    float power;
     float friction;
     float angle;
     float gravity;
     float lifeTime;
-    SDL_Color startColor, middleColor, endColor;
 
+    ParticleConfig* colorsConfig;
 };

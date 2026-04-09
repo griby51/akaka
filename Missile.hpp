@@ -11,11 +11,13 @@ public:
     void setTarget(SDL_Rect* _target);
     void update(float deltaTime);
     void reset();
+    void drawCollider(SDL_Renderer* renderer, SDL_Color* color);
     void renderParticles(SDL_Renderer* renderer);
     double getAngleInDegree();
     int getX();
     int getY();
     bool isAlive = false;
+    SDL_Rect collider;
 private:
     float rotation;
     float x, y;

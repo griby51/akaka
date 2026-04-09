@@ -9,12 +9,17 @@ void Missile::init(ParticleConfig* particleConfig, GameConfig& config){
     velocity = config.getFloat("velocity", 700.0f);
     angle = config.getFloat("angle", -90.0f);
 
-    printf("Precision : %f\n", precision);
+    collider.h = 10;
+    collider.w = 10;
+    collider.x = 0;
+    collider.y = 0;
 }
 
 void Missile::setPos(int posX, int posY){
     x = posX;
     y = posY;
+    collider.x = posX;
+    collider.y = posY;
 }
 
 void Missile::setTarget(SDL_Rect* _target){
@@ -22,6 +27,11 @@ void Missile::setTarget(SDL_Rect* _target){
 }
 
 void Missile::update(float deltaTime){
+    for(int i = 0; i < PARTICLE_NUMBER; i++){
+        particles[i].update(deltaTime);
+    }
+
+    if (!isAlive) return;
 
     int targetX = target->x + (target->w / 2);
     int targetY = target->y + (target->h / 2);
@@ -52,6 +62,8 @@ void Missile::update(float deltaTime){
 
     x+=vx * deltaTime;
     y+=vy * deltaTime;
+    collider.x = x;
+    collider.y = y;
 
     float centerX = x + 16;
     float centerY = y + 16;
@@ -64,10 +76,6 @@ void Missile::update(float deltaTime){
         particles[currentParticle].setPos(backX, backY);
         particles[currentParticle].reset();
         currentParticle = (currentParticle + 1) % PARTICLE_NUMBER;
-    }
-
-    for(int i = 0; i < PARTICLE_NUMBER; i++){
-        particles[i].update(deltaTime);
     }
 }
 
@@ -90,5 +98,15 @@ void Missile::renderParticles(SDL_Renderer* renderer){
 }
 
 void Missile::reset(){
+    angle = -90.0f;
     particleTimer.start();
+    for(int i = 0; i < PARTICLE_NUMBER; i++){
+        particles[i].reset();
+        particles[i].setPos(10000, 10000);
+    }
+}
+
+void Missile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){
+    SDL_SetRenderDrawColor(renderer, color->r, color->g, color->b, color->a);
+    SDL_RenderDrawRect(renderer, &collider);
 }

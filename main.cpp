@@ -20,6 +20,8 @@ int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
 int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 bool missileEnabled = g_config.getBool("missileEnabled", true);
 int PLAYER_NUMBER = g_config.getInt("PLAYER_NUMBER", 1);
+int scoreToLaunchMissile = g_config.getInt("scoreToLaunchMissile", 100);
+int missileScorePenality = g_config.getInt("missileScorePenality", -500);
 
 GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
 ParticleConfig thrustParticleConfig;
@@ -70,8 +72,10 @@ const int PROJECTILE_ARRAY_SIZE = 20;
 Projectile projectiles[PROJECTILE_ARRAY_SIZE];
 
 void playerThrust(int playerNumber);
+void spawnMissile(int playerWhoSpawn);
 
 std::vector<LTimer> playerParticleTimer(PLAYER_NUMBER);
+std::vector<LTimer> playerMissileTimer(PLAYER_NUMBER);
 
 int currentThrustParticle = 0;
 int randomProjectilePos = rand() % SCREEN_HEIGHT;
@@ -87,7 +91,13 @@ LTimer collisionTimer;
 LTimer scoreTimer;
 LTimer deltaTimer;
 
-Missile missile;
+const int MISSILE_NUMBER = 50;
+Missile missiles[MISSILE_NUMBER];
+int currentMissile = 0;
+
+
+
+
 std::stringstream timeText;
 bool init(){
     bool success = true;
@@ -265,6 +275,10 @@ int main(int argc, char* args[]){
     for (int i = 0; i<PLAYER_NUMBER; i++){
         player[i].setScreenSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     }
+    for (int i = 0; i < MISSILE_NUMBER; i++){
+        missiles[i].init(&thrustParticleConfig, missileConfig);
+        missiles[i].setPos(10000, 10000);
+    }
 
     SDL_Event e;
 
@@ -274,6 +288,7 @@ int main(int argc, char* args[]){
 
     for (int i = 0; i < PLAYER_NUMBER; i++){
         player[i].setPos(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4);
+        playerMissileTimer[i].start();
     }
 
     for(int i = 0; i < PLAYER_NUMBER; i++){
@@ -290,10 +305,6 @@ int main(int argc, char* args[]){
     projectileTimer.start();
     collisionTimer.start();
 
-    missile.init(&thrustParticleConfig, missileConfig);
-    missile.setPos(SCREEN_WIDTH + 100, SCREEN_HEIGHT / 2);
-    missile.setTarget(&player[0].collider);
-    missile.reset();
 
     while(!quit){
         while(SDL_PollEvent(&e) != 0){
@@ -332,6 +343,13 @@ int main(int argc, char* args[]){
         if(currentKeyStates[SDL_SCANCODE_A]){
             player[0].move(-1);
         }
+        if(currentKeyStates[SDL_SCANCODE_W]){
+            if(player[0].getScore() >= scoreToLaunchMissile && playerMissileTimer[0].getTicks() > 500){
+                player[0].updateScore(-scoreToLaunchMissile);
+                playerMissileTimer[0].start();
+                spawnMissile(0);
+            }
+        }
         if(currentKeyStates[SDL_SCANCODE_SPACE]){
             playerThrust(0);
         }
@@ -342,6 +360,13 @@ int main(int argc, char* args[]){
             }
             if(currentKeyStates[SDL_SCANCODE_J]){
                 player[1].move(-1);
+            }
+            if(currentKeyStates[SDL_SCANCODE_I]){
+                if(player[1].getScore() >= scoreToLaunchMissile && playerMissileTimer[1].getTicks() > 500){
+                    player[1].updateScore(-scoreToLaunchMissile);
+                    playerMissileTimer[1].start();
+                    spawnMissile(1);
+                }
             }
             if(currentKeyStates[SDL_SCANCODE_K]){
                 playerThrust(1);
@@ -355,6 +380,13 @@ int main(int argc, char* args[]){
             if(currentKeyStates[SDL_SCANCODE_KP_4]){
                 player[2].move(-1);
             }
+            if(currentKeyStates[SDL_SCANCODE_KP_8]){
+                if(player[2].getScore() >= scoreToLaunchMissile && playerMissileTimer[2].getTicks() > 500){
+                    player[2].updateScore(-scoreToLaunchMissile);
+                    playerMissileTimer[2].start();
+                    spawnMissile(2);
+                }
+             }
             if(currentKeyStates[SDL_SCANCODE_KP_5]){
                 playerThrust(2);
             }
@@ -441,10 +473,22 @@ void update(float deltaTime){
 
     for (int i = 0; i < PLAYER_NUMBER; i++){
         player[i].update(deltaTime);
+        for(int j = 0; j < MISSILE_NUMBER; j++){
+            if(missiles[j].isAlive){
+                if(Collision::collide(&missiles[j].collider, &player[i].collider)){
+                    player[i].updateScore(missileScorePenality);
+                    missiles[j].isAlive = false;
+                }
+            }
+        }
     }
 
     for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].update(deltaTime);
+    }
+
+    for (int i = 0; i < MISSILE_NUMBER; i++){
+        missiles[i].update(deltaTime);
     }
 
     if (scoreTimer.getTicks() >= 50){
@@ -453,8 +497,6 @@ void update(float deltaTime){
             player[i].updateScore(1);
         }
     }
-    missile.update(deltaTime);
-
 }
 
 void render(){
@@ -468,15 +510,20 @@ void render(){
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].render(gRenderer);
     }
-    if(missileEnabled){
-        missile.renderParticles(gRenderer);
-    }
 
     for(int i = 0; i < PROJECTILE_ARRAY_SIZE; i++){
         if (projectiles[i].isInScreen){
             gProjectile.render(projectiles[i].getX(), projectiles[i].getY(), &gProjectileRect);
         }    
     }
+
+    for(int i = 0; i < MISSILE_NUMBER; i++){
+        if(missiles[i].isAlive){
+            gMissileTexture.render(missiles[i].getX(), missiles[i].getY(), NULL, missiles[i].getAngleInDegree() + 90);
+        }
+        missiles[i].renderParticles(gRenderer);
+    }
+
     std::string scoreText="";
     for(int i = 0; i < PLAYER_NUMBER; i++){
         if(i == 0){
@@ -490,11 +537,21 @@ void render(){
         gSpriteSheetTexture.render(player[i].getX(), player[i].getY(), &gSpritesClips[0]);
         scoreText += "Player " + std::to_string((i+1)) + " : " + std::to_string(player[i].getScore()) + "        ";
     }
-    if(missileEnabled){
-        gMissileTexture.render(missile.getX(), missile.getY(), NULL, missile.getAngleInDegree() + 90);
-    }
     gScoreTexture.loadFromRenderedText(scoreText, WHITE, gScoreFont);  
     gScoreTexture.render(20, 20);
 
     SDL_RenderPresent(gRenderer);
+}
+
+void spawnMissile(int playerWhoSpawn){
+    int targetPlayer = playerWhoSpawn;
+    while(targetPlayer == playerWhoSpawn){
+        targetPlayer = rand() % PLAYER_NUMBER;
+    }
+    currentMissile++;
+    if(currentMissile >= MISSILE_NUMBER) currentMissile = 0;
+    missiles[currentMissile].reset();
+    missiles[currentMissile].setPos(SCREEN_WIDTH + 50, SCREEN_HEIGHT / 2);
+    missiles[currentMissile].isAlive = true;
+    missiles[currentMissile].setTarget(&player[targetPlayer].collider);
 }

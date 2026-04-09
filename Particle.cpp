@@ -138,3 +138,11 @@ void ThrustParticle::render(SDL_Renderer* renderer){
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderer, &particleRect);
 }
+
+void ExplosionParticle::init(ParticleConfig* _colorsConfig){
+    colorsConfig = _colorsConfig;
+}
+
+void ExplosionParticle::update(float deltaTime){
+    
+}
