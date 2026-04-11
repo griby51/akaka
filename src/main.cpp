@@ -15,7 +15,7 @@
 #include "Missile.hpp"
 
 
-GameConfig g_config("config.ini");
+GameConfig g_config("assets/config.ini");
 int SCREEN_WIDTH = g_config.getInt("SCREEN_WIDTH", 800);
 int SCREEN_HEIGHT = g_config.getInt("SCREEN_HEIGHT", 600);
 bool missileEnabled = g_config.getBool("missileEnabled", true);
@@ -23,10 +23,10 @@ int PLAYER_NUMBER = g_config.getInt("PLAYER_NUMBER", 1);
 int scoreToLaunchMissile = g_config.getInt("scoreToLaunchMissile", 100);
 int missileScorePenality = g_config.getInt("missileScorePenality", -500);
 
-GameConfig thrustParticleGameConfig("playerThrustParticle.ini");
+GameConfig thrustParticleGameConfig("assets/playerThrustParticle.ini");
 ParticleConfig thrustParticleConfig;
 
-GameConfig missileConfig("missileConfig.ini");
+GameConfig missileConfig("assets/missileConfig.ini");
 
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
@@ -152,7 +152,7 @@ bool init(){
 bool loadMedia(){
     bool success = true;
 
-    gScoreFont = TTF_OpenFont("Hypermonosaturation-zrMo0.ttf", 28);
+    gScoreFont = TTF_OpenFont("assets/Hypermonosaturation-zrMo0.ttf", 28);
     if(gScoreFont == NULL){
         printf("Failed to load font ! SDL_Error : %s", TTF_GetError());
         success = false;
@@ -163,22 +163,22 @@ bool loadMedia(){
         }
     }
 
-    if(!gMissileTexture.loadFromeFile("missile00.png")){
+    if(!gMissileTexture.loadFromeFile("assets/missile00.png")){
         printf("Failed to load missile texture !\n");
         success = false;
     }
 
-    if(!gDotTexture.loadFromeFile("dot.bmp")){
+    if(!gDotTexture.loadFromeFile("assets/dot.bmp")){
         printf("Failed to load dot texture\n");
         success = false;
     }
 
-    if(!gBGTexture.loadFromeFile("abstract_seamless_bg_01.png")){
+    if(!gBGTexture.loadFromeFile("assets/abstract_seamless_bg_01.png")){
         printf("Failed to load background texture\n");
         success = false;
     }
 
-    if(!gProjectile.loadFromeFile("cannonbob.png")){
+    if(!gProjectile.loadFromeFile("assets/cannonbob.png")){
         printf("Failed to laod cannonbob texture");
         success = false;
     }else{
@@ -190,7 +190,7 @@ bool loadMedia(){
 
 
 
-    if(!gSpriteSheetTexture.loadFromeFile("player.png")){
+    if(!gSpriteSheetTexture.loadFromeFile("assets/player.png")){
         printf("Failed to load player spritesheet texture\n");
         success  = false;
     }else{
@@ -206,7 +206,7 @@ bool loadMedia(){
         gSpritesClips[1].h = 32;
     }
 
-    if(!gPlayer2Texture.loadFromeFile("dawntree.png")){
+    if(!gPlayer2Texture.loadFromeFile("assets/dawntree.png")){
         printf("Failed to load player 2 texture\n");
         success = false;
     }
