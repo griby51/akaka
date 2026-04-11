@@ -250,7 +250,6 @@ int main(int argc, char* args[]){
     for(int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         thrustParticles[i].init(&thrustParticleConfig);
     };
-    g_config.save();
 
     SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     gSpriteSheetTexture.setRenderer(gRenderer);
