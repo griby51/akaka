@@ -1,0 +1,27 @@
+CXX = C:/msys64/mingw64/bin/g++.exe
+TARGET = main.exe
+SRCS = $(wildcard src/*.cpp)
+OBJS = $(SRCS:src/%.cpp=build/%.o)
+
+CXXFLAGS = -IC:/msys64/mingw64/include/SDL2 -Dmain=SDL_main -g
+
+LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image \
+          -lsetupapi -lcfgmgr32 -lole32 -luuid -lversion \
+          -static-libgcc -static-libstdc++ -Wl,--subsystem,windows \
+          -LC:/msys64/mingw64/lib
+
+all: build $(TARGET)
+
+build:
+	mkdir -p build
+
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)
+
+build/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -Iinclude -c $< -o $@
+
+clean:
+	rm -rf build $(TARGET)
+
+.PHONY: all clean build
