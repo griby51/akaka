@@ -402,6 +402,11 @@ int main(int argc, char* args[]){
             if(SDL_JoystickGetButton(gGameController, 0)){
                 playerThrust(0);
             }
+            if(SDL_JoystickGetButton(gGameController, 2) && player[0].getScore() >= scoreToLaunchMissile && playerMissileTimer[0].getTicks() > 500){
+                player[0].updateScore(-scoreToLaunchMissile);
+                playerMissileTimer[0].start();
+                spawnMissile(0);
+            }
         }
         update(deltaTime);
         render();
