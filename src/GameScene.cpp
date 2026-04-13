@@ -1,6 +1,6 @@
 #include "GameScene.hpp"
 
-GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window,SceneManager& manager)
+GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager)
     : mManager(manager)
 {
     mGame.init(renderer, window);

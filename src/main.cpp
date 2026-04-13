@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include "SceneManager.hpp"
+#include "MenuScene.hpp"
 #include "GameScene.hpp"
 #include "LTimer.hpp"
 
@@ -26,7 +27,7 @@ int main(int argc, char* args[]){
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     SceneManager manager;
-    manager.push(std::make_unique<GameScene>(renderer, window, manager));
+    manager.push(std::make_unique<MenuScene>(renderer, window, manager));
 
     LTimer deltaTimer;
     deltaTimer.start();
