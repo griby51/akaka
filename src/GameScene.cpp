@@ -1,9 +1,10 @@
 #include "GameScene.hpp"
+#include "PlayerSlot.hpp"
 
-GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager)
+GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager, PlayerSlot* playerSlots, int joinedCount)
     : mManager(manager)
 {
-    mGame.init(renderer, window);
+    mGame.init(renderer, window, playerSlots, joinedCount);
     mGame.start();
     mGame.loadMedia();
 }

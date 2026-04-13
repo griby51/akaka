@@ -5,10 +5,11 @@
 #include "LTexture.hpp"
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
+#include "Missile.hpp"
 
 class Player{
     public:
-        void init(GameConfig* config);
+        void init(GameConfig* config, int _index);
 
         void render(SDL_Renderer* renderer);
         void setPos(float posX, float posY);
@@ -37,6 +38,11 @@ class Player{
         
         void setParticleConfig(GameConfig config);
 
+        void setMissileTable(Missile* _missiles, int tableSize, int* _currentMissile);
+        void setPlayerTable(Player* _players, int tableSize);
+
+        void spawnMissile();
+
         SDL_Rect collider;
 
     private:
@@ -44,6 +50,8 @@ class Player{
         float vx, vy;
         int score;
         int dir;
+
+        int index;
 
         LTexture* skin;
         LTexture* hat;
@@ -71,4 +79,12 @@ class Player{
         ThrustParticle thrustParticles[500];
         ParticleConfig thrustParticleConfig;
         int currentThrustParticle;
+        
+        int* currentMissile;
+
+        Missile* missiles;
+        int missileTableSize;
+
+        Player* players;
+        int playerTableSize;
 };

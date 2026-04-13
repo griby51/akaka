@@ -1,7 +1,8 @@
 #include "Player.hpp"
 #include "KeyPreset.hpp"
 
-void Player::init(GameConfig* config){
+void Player::init(GameConfig* config, int _index){
+    index = _index;
     x = 0;
     y = 0;
     vx = 0;
@@ -151,6 +152,9 @@ void Player::handleInput(const Uint8* keys){
     if(keys[mPreset.thrust]){
         jetpack();
     }
+    if(keys[mPreset.missile]){
+        spawnMissile();
+    }
 }
 
 void Player::setParticleConfig(GameConfig config){
@@ -158,4 +162,31 @@ void Player::setParticleConfig(GameConfig config){
     for(int i = 0; i < 500; i++){
         thrustParticles[i].init(&thrustParticleConfig);
     }
+}
+
+void Player::setMissileTable(Missile* _missiles, int tableSize, int* _currentMissile){
+    missiles = _missiles;
+    currentMissile = _currentMissile;
+    missileTableSize = tableSize;
+}
+
+void Player::setPlayerTable(Player* _players, int tableSize){
+    players = _players;
+    playerTableSize = tableSize;
+}
+
+void Player::spawnMissile(){
+    int target = index;
+
+    if(playerTableSize <= 1) return;
+
+    while(target == index){
+        target = rand() % playerTableSize;
+    }
+
+    *currentMissile = (*currentMissile + 1) % missileTableSize;
+    missiles[*currentMissile].reset();
+    missiles[*currentMissile].setPos(SCREEN_WIDTH + 50, SCREEN_HEIGHT / 2);
+    missiles[*currentMissile].isAlive = true;
+    missiles[*currentMissile].setTarget(&players[target].collider);
 }

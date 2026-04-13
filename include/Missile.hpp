@@ -1,3 +1,4 @@
+#pragma once
 #include "Particle.hpp"
 #include <SDL2/SDL.h>
 #include "Config.hpp"

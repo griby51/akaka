@@ -12,6 +12,7 @@
 #include "Dot.hpp"
 #include "Player.hpp"
 #include "Particle.hpp"
+#include "PlayerSlot.hpp"
 #include "CollisionSystem.hpp"
 #include "Missile.hpp"
 
@@ -20,7 +21,7 @@ public:
     Game();
     ~Game();
 
-    bool init(SDL_Renderer* renderer, SDL_Window* window);
+    bool init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlots, int joinedCount);
     bool loadMedia();
     void close();
     void start();
@@ -51,7 +52,7 @@ private:
     static constexpr int JOYSTICK_DEAD_ZONE = 8000;
     static constexpr int THRUST_PARTICLE_NUMBER = 500;
     static constexpr int PROJECTILE_NUMBER = 20;
-    static constexpr int MISSILE_NUMBER = 50;
+    static constexpr int MISSILE_NUMBER = 500;
     static constexpr float GLOBAL_SPEED = 5.0f;
 
     std::vector<Player> mPlayers;

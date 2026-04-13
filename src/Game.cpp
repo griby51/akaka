@@ -21,8 +21,9 @@ Game::~Game() {
     close();
 }
 
-bool Game::init(SDL_Renderer* renderer, SDL_Window* window){
+bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlot, int joinedCount){
     mRenderer = renderer;
+    mPlayerNumber = joinedCount;
     mWindow = window;
 
     SDL_GetWindowSize(window, &mScreenWidth, &mScreenHeight);
@@ -32,7 +33,12 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window){
     mMissileTimers.resize(mPlayerNumber);
 
     for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].init(&mConfig);
+        mPlayers[i].init(&mConfig, i);
+        mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
+        mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
+        mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
+        mPlayers[i].setSkin(playerSlot[i].skin);
+        mPlayers[i].setHat(playerSlot[i].hat);
     }
 
     return true;
@@ -83,14 +89,8 @@ bool Game::loadMedia() {
 }
 
 void Game::start(){
-    KeyPreset presets[3] = {
-        {SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_S, SDL_SCANCODE_W},
-        {SDL_SCANCODE_J, SDL_SCANCODE_L, SDL_SCANCODE_K, SDL_SCANCODE_I},
-        {SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6, SDL_SCANCODE_KP_5, SDL_SCANCODE_KP_8}
-    };
 
     for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].setKeyPreset(presets[i]);
         mPlayers[i].setParticleConfig(mThrustParticleGameConfig);
     }
 
@@ -108,8 +108,6 @@ void Game::start(){
 
     for(int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].setScreenSize(mScreenWidth, mScreenHeight);
-        mPlayers[i].setSkin(&mSquirellTexture);
-        mPlayers[i].setHat(&mCowboyTexture);
         mPlayers[i].setPos(mScreenWidth / 2, mScreenHeight / 4);
         mPlayers[i].setCollider(0, 0, 32, 32);
         mMissileTimers[i].start();

@@ -2,10 +2,12 @@
 #include "Scene.hpp"
 #include "SceneManager.hpp"
 #include "LTexture.hpp"
+#include "PlayerSlot.hpp"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
-
+#include <vector>
 
 class MenuScene : public Scene{
 public:
@@ -26,4 +28,10 @@ private:
     SDL_Rect playBtnHitbox;
     int mScreenWidth, mScreenHeight;
     LTexture mPlayBtnTexture;
+
+    PlayerSlot mSlots[4];
+    int mJoinedCount = 0;
+
+    std::vector<LTexture> skins;
+    std::vector<LTexture> hats;
 };
