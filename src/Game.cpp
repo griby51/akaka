@@ -21,7 +21,12 @@ Game::~Game() {
     close();
 }
 
-bool Game::init(){
+bool Game::init(SDL_Renderer* renderer, SDL_Window* window){
+    mRenderer = renderer;
+    mWindow = window;
+
+    SDL_GetWindowSize(window, &mScreenWidth, &mScreenHeight);
+    
     mPlayers.resize(mPlayerNumber);
     mParticleTimers.resize(mPlayerNumber);
     mMissileTimers.resize(mPlayerNumber);
@@ -30,45 +35,9 @@ bool Game::init(){
         mPlayers[i].init(&mConfig);
     }
 
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0){
-        printf("SDL init error : %s\n", SDL_GetError());
-        return false;
-    }
-
-    mWindow = SDL_CreateWindow("Encore un jeu random", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mScreenWidth, mScreenHeight ,SDL_WINDOW_SHOWN);
-
-    if(!mWindow){
-        printf("Window error : %s\n", SDL_GetError());
-        return false;
-    }
-
-    mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED);
-    if(!mRenderer){
-        printf("Renderer error : %s\n", SDL_GetError());
-        return false;
-    }
-    int imgFlags = IMG_INIT_PNG;
-    if(!(IMG_Init(imgFlags) & imgFlags)){
-        printf("IMG_Init error : %s\n", IMG_GetError());
-        return false;
-    }
-
-    if(TTF_Init() == -1){
-        printf("TTF_Init error : %s\n", TTF_GetError());
-        return false;
-    }
-
-    if(SDL_NumJoysticks() >= 1){
-        mController = SDL_JoystickOpen(0);
-        if(!mController){
-            printf("Joytick warning : %s\n", SDL_GetError());
-        }
-    }
-
     return true;
 }
 bool Game::loadMedia() {
-    // On associe le renderer à toutes les textures
     mSquirellTexture.setRenderer(mRenderer);
     mProjectileTexture.setRenderer(mRenderer);
     mDotTexture.setRenderer(mRenderer);
@@ -113,7 +82,7 @@ bool Game::loadMedia() {
     return true;
 }
 
-void Game::run(){
+void Game::start(){
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
@@ -148,45 +117,26 @@ void Game::run(){
     mProjectileTimer.start();
     mCollisionTimer.start();
     mScoreTimer.start();
+}
 
-    bool quit = false;
-    while(!quit){
-        mCapTimer.start();
-
-        float deltaTime = mDeltaTimer.getTicks() / 1000.0f;
-        if(deltaTime > 0.05f) deltaTime = 0.05f;
-
-        handleEvents(quit);
-        update(deltaTime);
-        render();
-
-        mDeltaTimer.start();
-
-        int frameTicks = mCapTimer.getTicks();
-        if(frameTicks < TICKS_PER_FRAME){
-            SDL_Delay(TICKS_PER_FRAME - frameTicks);
+void Game::handleEvents(const SDL_Event& e) {
+    if (e.type == SDL_QUIT){
+        mQuit = true;
+        return;
+    }
+    if (e.type == SDL_JOYAXISMOTION && e.jaxis.which == 0 && e.jaxis.axis == 0) {
+        if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
+            mXJoystickDir = -1;
+        }
+        else if (e.jaxis.value >  JOYSTICK_DEAD_ZONE){
+            mXJoystickDir =  1;
+        }
+        else{
+            mXJoystickDir =  0;
         }
     }
 }
-
-void Game::handleEvents(bool& quit) {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) { quit = true; return; }
-        if (e.type == SDL_JOYAXISMOTION && e.jaxis.which == 0 && e.jaxis.axis == 0) {
-            if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
-                mXJoystickDir = -1;
-            }
-            else if (e.jaxis.value >  JOYSTICK_DEAD_ZONE){
-                mXJoystickDir =  1;
-            }
-            else{
-                mXJoystickDir =  0;
-                
-            }
-        }
-    }
-
+void Game::handleInput(){
     const Uint8* keys = SDL_GetKeyboardState(NULL);
 
 
@@ -254,6 +204,7 @@ void Game::handleEvents(bool& quit) {
         }
     }
 }
+
 
 void Game::playerThrust(int playerIndex){
     mPlayers[playerIndex].jetpack();
@@ -399,14 +350,8 @@ void Game::close() {
     if (mController){
         SDL_JoystickClose(mController); mController = nullptr;
     }
-    if (mRenderer){
-        SDL_DestroyRenderer(mRenderer); mRenderer = nullptr;
-    }
-    if (mWindow){
-        SDL_DestroyWindow(mWindow); mWindow = nullptr;
-    }
+}
 
-    TTF_Quit();
-    IMG_Quit();
-    SDL_Quit();
+bool Game::isOver(){
+    return mQuit;
 }

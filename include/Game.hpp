@@ -20,10 +20,15 @@ public:
     Game();
     ~Game();
 
-    bool init();
+    bool init(SDL_Renderer* renderer, SDL_Window* window);
     bool loadMedia();
-    void run();
     void close();
+    void start();
+    void handleEvents(const SDL_Event& e);
+    void handleInput();
+    void update(float deltaTime);
+    void render();
+    bool isOver();
 private:
     SDL_Window* mWindow = nullptr;
     SDL_Renderer* mRenderer = nullptr;
@@ -38,6 +43,8 @@ private:
     int mPlayerNumber;
     int mScoreToLaunchMissile;
     int mMissileScorePenality;
+
+    bool mQuit = false;
     
     static constexpr int FPS = 60;
     static constexpr int TICKS_PER_FRAME = 1000 / 60;
@@ -84,10 +91,6 @@ private:
 
     SDL_Color mWhite = {255, 255, 255, 255};
 
-    void handleEvents(bool &quit);
-    void update(float deltaTime);
-    void render();
     void playerThrust(int playerIndex);
     void spawnMissile(int playerWhoSpawn);
-
  };
