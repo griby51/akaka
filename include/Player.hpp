@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include "Config.hpp"
+#include "LTexture.hpp"
 
 class Player{
     public:
@@ -21,6 +22,8 @@ class Player{
         int getScore();
 
         void update(float deltaTime);
+        void setSkin(LTexture* _skin);
+        void setHat(LTexture* _hat);
 
         int getX();
         int getY();
@@ -31,6 +34,9 @@ class Player{
         float vx, vy;
         int score;
         int dir;
+
+        LTexture* skin;
+        LTexture* hat;
 
         GameConfig* g_config;
         int distanceBetweenColliderXAnd0;

@@ -1,0 +1,412 @@
+#include "Game.hpp"
+#include "CollisionSystem.hpp"
+#include <SDL2/SDL_render.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+
+Game::Game()
+    : mConfig("assets/config.ini"),
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini"),
+    mMissileConfig("assets/missileConfig.ini")
+{
+    mScreenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
+    mScreenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
+    mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
+    mScoreToLaunchMissile = mConfig.getInt("scoreToLaunchMissile", 100);
+    mMissileScorePenality = mConfig.getInt("missileScorePenality", -500);
+}
+
+Game::~Game() {
+    close();
+}
+
+bool Game::init(){
+    mPlayers.resize(mPlayerNumber);
+    mParticleTimers.resize(mPlayerNumber);
+    mMissileTimers.resize(mPlayerNumber);
+
+    for(int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].init(&mConfig);
+    }
+
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0){
+        printf("SDL init error : %s\n", SDL_GetError());
+        return false;
+    }
+
+    mWindow = SDL_CreateWindow("Encore un jeu random", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mScreenWidth, mScreenHeight ,SDL_WINDOW_SHOWN);
+
+    if(!mWindow){
+        printf("Window error : %s\n", SDL_GetError());
+        return false;
+    }
+
+    mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED);
+    if(!mRenderer){
+        printf("Renderer error : %s\n", SDL_GetError());
+        return false;
+    }
+    int imgFlags = IMG_INIT_PNG;
+    if(!(IMG_Init(imgFlags) & imgFlags)){
+        printf("IMG_Init error : %s\n", IMG_GetError());
+        return false;
+    }
+
+    if(TTF_Init() == -1){
+        printf("TTF_Init error : %s\n", TTF_GetError());
+        return false;
+    }
+
+    if(SDL_NumJoysticks() >= 1){
+        mController = SDL_JoystickOpen(0);
+        if(!mController){
+            printf("Joytick warning : %s\n", SDL_GetError());
+        }
+    }
+
+    return true;
+}
+bool Game::loadMedia() {
+    // On associe le renderer à toutes les textures
+    mSquirellTexture.setRenderer(mRenderer);
+    mProjectileTexture.setRenderer(mRenderer);
+    mDotTexture.setRenderer(mRenderer);
+    mBGTexture.setRenderer(mRenderer);
+    mScoreTexture.setRenderer(mRenderer);
+    mMissileTexture.setRenderer(mRenderer);
+    mCowboyTexture.setRenderer(mRenderer);
+
+    mScoreFont = TTF_OpenFont("assets/Hypermonosaturation-zrMo0.ttf", 28);
+    if (!mScoreFont) { printf("Font error: %s\n", TTF_GetError()); return false; }
+
+    if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
+        printf("Error loading score texture\n");
+        return false;
+    }
+    if (!mCowboyTexture.loadFromeFile("assets/hats/cowboy_hat.png")){
+        printf("Error loading cowboy hat\n");
+        return false;
+    }
+    if (!mMissileTexture.loadFromeFile("assets/missile00.png")){
+        printf("Error loading missile texture\n");
+        return false;
+    }
+    if (!mDotTexture.loadFromeFile("assets/dot.bmp")){
+        printf("Error loading dot texture\n");
+        return false;
+    }
+    if (!mBGTexture.loadFromeFile("assets/abstract_seamless_bg_01.png")){
+        printf("Error loading background\n");
+        return false;
+    }
+    if (!mProjectileTexture.loadFromeFile("assets/cannonbob.png")){
+        printf("Error loading projectile texture\n");
+        return false;
+    }
+    if (!mSquirellTexture.loadFromeFile("assets/skins/squirell.png")){
+        printf("Error loading squirell texture");
+        return false;
+    }
+
+    mProjectileRect = {0, 0, 16, 16};
+    return true;
+}
+
+void Game::run(){
+    SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
+
+    mThrustParticleConfig.load(mThrustParticleGameConfig);
+    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        mThrustParticles[i].init(&mThrustParticleConfig);
+    }
+
+    srand(time(0));
+    mRandomBaseProjectileSpawnTicks = rand() % 3000;
+    mRandomProjectilePos = rand() % mScreenHeight;
+
+    for(int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].setScreenSize(mScreenWidth, mScreenHeight);
+        mPlayers[i].setSkin(&mSquirellTexture);
+        mPlayers[i].setHat(&mCowboyTexture);
+        mPlayers[i].setPos(mScreenWidth / 2, mScreenHeight / 4);
+        mPlayers[i].setCollider(0, 0, 32, 32);
+        mMissileTimers[i].start();
+        mParticleTimers[i].start();
+    }
+
+    for(int i = 0; i < MISSILE_NUMBER; i++){
+        mMissiles[i].init(&mThrustParticleConfig, mMissileConfig);
+        mMissiles[i].setPos(100000, 100000);
+    }
+
+    for (int i = 0; i < PROJECTILE_NUMBER; i++){
+        mProjectiles[i].setPos(100000, 100000);
+        mProjectiles[i].setCollider(0, 0, 16, 16);
+    }
+
+    mProjectileTimer.start();
+    mCollisionTimer.start();
+    mScoreTimer.start();
+
+    bool quit = false;
+    while(!quit){
+        mCapTimer.start();
+
+        float deltaTime = mDeltaTimer.getTicks() / 1000.0f;
+        if(deltaTime > 0.05f) deltaTime = 0.05f;
+
+        handleEvents(quit);
+        update(deltaTime);
+        render();
+
+        mDeltaTimer.start();
+
+        int frameTicks = mCapTimer.getTicks();
+        if(frameTicks < TICKS_PER_FRAME){
+            SDL_Delay(TICKS_PER_FRAME - frameTicks);
+        }
+    }
+}
+
+void Game::handleEvents(bool& quit) {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) { quit = true; return; }
+        if (e.type == SDL_JOYAXISMOTION && e.jaxis.which == 0 && e.jaxis.axis == 0) {
+            if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
+                mXJoystickDir = -1;
+            }
+            else if (e.jaxis.value >  JOYSTICK_DEAD_ZONE){
+                mXJoystickDir =  1;
+            }
+            else{
+                mXJoystickDir =  0;
+                
+            }
+        }
+    }
+
+    const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+
+    if (keys[SDL_SCANCODE_A]) {
+        mPlayers[0].move(-1);
+    }
+    if(keys[SDL_SCANCODE_D]){
+        mPlayers[0].move(1);
+    }
+    if (keys[SDL_SCANCODE_S]){
+        playerThrust(0);
+    }
+    if (keys[SDL_SCANCODE_W] && mPlayers[0].getScore() >= mScoreToLaunchMissile && mMissileTimers[0].getTicks() > 500){
+        mPlayers[0].updateScore(-mScoreToLaunchMissile);
+        mMissileTimers[0].start();
+        spawnMissile(0);
+    }
+
+    if (mPlayerNumber > 1) {
+        if (keys[SDL_SCANCODE_L]){
+            mPlayers[1].move(1);
+        }
+        if (keys[SDL_SCANCODE_J]){
+            mPlayers[1].move(-1);
+        }
+        if (keys[SDL_SCANCODE_K]){
+            playerThrust(1);
+        }
+        if (keys[SDL_SCANCODE_I] &&  mPlayers[1].getScore() >= mScoreToLaunchMissile && mMissileTimers[1].getTicks() > 500){
+            mPlayers[1].updateScore(-mScoreToLaunchMissile);
+            mMissileTimers[1].start();
+            spawnMissile(1);
+        }
+    }
+
+    if (mPlayerNumber > 2) {
+        if (keys[SDL_SCANCODE_KP_6]){
+            mPlayers[2].move(1);
+        }
+        if (keys[SDL_SCANCODE_KP_4]){
+            mPlayers[2].move(-1);
+        }
+        if (keys[SDL_SCANCODE_KP_5]){
+            playerThrust(2);
+        }
+        if (keys[SDL_SCANCODE_KP_8] && mPlayers[2].getScore() >= mScoreToLaunchMissile && mMissileTimers[2].getTicks() > 500){
+            mPlayers[2].updateScore(-mScoreToLaunchMissile);
+            mMissileTimers[2].start();
+            spawnMissile(2);
+        }
+    }
+
+    if (mXJoystickDir == -1){
+        mPlayers[0].move(-1);
+    }
+    if (mXJoystickDir ==  1){
+        mPlayers[0].move(1);
+    }
+    if (mController && SDL_JoystickGetAttached(mController)) {
+        if (SDL_JoystickGetButton(mController, 0)) playerThrust(0);
+        if (SDL_JoystickGetButton(mController, 2) && mPlayers[0].getScore() >= mScoreToLaunchMissile && mMissileTimers[0].getTicks() > 500){
+            mPlayers[0].updateScore(-mScoreToLaunchMissile);
+            mMissileTimers[0].start();
+            spawnMissile(0);
+        }
+    }
+}
+
+void Game::playerThrust(int playerIndex){
+    mPlayers[playerIndex].jetpack();
+    if(mParticleTimers[playerIndex].getTicks() >= 20){
+        mParticleTimers[playerIndex].start();
+        mThrustParticles[mCurrentThrustParticle].setPos(mPlayers[playerIndex].getX() + 5, mPlayers[playerIndex].getY() + 25);
+        mThrustParticles[mCurrentThrustParticle].reset();
+        mCurrentThrustParticle = (mCurrentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
+    }
+}
+
+void Game::update(float deltaTime){
+    mDot.move();
+    mScrollingOffset -= GLOBAL_SPEED;
+    if(mScrollingOffset < -mBGTexture.getWidth()){
+        mScrollingOffset = 0;
+    }
+
+    if(mProjectileTimer.getTicks() >= mRandomBaseProjectileSpawnTicks){
+        mRandomBaseProjectileSpawnTicks = rand() % 1000;
+        mRandomProjectilePos = rand() % mScreenHeight;
+        mProjectileTimer.start();
+        if(mCurrentProj >= PROJECTILE_NUMBER) mCurrentProj = 0;
+        mProjectiles[mCurrentProj].setPos(mScreenWidth, mRandomProjectilePos);
+        mProjectiles[mCurrentProj].setVelocity(-8, 0);
+        mCurrentProj++;
+    }
+
+    for (int i = 0; i < PROJECTILE_NUMBER; i++){
+        mProjectiles[i].update();
+        bool inScreen = mProjectiles[i].getX() > -mProjectileRect.w &&
+            mProjectiles[i].getX() < mScreenWidth &&
+            mProjectiles[i].getY() > -mProjectileRect.h &&
+            mProjectiles[i].getY() < mScreenHeight;
+
+        mProjectiles[i].isInScreen = inScreen;
+
+        if(inScreen){
+            for(int j = 0; j < mPlayerNumber; j++){
+                if(Collision::collide(&mProjectiles[i].collider, &mPlayers[j].collider)){
+                    if(mCollisionTimer.getTicks() > 500){
+                        mCollisionTimer.start();
+                        mPlayers[j].updateScore(-100);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].update(deltaTime);
+        for (int j = 0; j < MISSILE_NUMBER; j++){
+            if(mMissiles[j].isAlive && Collision::collide(&mMissiles[j].collider, &mPlayers[i].collider)){
+                mPlayers[i].updateScore(mMissileScorePenality);
+                mMissiles[j].isAlive = false;
+            }
+        }
+    }
+
+    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        mThrustParticles[i].update(deltaTime);
+    }
+
+    for(int i = 0; i < MISSILE_NUMBER; i++){
+        mMissiles[i].update(deltaTime);
+    }
+
+    if(mScoreTimer.getTicks() >= 50){
+        mScoreTimer.start();
+        for(int i = 0; i < mPlayerNumber; i++){
+            mPlayers[i].updateScore(1);
+        }
+    }
+}
+
+void Game::render(){
+    SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
+    SDL_RenderClear(mRenderer);
+
+    mBGTexture.render(mScrollingOffset, 0);
+    mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
+
+    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        mThrustParticles[i].render(mRenderer);
+    }
+
+    for (int i = 0; i < PROJECTILE_NUMBER; i++){
+        if(mProjectiles[i].isInScreen){
+            mProjectileTexture.render(mProjectiles[i].getX(), mProjectiles[i].getY(), &mProjectileRect);
+        }
+    }
+
+    for (int i = 0; i < MISSILE_NUMBER; i++){
+        if(mMissiles[i].isAlive){
+            mMissileTexture.render(mMissiles[i].getX(), mMissiles[i].getY(), NULL, mMissiles[i].getAngleInDegree() + 90);
+        }
+        mMissiles[i].renderParticles(mRenderer);
+    }
+
+    std::string scoreText;
+    SDL_Color colors[3] = {
+        {100, 100, 255, 255},
+        {255, 100, 100, 255},
+        {100, 255, 100, 255}
+    };
+
+    for (int i = 0; i < mPlayerNumber; i++){
+        mSquirellTexture.setColor(colors[i].r, colors[i].g, colors[i].b);
+        mPlayers[i].render();
+        scoreText += "Player " + std::to_string(i + 1) + " : " + std::to_string(mPlayers[i].getScore()) + "         ";
+    }
+    mScoreTexture.loadFromRenderedText(scoreText, mWhite, mScoreFont);
+    mScoreTexture.render(20, 20);
+
+    SDL_RenderPresent(mRenderer);
+};
+
+void Game::spawnMissile(int playerWhoSpawn){
+    int target = playerWhoSpawn;
+    while(target == playerWhoSpawn){
+        target = rand() % mPlayerNumber;
+    }
+    mCurrentMissile = (mCurrentMissile + 1) % MISSILE_NUMBER;
+    mMissiles[mCurrentMissile].reset();
+    mMissiles[mCurrentMissile].setPos(mScreenWidth + 50, mScreenHeight / 2);
+    mMissiles[mCurrentMissile].isAlive = true;
+    mMissiles[mCurrentMissile].setTarget(&mPlayers[target].collider);
+    
+}
+
+void Game::close() {
+    mSquirellTexture.free();
+    mProjectileTexture.free();
+    mDotTexture.free();
+    mBGTexture.free();
+    mScoreTexture.free();
+    mMissileTexture.free();
+    mCowboyTexture.free();
+
+    if (mScoreFont){
+        TTF_CloseFont(mScoreFont); mScoreFont = nullptr;
+    }
+    if (mController){
+        SDL_JoystickClose(mController); mController = nullptr;
+    }
+    if (mRenderer){
+        SDL_DestroyRenderer(mRenderer); mRenderer = nullptr;
+    }
+    if (mWindow){
+        SDL_DestroyWindow(mWindow); mWindow = nullptr;
+    }
+
+    TTF_Quit();
+    IMG_Quit();
+    SDL_Quit();
+}

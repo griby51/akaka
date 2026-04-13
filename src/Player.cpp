@@ -104,3 +104,18 @@ void Player::setScreenSize(int width, int height){
 void Player::jetpack(){
     jetpackThrust = JETPACK_FORCE;
 }
+
+void Player::render(){
+    skin->render(x, y);
+    if(hat != nullptr){
+        hat->render(x, y);
+    }
+}
+
+void Player::setSkin(LTexture* _skin){
+    skin = _skin;
+}
+
+void Player::setHat(LTexture* _hat){
+    hat = _hat;
+}

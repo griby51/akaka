@@ -1,4 +1,5 @@
 CXX = g++
+CXXFLAGS = -std=c++17 -Iinclude
 TARGET = main
 SRCS = $(wildcard src/*.cpp)
 OBJS = $(SRCS:src/%.cpp=build/%.o)

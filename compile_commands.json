@@ -1,0 +1,15 @@
+[
+  {
+    "file": "src/main.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Iinclude",
+      "-c",
+      "src/main.cpp",
+      "-o",
+      "build/main.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/main.o"
+  }
+]
