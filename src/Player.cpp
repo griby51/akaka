@@ -1,10 +1,13 @@
 #include "Player.hpp"
+#include "KeyPreset.hpp"
 
 void Player::init(GameConfig* config){
     x = 0;
     y = 0;
     vx = 0;
     vy = 0;
+    thrustParticlesTimer.start();
+    currentThrustParticle = 0;
     g_config = config;
     JETPACK_FORCE = g_config->getFloat("JETPACK_FORCE", 1000.0f);
     MAX_VX = g_config->getFloat("MAX_VX", 1000.0f);
@@ -94,6 +97,9 @@ void Player::update(float deltaTime){
     collider.x = x + distanceBetweenColliderXAnd0;
     collider.y = y + distanceBetweenColliderYAnd0;
 
+    for (int i = 0; i < 500; i++){
+        thrustParticles[i].update(deltaTime);
+    }
 }
 
 void Player::setScreenSize(int width, int height){
@@ -103,12 +109,23 @@ void Player::setScreenSize(int width, int height){
 
 void Player::jetpack(){
     jetpackThrust = JETPACK_FORCE;
+
+    if(thrustParticlesTimer.getTicks() >= 20){
+        thrustParticlesTimer.start();
+        thrustParticles[currentThrustParticle].reset();
+        thrustParticles[currentThrustParticle].setPos(x + 5, y + 25);
+        currentThrustParticle = (currentThrustParticle + 1) % 500;
+    }
 }
 
-void Player::render(){
+void Player::render(SDL_Renderer* renderer){
     skin->render(x, y);
     if(hat != nullptr){
         hat->render(x, y);
+    }
+
+    for(int i = 0; i < 500; i++){
+        thrustParticles[i].render(renderer);
     }
 }
 
@@ -118,4 +135,27 @@ void Player::setSkin(LTexture* _skin){
 
 void Player::setHat(LTexture* _hat){
     hat = _hat;
+}
+
+void Player::setKeyPreset(KeyPreset preset){
+    mPreset = preset;
+}
+
+void Player::handleInput(const Uint8* keys){
+    if(keys[mPreset.left]){
+        move(-1);
+    }
+    if(keys[mPreset.right]){
+        move(1);
+    }
+    if(keys[mPreset.thrust]){
+        jetpack();
+    }
+}
+
+void Player::setParticleConfig(GameConfig config){
+    thrustParticleConfig.load(config);
+    for(int i = 0; i < 500; i++){
+        thrustParticles[i].init(&thrustParticleConfig);
+    }
 }

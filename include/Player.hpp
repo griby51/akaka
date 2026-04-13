@@ -1,13 +1,16 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include "Config.hpp"
+#include "LTimer.hpp"
 #include "LTexture.hpp"
+#include "Particle.hpp"
+#include "KeyPreset.hpp"
 
 class Player{
     public:
         void init(GameConfig* config);
 
-        void render();
+        void render(SDL_Renderer* renderer);
         void setPos(float posX, float posY);
         void move(int direction);
         void jetpack();
@@ -21,14 +24,21 @@ class Player{
 
         int getScore();
 
+        void setKeyPreset(KeyPreset preset);
+        
+        void handleInput(const Uint8* keys);
+
         void update(float deltaTime);
         void setSkin(LTexture* _skin);
         void setHat(LTexture* _hat);
 
         int getX();
         int getY();
+        
+        void setParticleConfig(GameConfig config);
+
         SDL_Rect collider;
-    
+
     private:
         float x, y; 
         float vx, vy;
@@ -53,5 +63,12 @@ class Player{
         float BOUNCE_RESTITUTION; 
         bool BOUNCE;
 
+        KeyPreset mPreset;
+
         int SCREEN_WIDTH, SCREEN_HEIGHT;
+
+        LTimer thrustParticlesTimer;
+        ThrustParticle thrustParticles[500];
+        ParticleConfig thrustParticleConfig;
+        int currentThrustParticle;
 };

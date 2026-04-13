@@ -10,6 +10,8 @@ LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image \
           -static-libgcc -static-libstdc++ -Wl,--subsystem,windows
 
 all: build $(TARGET)
+build:
+	mkdir -p build
 
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)

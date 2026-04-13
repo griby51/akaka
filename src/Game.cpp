@@ -83,6 +83,18 @@ bool Game::loadMedia() {
 }
 
 void Game::start(){
+    KeyPreset presets[3] = {
+        {SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_S, SDL_SCANCODE_W},
+        {SDL_SCANCODE_J, SDL_SCANCODE_L, SDL_SCANCODE_K, SDL_SCANCODE_I},
+        {SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6, SDL_SCANCODE_KP_5, SDL_SCANCODE_KP_8}
+    };
+
+    for(int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].setKeyPreset(presets[i]);
+        mPlayers[i].setParticleConfig(mThrustParticleGameConfig);
+    }
+
+
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
@@ -138,81 +150,8 @@ void Game::handleEvents(const SDL_Event& e) {
 }
 void Game::handleInput(){
     const Uint8* keys = SDL_GetKeyboardState(NULL);
-
-
-    if (keys[SDL_SCANCODE_A]) {
-        mPlayers[0].move(-1);
-    }
-    if(keys[SDL_SCANCODE_D]){
-        mPlayers[0].move(1);
-    }
-    if (keys[SDL_SCANCODE_S]){
-        playerThrust(0);
-    }
-    if (keys[SDL_SCANCODE_W] && mPlayers[0].getScore() >= mScoreToLaunchMissile && mMissileTimers[0].getTicks() > 500){
-        mPlayers[0].updateScore(-mScoreToLaunchMissile);
-        mMissileTimers[0].start();
-        spawnMissile(0);
-    }
-
-    if (mPlayerNumber > 1) {
-        if (keys[SDL_SCANCODE_L]){
-            mPlayers[1].move(1);
-        }
-        if (keys[SDL_SCANCODE_J]){
-            mPlayers[1].move(-1);
-        }
-        if (keys[SDL_SCANCODE_K]){
-            playerThrust(1);
-        }
-        if (keys[SDL_SCANCODE_I] &&  mPlayers[1].getScore() >= mScoreToLaunchMissile && mMissileTimers[1].getTicks() > 500){
-            mPlayers[1].updateScore(-mScoreToLaunchMissile);
-            mMissileTimers[1].start();
-            spawnMissile(1);
-        }
-    }
-
-    if (mPlayerNumber > 2) {
-        if (keys[SDL_SCANCODE_KP_6]){
-            mPlayers[2].move(1);
-        }
-        if (keys[SDL_SCANCODE_KP_4]){
-            mPlayers[2].move(-1);
-        }
-        if (keys[SDL_SCANCODE_KP_5]){
-            playerThrust(2);
-        }
-        if (keys[SDL_SCANCODE_KP_8] && mPlayers[2].getScore() >= mScoreToLaunchMissile && mMissileTimers[2].getTicks() > 500){
-            mPlayers[2].updateScore(-mScoreToLaunchMissile);
-            mMissileTimers[2].start();
-            spawnMissile(2);
-        }
-    }
-
-    if (mXJoystickDir == -1){
-        mPlayers[0].move(-1);
-    }
-    if (mXJoystickDir ==  1){
-        mPlayers[0].move(1);
-    }
-    if (mController && SDL_JoystickGetAttached(mController)) {
-        if (SDL_JoystickGetButton(mController, 0)) playerThrust(0);
-        if (SDL_JoystickGetButton(mController, 2) && mPlayers[0].getScore() >= mScoreToLaunchMissile && mMissileTimers[0].getTicks() > 500){
-            mPlayers[0].updateScore(-mScoreToLaunchMissile);
-            mMissileTimers[0].start();
-            spawnMissile(0);
-        }
-    }
-}
-
-
-void Game::playerThrust(int playerIndex){
-    mPlayers[playerIndex].jetpack();
-    if(mParticleTimers[playerIndex].getTicks() >= 20){
-        mParticleTimers[playerIndex].start();
-        mThrustParticles[mCurrentThrustParticle].setPos(mPlayers[playerIndex].getX() + 5, mPlayers[playerIndex].getY() + 25);
-        mThrustParticles[mCurrentThrustParticle].reset();
-        mCurrentThrustParticle = (mCurrentThrustParticle + 1) % THRUST_PARTICLE_NUMBER;
+    for (int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].handleInput(keys);
     }
 }
 
@@ -264,10 +203,6 @@ void Game::update(float deltaTime){
         }
     }
 
-    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
-        mThrustParticles[i].update(deltaTime);
-    }
-
     for(int i = 0; i < MISSILE_NUMBER; i++){
         mMissiles[i].update(deltaTime);
     }
@@ -313,7 +248,7 @@ void Game::render(){
 
     for (int i = 0; i < mPlayerNumber; i++){
         mSquirellTexture.setColor(colors[i].r, colors[i].g, colors[i].b);
-        mPlayers[i].render();
+        mPlayers[i].render(mRenderer);
         scoreText += "Player " + std::to_string(i + 1) + " : " + std::to_string(mPlayers[i].getScore()) + "         ";
     }
     mScoreTexture.loadFromRenderedText(scoreText, mWhite, mScoreFont);
