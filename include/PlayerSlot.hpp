@@ -4,6 +4,6 @@
 struct PlayerSlot{
     int presetIndex = -1;
     bool ready = false;
-    LTexture* skin;
-    LTexture* hat;
+    int skinIndex = 0;
+    int hatIndex = 0;
 };

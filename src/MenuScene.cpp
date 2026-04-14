@@ -76,18 +76,20 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 for (int j = 0; j < mJoinedCount; j++){
                     if(i == mSlots[j].presetIndex){
                         taken = true;
+                        if(key == presets[i].right){
+                            mSlots[j].hatIndex = (mSlots[j].skinIndex + 1) % skins.size();
+                            printf("Skin selected : %i", mSlots[j].hatIndex);
+                        }
                         break;
                     }
                 }
 
                 if(!taken){
                     mSlots[mJoinedCount].presetIndex = i;
-                    mSlots[mJoinedCount].hat = &hats[0];
-                    mSlots[mJoinedCount].skin = &skins[0];
                     mJoinedCount++;
                 }
-
                 printf("Preset : %i, taken: %d, playerJoined : %i\n", i, taken, mJoinedCount);
+
             }
         }
     }

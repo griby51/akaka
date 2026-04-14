@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
 
 Game::Game()
     : mConfig("assets/config.ini"),
@@ -32,13 +33,33 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mParticleTimers.resize(mPlayerNumber);
     mMissileTimers.resize(mPlayerNumber);
 
+    for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
+        if(entry.path().extension() == ".png"){
+            LTexture tex;
+            tex.setRenderer(mRenderer);
+            tex.loadFromeFile(entry.path().string().c_str());
+            printf("%s\n", entry.path().string().c_str());
+            hats.push_back(std::move(tex));
+        }
+    }
+
+    for(const auto& entry : std::filesystem::directory_iterator("assets/skins/")){
+        if(entry.path().extension() == ".png"){
+            LTexture tex;
+            tex.setRenderer(mRenderer);
+            tex.loadFromeFile(entry.path().string().c_str());
+            skins.push_back(std::move(tex));
+        }
+    }
+
+
     for(int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].init(&mConfig, i);
         mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
         mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
         mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
-        mPlayers[i].setSkin(playerSlot[i].skin);
-        mPlayers[i].setHat(playerSlot[i].hat);
+        mPlayers[i].setSkin(&skins[playerSlot[i].skinIndex]);
+        mPlayers[i].setHat(&hats[playerSlot[i].hatIndex]);
     }
 
     return true;

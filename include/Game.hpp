@@ -88,6 +88,9 @@ private:
     int mRandomProjectilePos = 0;
     int mXJoystickDir = 0;
 
+    std::vector<LTexture> hats;
+    std::vector<LTexture> skins;
+
     ParticleConfig mThrustParticleConfig;
 
     SDL_Color mWhite = {255, 255, 255, 255};
