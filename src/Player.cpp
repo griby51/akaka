@@ -124,7 +124,6 @@ void Player::render(SDL_Renderer* renderer){
     if(hat != nullptr){
         hat->render(x, y);
     }
-
     for(int i = 0; i < 500; i++){
         thrustParticles[i].render(renderer);
     }
@@ -136,6 +135,7 @@ void Player::setSkin(LTexture* _skin){
 
 void Player::setHat(LTexture* _hat){
     hat = _hat;
+
 }
 
 void Player::setKeyPreset(KeyPreset preset){

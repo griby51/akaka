@@ -4,6 +4,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <string>
 #include <sstream>
+#include <memory>
 
 #include "Config.hpp"
 #include "LTexture.hpp"
@@ -88,8 +89,8 @@ private:
     int mRandomProjectilePos = 0;
     int mXJoystickDir = 0;
 
-    std::vector<LTexture> hats;
-    std::vector<LTexture> skins;
+    std::vector<LTexture*> hats;
+    std::vector<LTexture*> skins;
 
     ParticleConfig mThrustParticleConfig;
 

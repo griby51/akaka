@@ -19,7 +19,6 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
             LTexture tex;
             tex.setRenderer(mRenderer);
             tex.loadFromeFile(entry.path().string().c_str());
-            printf("%s\n", entry.path().string().c_str());
             hats.push_back(std::move(tex));
         }
     }
@@ -59,7 +58,11 @@ void MenuScene::handleEvent(const SDL_Event &e){
             SDL_Point mouse = {e.button.x, e.button.y};
             if(SDL_PointInRect(&mouse, &playBtnHitbox)){
                 printf("Play button clicked\n");
-                mManager.change(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+                if(mJoinedCount <= 0){
+                    printf("No player");
+                }else{
+                    mManager.change(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+                }
             }
         }
     }
@@ -77,7 +80,7 @@ void MenuScene::handleEvent(const SDL_Event &e){
                     if(i == mSlots[j].presetIndex){
                         taken = true;
                         if(key == presets[i].right){
-                            mSlots[j].hatIndex = (mSlots[j].skinIndex + 1) % skins.size();
+                            mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
                             printf("Skin selected : %i", mSlots[j].hatIndex);
                         }
                         break;

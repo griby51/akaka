@@ -35,20 +35,20 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
-            LTexture tex;
-            tex.setRenderer(mRenderer);
-            tex.loadFromeFile(entry.path().string().c_str());
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
             printf("%s\n", entry.path().string().c_str());
-            hats.push_back(std::move(tex));
+            hats.push_back(tex);
         }
     }
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/skins/")){
         if(entry.path().extension() == ".png"){
-            LTexture tex;
-            tex.setRenderer(mRenderer);
-            tex.loadFromeFile(entry.path().string().c_str());
-            skins.push_back(std::move(tex));
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
+            skins.push_back(tex);
         }
     }
 
@@ -58,12 +58,14 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
         mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
         mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
-        mPlayers[i].setSkin(&skins[playerSlot[i].skinIndex]);
-        mPlayers[i].setHat(&hats[playerSlot[i].hatIndex]);
+        mPlayers[i].setSkin(skins[playerSlot[i].skinIndex]);
+        mPlayers[i].setHat(hats[playerSlot[i].hatIndex]);
+        printf("Player %d hat index = %d, addr = %p\n", i, playerSlot[i].hatIndex, hats[playerSlot[i].hatIndex]);   
     }
 
     return true;
 }
+
 bool Game::loadMedia() {
     mSquirellTexture.setRenderer(mRenderer);
     mProjectileTexture.setRenderer(mRenderer);
@@ -272,6 +274,8 @@ void Game::render(){
     }
     mScoreTexture.loadFromRenderedText(scoreText, mWhite, mScoreFont);
     mScoreTexture.render(20, 20);
+
+    hats[0]->render(mScreenWidth/2, mScreenHeight/2);
 
     SDL_RenderPresent(mRenderer);
 };

@@ -30,6 +30,7 @@ bool LTexture::loadFromeFile(std::string path){
         else{
             mWidth = loadedSurface->w;
             mHeight = loadedSurface->h;
+            printf("Texture :%s created!\n", path.c_str());
         }
 
         SDL_FreeSurface(loadedSurface);
