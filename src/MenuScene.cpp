@@ -92,7 +92,6 @@ void MenuScene::handleEvent(const SDL_Event &e){
                     mJoinedCount++;
                 }
                 printf("Preset : %i, taken: %d, playerJoined : %i\n", i, taken, mJoinedCount);
-
             }
         }
     }
