@@ -27,7 +27,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mPlayerNumber = joinedCount;
     mWindow = window;
 
-    SDL_GetWindowSize(window, &mScreenWidth, &mScreenHeight);
+    SDL_RenderGetLogicalSize(renderer, &mScreenWidth, &mScreenHeight);
     
     mPlayers.resize(mPlayerNumber);
     mParticleTimers.resize(mPlayerNumber);
@@ -59,6 +59,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
         mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
         mPlayers[i].setSkin(skins[playerSlot[i].skinIndex]);
+        printf("hat[0] ptr=%p width=%d height=%d\n", hats[0], hats[0]->getWidth(), hats[0]->getHeight());
         mPlayers[i].setHat(hats[playerSlot[i].hatIndex]);
         printf("Player %d hat index = %d, addr = %p\n", i, playerSlot[i].hatIndex, hats[playerSlot[i].hatIndex]);   
     }
@@ -275,7 +276,6 @@ void Game::render(){
     mScoreTexture.loadFromRenderedText(scoreText, mWhite, mScoreFont);
     mScoreTexture.render(20, 20);
 
-    hats[0]->render(mScreenWidth/2, mScreenHeight/2);
 
     SDL_RenderPresent(mRenderer);
 };

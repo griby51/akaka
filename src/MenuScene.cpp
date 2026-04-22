@@ -16,10 +16,10 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
-            LTexture tex;
-            tex.setRenderer(mRenderer);
-            tex.loadFromeFile(entry.path().string().c_str());
-            hats.push_back(std::move(tex));
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
+            hats.push_back(tex);
         }
     }
 
@@ -33,7 +33,8 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
     }
 }
 
-void MenuScene::update(float deltaTime){}
+void MenuScene::update(float deltaTime){
+}
 
 MenuScene::~MenuScene(){
     if(mFont) TTF_CloseFont(mFont);
@@ -45,6 +46,9 @@ void MenuScene::render(){
     SDL_SetRenderDrawColor(mRenderer, 255, 0, 0, 255);
     mPlayBtnTexture.render(playBtnHitbox.x, playBtnHitbox.y);
     //SDL_RenderFillRect(mRenderer, &playBtnHitbox);
+    for(int i =0; i < mJoinedCount; i++){
+        hats[mSlots[i].hatIndex]->render(100 + 100*i, 300);
+    }
     SDL_RenderPresent(mRenderer);
 }
 

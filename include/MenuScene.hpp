@@ -33,5 +33,5 @@ private:
     int mJoinedCount = 0;
 
     std::vector<LTexture> skins;
-    std::vector<LTexture> hats;
+    std::vector<LTexture*> hats;
 };

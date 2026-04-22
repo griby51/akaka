@@ -17,6 +17,8 @@ void Player::init(GameConfig* config, int _index){
     GRAVITY_FORCE = g_config->getFloat("GRAVITY_FORCE", -500.0f);
     BOUNCE = g_config->getBool("BOUNCE", true);
     BOUNCE_RESTITUTION = g_config->getFloat("BOUNCE_RESTITUTION", 0.8f);
+    scoreToLaunchMissile = 50;
+    missileTimer.start();
 }
 
 void Player::setPos(float posX, float posY){
@@ -122,6 +124,7 @@ void Player::jetpack(){
 void Player::render(SDL_Renderer* renderer){
     skin->render(x, y);
     if(hat != nullptr){
+        printf("Render hat\n");
         hat->render(x, y);
     }
     for(int i = 0; i < 500; i++){
@@ -179,10 +182,16 @@ void Player::spawnMissile(){
     int target = index;
 
     if(playerTableSize <= 1) return;
+    if(missileTimer.getTicks() <= 300) return;
+    if(score <= scoreToLaunchMissile) return;
+
+    score-=scoreToLaunchMissile;
+    missileTimer.start();
 
     while(target == index){
         target = rand() % playerTableSize;
     }
+
 
     *currentMissile = (*currentMissile + 1) % missileTableSize;
     missiles[*currentMissile].reset();

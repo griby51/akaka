@@ -21,10 +21,12 @@ int main(int argc, char* args[]){
             SDL_WINDOWPOS_UNDEFINED,
             800,
             600,
-            SDL_WINDOW_SHOWN
+            SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP
     );
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    SDL_RenderSetLogicalSize(renderer, 800, 600);
 
     SceneManager manager;
     manager.push(std::make_unique<MenuScene>(renderer, window, manager));

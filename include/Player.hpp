@@ -87,4 +87,7 @@ class Player{
 
         Player* players;
         int playerTableSize;
+
+        LTimer missileTimer;
+        int scoreToLaunchMissile;
 };

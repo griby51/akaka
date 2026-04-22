@@ -15,6 +15,6 @@ public:
 
 private:
 SceneManager& mManager;
-    Game mGame;
+    Game* mGame;
     bool mDone = false;
 };
