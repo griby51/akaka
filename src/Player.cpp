@@ -215,3 +215,19 @@ int Player::getLife(){
 void Player::updateLife(int toAdd){
     life+=toAdd;
 }
+
+void Player::setJoytickId(int id){
+    mJoystickId = id;
+}
+
+void Player::handleJoystickInput(SDL_Joystick* joystick){
+    if(!joystick) return;
+
+    Sint16 axisX = SDL_JoystickGetAxis(joytick, 0);
+    if(axisX < -DEAD_ZONE) move(-1);
+    else if(axisX > DEAD_ZONE) move(1);
+
+    if(SDL_JoystickGetButton(joytick, 0)) jetpack();
+
+    if(SDL_JoystickGetButton(joystick, 1)) spawnMissile();
+}

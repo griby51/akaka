@@ -28,6 +28,9 @@ class Player{
         void setKeyPreset(KeyPreset preset);
         
         void handleInput(const Uint8* keys);
+        void handleJoytickInput(SDL_Joystick* joystick);
+
+        void setJoystickId(int id);
 
         void update(float deltaTime);
         void setSkin(LTexture* _skin);
@@ -57,6 +60,9 @@ class Player{
         int dir;
 
         int index;
+
+        int mJoystickId = -1;
+        static constexpr int DEAD_ZONE = 8000;
 
         LTexture* skin;
         LTexture* hat;

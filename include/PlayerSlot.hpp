@@ -6,4 +6,5 @@ struct PlayerSlot{
     bool ready = false;
     int skinIndex = 0;
     int hatIndex = 0;
+    int joystickId = -1;
 };

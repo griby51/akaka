@@ -5,15 +5,22 @@
 #include "LTimer.hpp"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
+#include <map>
 
 int main(int argc, char* args[]){
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
     IMG_Init(IMG_INIT_PNG);
     TTF_Init();
+
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
+    std::map<int, SDL_Joystick*> openJoysticks;
 
     SDL_Window* window = SDL_CreateWindow(
             "Encore un jeu random",
@@ -43,6 +50,25 @@ int main(int argc, char* args[]){
         deltaTimer.start();
 
         while(SDL_PollEvent(&e)){
+            if(e.type == SDL_JOYDEVICEADDED){
+                int deviceIndex = e.jdevice.which;
+                SDL_Joystick* joy = SDL_JoystickOpen(deviceIndex);
+                if(joy){
+                    int instanceId = SDL_JoystickInstanceID(joy);
+                    openJoysticks[instanceId] = joy;
+                    printf("Controller plugged : %d", instanceId);
+                }
+            }
+
+            if(e.type == SDL_JOYDEVICEREMOVED){
+                int instanceId = e.jdevice.which;
+                if(openJoysticks.count(instanceId)){
+                    SDL_JoystickClose(openJoysticks[instanceId]);
+                    openJoysticks.erase(instanceId);
+                    printf("Controller unplugged : %d\n", instanceId);
+                }
+            }
+
             if (e.type == SDL_QUIT){
                 while(!manager.isEmpty()){
                     manager.pop();
@@ -61,6 +87,8 @@ int main(int argc, char* args[]){
         manager.current()->render();
         SDL_Delay(16);
     }
+
+    for (auto& [id, joy] : openJoysticks) SDL_JoystickClose(joy);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
