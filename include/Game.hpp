@@ -16,6 +16,7 @@
 #include "PlayerSlot.hpp"
 #include "CollisionSystem.hpp"
 #include "Missile.hpp"
+#include "ScoreCollectable.hpp"
 
 class Game {
 public:
@@ -42,9 +43,11 @@ private:
 
     int mScreenWidth;
     int mScreenHeight;
+    int mEffectiveHeight;
     int mPlayerNumber;
     int mScoreToLaunchMissile;
     int mMissileScorePenality;
+    int mPizzaTimeUntilNext;
 
     bool mQuit = false;
     
@@ -52,13 +55,11 @@ private:
     static constexpr int TICKS_PER_FRAME = 1000 / 60;
     static constexpr int JOYSTICK_DEAD_ZONE = 8000;
     static constexpr int THRUST_PARTICLE_NUMBER = 500;
-    static constexpr int PROJECTILE_NUMBER = 20;
     static constexpr int MISSILE_NUMBER = 500;
-    static constexpr float GLOBAL_SPEED = 5.0f;
+    static constexpr float GLOBAL_SPEED = 50.0f;
 
     std::vector<Player> mPlayers;
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
-    Projectile mProjectiles[PROJECTILE_NUMBER];
     Missile mMissiles[MISSILE_NUMBER];
     Dot mDot;
 
@@ -69,24 +70,21 @@ private:
     LTexture mScoreTexture;
     LTexture mMissileTexture;
     LTexture mCowboyTexture;
+    LTexture mPizzaTexture;
 
     TTF_Font* mScoreFont = nullptr;
 
     LTimer mCapTimer;
-    LTimer mProjectileTimer;
-    LTimer mCollisionTimer;
-    LTimer mScoreTimer;
     LTimer mDeltaTimer;
+    LTimer mPizzaTimer;
     std::vector<LTimer> mParticleTimers;
     std::vector<LTimer> mMissileTimers;
+    
 
     SDL_Rect mProjectileRect;
-    int mScrollingOffset = 0;
-    int mCurrentProj = 0;
+    float mScrollingOffset = 0;
     int mCurrentMissile = 0;
     int mCurrentThrustParticle = 0;
-    int mRandomBaseProjectileSpawnTicks = 0;
-    int mRandomProjectilePos = 0;
     int mXJoystickDir = 0;
 
     std::vector<LTexture*> hats;
@@ -95,6 +93,10 @@ private:
     ParticleConfig mThrustParticleConfig;
 
     SDL_Color mWhite = {255, 255, 255, 255};
+    SDL_Color mRed = {255, 0, 0, 255};
+    SDL_Color mGreen = {0, 255, 0, 255};
+
+    std::vector<ScoreCollectable> mPizza;
 
     void playerThrust(int playerIndex);
     void spawnMissile(int playerWhoSpawn);

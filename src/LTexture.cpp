@@ -23,14 +23,13 @@ bool LTexture::loadFromeFile(std::string path){
     if(loadedSurface == NULL){
         printf("Unable to load image %s! SDL Error : %s\n", path.c_str(), SDL_GetError());
     }else{
-        SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
+        SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0xFF, 0, 0xFF));
 
         newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
         if (newTexture == NULL) printf("Unable to create texture from %s ! SDL Error : %s\n", path.c_str(), SDL_GetError());
         else{
             mWidth = loadedSurface->w;
             mHeight = loadedSurface->h;
-            printf("Texture :%s created!\n", path.c_str());
         }
 
         SDL_FreeSurface(loadedSurface);

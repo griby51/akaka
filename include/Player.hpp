@@ -43,6 +43,11 @@ class Player{
 
         void spawnMissile();
 
+        void updateLife(int toAdd);
+        int getLife();
+
+        bool isAlive;
+
         SDL_Rect collider;
 
     private:
@@ -90,4 +95,6 @@ class Player{
 
         LTimer missileTimer;
         int scoreToLaunchMissile;
+        
+        int life;
 };

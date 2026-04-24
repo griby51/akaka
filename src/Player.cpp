@@ -3,10 +3,12 @@
 
 void Player::init(GameConfig* config, int _index){
     index = _index;
+    life = 100;
     x = 0;
     y = 0;
     vx = 0;
     vy = 0;
+    isAlive = true;
     thrustParticlesTimer.start();
     currentThrustParticle = 0;
     g_config = config;
@@ -17,7 +19,7 @@ void Player::init(GameConfig* config, int _index){
     GRAVITY_FORCE = g_config->getFloat("GRAVITY_FORCE", -500.0f);
     BOUNCE = g_config->getBool("BOUNCE", true);
     BOUNCE_RESTITUTION = g_config->getFloat("BOUNCE_RESTITUTION", 0.8f);
-    scoreToLaunchMissile = 50;
+    scoreToLaunchMissile = g_config->getFloat("scoreToLaunchMissile", 200);
     missileTimer.start();
 }
 
@@ -64,6 +66,8 @@ int Player::getScore(){
 }
 
 void Player::update(float deltaTime){
+    if(!isAlive) return;
+
     vx = (vx + (ACCELERATION * deltaTime * dir)) * (1 - ((1 - DECELERATION) * deltaTime));
 
     if(vx > MAX_VX) vx = MAX_VX;
@@ -92,7 +96,6 @@ void Player::update(float deltaTime){
         vy = 0;
     };
 
-
     jetpackThrust = 0.0f;
 
     dir = 0;
@@ -102,6 +105,11 @@ void Player::update(float deltaTime){
 
     for (int i = 0; i < 500; i++){
         thrustParticles[i].update(deltaTime);
+    }
+
+    if (life <= 0){
+        isAlive = false;
+        printf("Player dead\n");
     }
 }
 
@@ -122,9 +130,10 @@ void Player::jetpack(){
 }
 
 void Player::render(SDL_Renderer* renderer){
+    if (!isAlive) return;
+
     skin->render(x, y);
     if(hat != nullptr){
-        printf("Render hat\n");
         hat->render(x, y);
     }
     for(int i = 0; i < 500; i++){
@@ -138,7 +147,6 @@ void Player::setSkin(LTexture* _skin){
 
 void Player::setHat(LTexture* _hat){
     hat = _hat;
-
 }
 
 void Player::setKeyPreset(KeyPreset preset){
@@ -183,7 +191,7 @@ void Player::spawnMissile(){
 
     if(playerTableSize <= 1) return;
     if(missileTimer.getTicks() <= 300) return;
-    if(score <= scoreToLaunchMissile) return;
+    if(score < scoreToLaunchMissile) return;
 
     score-=scoreToLaunchMissile;
     missileTimer.start();
@@ -198,4 +206,12 @@ void Player::spawnMissile(){
     missiles[*currentMissile].setPos(SCREEN_WIDTH + 50, SCREEN_HEIGHT / 2);
     missiles[*currentMissile].isAlive = true;
     missiles[*currentMissile].setTarget(&players[target].collider);
+}
+
+int Player::getLife(){
+    return life;
+}
+
+void Player::updateLife(int toAdd){
+    life+=toAdd;
 }
