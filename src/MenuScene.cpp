@@ -8,7 +8,8 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
 {
     mRenderer = renderer;
     mWindow = window;
-    SDL_GetRendererOutputSize(mRenderer ,&mScreenWidth, &mScreenHeight);
+    mScreenWidth = 1024;
+    mScreenHeight = 576;
     playBtnHitbox = {mScreenWidth / 2 - 50, mScreenHeight / 2 - 10, 100, 20}; 
     mPlayBtnTexture.setRenderer(mRenderer);
     mPlayBtnTexture.loadFromeFile("assets/buttons/playBtn.png");
