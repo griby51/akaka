@@ -28,9 +28,10 @@ class Player{
         void setKeyPreset(KeyPreset preset);
         
         void handleInput(const Uint8* keys);
-        void handleJoytickInput(SDL_Joystick* joystick);
+        void handleJoystickInput(SDL_Joystick* joystick);
 
         void setJoystickId(int id);
+        int getJoystickId();
 
         void update(float deltaTime);
         void setSkin(LTexture* _skin);

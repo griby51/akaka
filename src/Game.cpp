@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "CollisionSystem.hpp"
 #include "ScoreCollectable.hpp"
+#include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_render.h>
 #include <cstdio>
 #include <cstdlib>
@@ -64,9 +65,12 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         mPlayers[i].init(&mConfig, i);
         mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
         mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
-        mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
+        if(playerSlot[i].presetIndex >= 0){
+            mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
+        }
         mPlayers[i].setSkin(skins[playerSlot[i].skinIndex]);
         mPlayers[i].setHat(hats[playerSlot[i].hatIndex]);
+        mPlayers[i].setJoystickId(playerSlot[i].joystickId);
     }
 
     return true;
@@ -176,6 +180,13 @@ void Game::handleInput(){
     const Uint8* keys = SDL_GetKeyboardState(NULL);
     for (int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].handleInput(keys);
+
+        int joyId = mPlayers[i].getJoystickId();
+
+        if (joyId >= 0){
+            SDL_Joystick* joy = SDL_JoystickFromInstanceID(joyId);
+            mPlayers[i].handleJoystickInput(joy);
+        }
     }
 }
 

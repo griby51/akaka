@@ -4,7 +4,7 @@ A 2D multiplayer game built in C++ with SDL2.
 
 ## Features
 
-- Up to 3 players
+- Up to INFINITE players if you build at your own and have enough infinte USB port to branch controller (3 in last release)
 - Jetpack-based movement with gravity and bounce physics
 - Missile system with score penalties
 - Particle effects (thrust, explosions)

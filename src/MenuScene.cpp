@@ -1,5 +1,6 @@
 #include "MenuScene.hpp"
 #include "GameScene.hpp"
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mouse.h>
 #include <filesystem>
 
@@ -98,6 +99,26 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 }
                 printf("Preset : %i, taken: %d, playerJoined : %i\n", i, taken, mJoinedCount);
             }
+        }
+    }
+
+    if(e.type == SDL_JOYBUTTONDOWN){
+        printf("Joytick button pressed");
+        int joyId = e.jbutton.which;
+
+        bool taken = false;
+        for (int j = 0; j < mJoinedCount; j++){
+            if(mSlots[j].joystickId == joyId){
+                taken = true;
+                break;
+            }
+        }
+
+        if(!taken){
+            mSlots[mJoinedCount].presetIndex = -1;
+            mSlots[mJoinedCount].joystickId = joyId;
+            mJoinedCount++;
+            printf("Player %d joined with %d joystick\n", mJoinedCount, joyId);
         }
     }
 }
