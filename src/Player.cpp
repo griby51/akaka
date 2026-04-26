@@ -130,14 +130,15 @@ void Player::jetpack(){
 }
 
 void Player::render(SDL_Renderer* renderer){
+    for(int i = 0; i < 500; i++){
+        thrustParticles[i].render(renderer);
+    }
+
     if (!isAlive) return;
 
     skin->render(x, y);
     if(hat != nullptr){
         hat->render(x, y);
-    }
-    for(int i = 0; i < 500; i++){
-        thrustParticles[i].render(renderer);
     }
 }
 
@@ -235,3 +236,6 @@ void Player::handleJoystickInput(SDL_Joystick* joystick){
 int Player::getJoystickId(){
     return mJoystickId;
 }
+
+LTexture* Player::getSkin() { return skin; }
+LTexture* Player::getHat() { return hat; }

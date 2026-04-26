@@ -23,6 +23,9 @@ class Player{
 
         void drawCollider(SDL_Renderer* renderer, SDL_Color* color);
 
+        LTexture* getSkin();
+        LTexture* getHat();
+
         int getScore();
 
         void setKeyPreset(KeyPreset preset);

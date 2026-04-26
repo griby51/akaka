@@ -39,23 +39,23 @@ void Missile::update(float deltaTime){
     float yDist = targetY - y;
     float dist = sqrt(pow(xDist, 2) + pow(yDist, 2));
 
-    double targetedAngle = atan2(yDist, xDist) + M_PI;
+    double targetedAngle = atan2(yDist, xDist);
 
     double diff = targetedAngle - angle;
     while (diff > M_PI) diff -= 2 * M_PI;
     while (diff < -M_PI) diff += 2 * M_PI;
 
-    if (diff > 0){
-        angle -= precision*deltaTime;
+    float maxTurn = precision * deltaTime;
+
+    if(diff > maxTurn){
+        angle += maxTurn;
+    }else if(diff < -maxTurn){
+        angle -= maxTurn;
     }else{
-        angle += precision*deltaTime;
+        angle= targetedAngle;
     }
-
-    float turnRatio = (std::abs(diff) / M_PI);
-    float targetVelocity = velocity * std::max(0.0f, turnRatio);
-
-    float lerpSpeed = 3.0f;
-    currentVelocity += (targetVelocity - currentVelocity) * lerpSpeed * deltaTime;
+    float alignRatio = 1.0f - (std::abs(diff) / M_PI);
+    currentVelocity = velocity * std::max(0.3f, alignRatio);
 
     vx = std::cos(angle) * currentVelocity;
     vy = std::sin(angle) * currentVelocity;

@@ -246,10 +246,9 @@ void Game::render(){
     mBGTexture.render(mScrollingOffset, 0);
     mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
 
-    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
-        mThrustParticles[i].render(mRenderer);
+    for (int i = 0; i < mPlayerNumber; i++){
+        mPlayers[i].render(mRenderer);
     }
-
 
     for (int i = 0; i < MISSILE_NUMBER; i++){
         if(mMissiles[i].isAlive){
@@ -262,17 +261,6 @@ void Game::render(){
         mPizza[i].render(mRenderer);
     }
 
-    std::string scoreText;
-    SDL_Color colors[3] = {
-        {100, 100, 255, 255},
-        {255, 100, 100, 255},
-        {100, 255, 100, 255}
-    };
-
-    for (int i = 0; i < mPlayerNumber; i++){
-        mSquirellTexture.setColor(colors[i].r, colors[i].g, colors[i].b);
-        mPlayers[i].render(mRenderer);
-    }
 
     SDL_Rect indicatorRect;
     indicatorRect.w = mScreenWidth / mPlayerNumber;
@@ -302,6 +290,9 @@ void Game::render(){
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
 
         SDL_RenderFillRect(mRenderer, &indicatorRect);
+        mPlayers[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        mPlayers[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+
         
         playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
         lifeTexture.render(indicatorRect.x, indicatorRect.y + playerNumberTexture.getHeight() + 10);
