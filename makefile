@@ -10,7 +10,7 @@ build:
 	mkdir -p build
 
 $(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -o $(TARGET) -lSDL2 -lSDL2_image -lSDL2_ttf
+	$(CXX) $(OBJS) -o $(TARGET) -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 
 build/%.o: src/%.cpp
 	$(CXX) -Iinclude -c $< -o $@

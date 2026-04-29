@@ -5,7 +5,7 @@ OBJS = $(SRCS:src/%.cpp=build/%.o)
 
 CXXFLAGS = -I/usr/x86_64-w64-mingw32/include/SDL2 -Iinclude -Dmain=SDL_main -g
 
-LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image \
+LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer \
           -lsetupapi -lcfgmgr32 -lole32 -luuid -lversion \
           -static-libgcc -static-libstdc++ -Wl,--subsystem,windows
 

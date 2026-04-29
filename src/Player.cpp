@@ -66,6 +66,10 @@ int Player::getScore(){
 }
 
 void Player::update(float deltaTime){
+    for (int i = 0; i < 500; i++){
+        thrustParticles[i].update(deltaTime);
+    }
+
     if(!isAlive) return;
 
     vx = (vx + (ACCELERATION * deltaTime * dir)) * (1 - ((1 - DECELERATION) * deltaTime));
@@ -73,7 +77,7 @@ void Player::update(float deltaTime){
     if(vx > MAX_VX) vx = MAX_VX;
     if (vx < -MAX_VX) vx = -MAX_VX;
 
-    vy -= jetpackThrust*deltaTime;
+    vy -= jetpackThrust * deltaTime;
     vy = vy - GRAVITY_FORCE * deltaTime;
 
     x += vx * deltaTime;
@@ -103,9 +107,6 @@ void Player::update(float deltaTime){
     collider.x = x + distanceBetweenColliderXAnd0;
     collider.y = y + distanceBetweenColliderYAnd0;
 
-    for (int i = 0; i < 500; i++){
-        thrustParticles[i].update(deltaTime);
-    }
 
     if (life <= 0){
         isAlive = false;
@@ -163,6 +164,8 @@ void Player::handleInput(const Uint8* keys){
     }
     if(keys[mPreset.thrust]){
         jetpack();
+    }else{
+        if(jetpackChannel !=)
     }
     if(keys[mPreset.missile]){
         spawnMissile();
@@ -201,10 +204,28 @@ void Player::spawnMissile(){
         target = rand() % playerTableSize;
     }
 
+    int missileX = rand() % 2 * SCREEN_WIDTH;
+    int missileY = rand() % 2;
+
+    if (missileY == 1){
+        missileY = SCREEN_HEIGHT + 50;
+    }else{
+        missileY = -50;
+    }
+    
+    if(missileX > SCREEN_WIDTH){
+        missileX = SCREEN_WIDTH;
+
+        if(missileX < SCREEN_WIDTH / 2){
+            missileX = -missileX;
+        }else{
+            missileX = missileX + SCREEN_WIDTH / 2;
+        }
+    }
 
     *currentMissile = (*currentMissile + 1) % missileTableSize;
     missiles[*currentMissile].reset();
-    missiles[*currentMissile].setPos(SCREEN_WIDTH + 50, SCREEN_HEIGHT / 2);
+    missiles[*currentMissile].setPos(missileX, missileY);
     missiles[*currentMissile].isAlive = true;
     missiles[*currentMissile].setTarget(&players[target].collider);
 }
@@ -239,3 +260,7 @@ int Player::getJoystickId(){
 
 LTexture* Player::getSkin() { return skin; }
 LTexture* Player::getHat() { return hat; }
+
+void Player::setSFX(Mix_Chunk* jetpack){
+    jetpackSFX = jetpack;
+}

@@ -1,11 +1,14 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
 #include "Config.hpp"
 #include "LTimer.hpp"
 #include "LTexture.hpp"
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
 #include "Missile.hpp"
+
 
 class Player{
     public:
@@ -54,6 +57,8 @@ class Player{
         int getLife();
 
         bool isAlive;
+
+        void setSFX(Mix_Chunk* jetpack);
 
         SDL_Rect collider;
 
@@ -107,4 +112,6 @@ class Player{
         int scoreToLaunchMissile;
         
         int life;
+        Mix_Chunk* jetpackSFX;
+        int jetpackChannel = -1;
 };

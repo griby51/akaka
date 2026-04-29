@@ -2,6 +2,7 @@
 #include "CollisionSystem.hpp"
 #include "ScoreCollectable.hpp"
 #include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
 #include <cstdio>
 #include <cstdlib>
@@ -123,6 +124,19 @@ bool Game::loadMedia() {
         printf("Error loading squirell texture");
         return false;
     }
+    
+    gFireLoop = Mix_LoadWAV("assets/sounds/sfx/fireLoop.wav");
+    if(gFireLoop == NULL){
+        printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
+        return false;
+    }
+
+    gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
+    //https://opengameart.org/content/engine-loop-heavy-vehicletank
+    if(gJetpackThrustSFX == NULL){
+        printf("Failed to load jetpackThrust SFX : %S\n", Mix_GetError());
+    }
+
     return true;
 }
 
@@ -253,6 +267,8 @@ void Game::render(){
     for (int i = 0; i < MISSILE_NUMBER; i++){
         if(mMissiles[i].isAlive){
             mMissileTexture.render(mMissiles[i].getX(), mMissiles[i].getY(), NULL, mMissiles[i].getAngleInDegree() + 90);
+
+            Mix_PlayChannel(-1, gFireLoop, 0);
         }
         mMissiles[i].renderParticles(mRenderer);
     }
@@ -302,19 +318,6 @@ void Game::render(){
     SDL_RenderPresent(mRenderer);
 };
 
-void Game::spawnMissile(int playerWhoSpawn){
-    int target = playerWhoSpawn;
-    while(target == playerWhoSpawn){
-        target = rand() % mPlayerNumber;
-    }
-    mCurrentMissile = (mCurrentMissile + 1) % MISSILE_NUMBER;
-    mMissiles[mCurrentMissile].reset();
-    mMissiles[mCurrentMissile].setPos(mScreenWidth + 50, mEffectiveHeight / 2);
-    mMissiles[mCurrentMissile].isAlive = true;
-    mMissiles[mCurrentMissile].setTarget(&mPlayers[target].collider);
-    
-}
-
 void Game::close() {
     mSquirellTexture.free();
     mProjectileTexture.free();
@@ -323,6 +326,9 @@ void Game::close() {
     mScoreTexture.free();
     mMissileTexture.free();
     mCowboyTexture.free();
+
+    Mix_FreeChunk(gFireLoop);
+    gFireLoop = NULL;
 
     if (mScoreFont){
         TTF_CloseFont(mScoreFont); mScoreFont = nullptr;

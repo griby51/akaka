@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -100,4 +101,7 @@ private:
 
     void playerThrust(int playerIndex);
     void spawnMissile(int playerWhoSpawn);
+
+    Mix_Chunk* gFireLoop = NULL;
+    Mix_Chunk* gJetpackThrustSFX = NULL;
  };
