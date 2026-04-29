@@ -165,7 +165,7 @@ void Player::handleInput(const Uint8* keys){
     if(keys[mPreset.thrust]){
         jetpack();
     }else{
-        if(jetpackChannel !=)
+//        if(jetpackChannel !=)
     }
     if(keys[mPreset.missile]){
         spawnMissile();
