@@ -1,5 +1,6 @@
 #include "Player.hpp"
 #include "KeyPreset.hpp"
+#include <SDL2/SDL_mixer.h>
 
 void Player::init(GameConfig* config, int _index){
     index = _index;
@@ -164,8 +165,16 @@ void Player::handleInput(const Uint8* keys){
     }
     if(keys[mPreset.thrust]){
         jetpack();
+        if(!mJetpackActive){
+            jetpackChannel = Mix_PlayChannel(-1, jetpackSFX, -1);
+            mJetpackActive = true;
+        }
     }else{
-//        if(jetpackChannel !=)
+        if(mJetpackActive){
+            Mix_HaltChannel(jetpackChannel);
+            jetpackChannel = -1;
+            mJetpackActive = false;
+        }
     }
     if(keys[mPreset.missile]){
         spawnMissile();

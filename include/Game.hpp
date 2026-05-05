@@ -61,7 +61,7 @@ private:
 
     std::vector<Player> mPlayers;
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
-    Missile mMissiles[MISSILE_NUMBER];
+    std::vector<Missile> mMissiles;
     Dot mDot;
 
     LTexture mSquirellTexture;
@@ -104,4 +104,5 @@ private:
 
     Mix_Chunk* gFireLoop = NULL;
     Mix_Chunk* gJetpackThrustSFX = NULL;
+    Mix_Chunk* gMissileLaunchSFX = NULL;
  };

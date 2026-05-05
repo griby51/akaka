@@ -1,6 +1,7 @@
 #include "Missile.hpp"
+#include <SDL2/SDL_mixer.h>
 
-void Missile::init(ParticleConfig* particleConfig, GameConfig& config){
+void Missile::init(ParticleConfig* particleConfig, GameConfig& config, Mix_Chunk* launchSFX){
     for(int i = 0; i < PARTICLE_NUMBER; i++){
         particles[i].init(particleConfig);
     }
@@ -13,6 +14,7 @@ void Missile::init(ParticleConfig* particleConfig, GameConfig& config){
     collider.w = 10;
     collider.x = 0;
     collider.y = 0;
+    mLaunchSFX = launchSFX;
 }
 
 void Missile::setPos(int posX, int posY){
@@ -104,6 +106,7 @@ void Missile::reset(){
         particles[i].reset();
         particles[i].setPos(10000, 10000);
     }
+    Mix_PlayChannel(-1, mLaunchSFX, 0); 
 }
 
 void Missile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){

@@ -114,4 +114,5 @@ class Player{
         int life;
         Mix_Chunk* jetpackSFX;
         int jetpackChannel = -1;
+        bool mJetpackActive = false;
 };

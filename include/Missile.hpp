@@ -3,11 +3,12 @@
 #include <SDL2/SDL.h>
 #include "Config.hpp"
 #include "LTimer.hpp"
+#include <SDL2/SDL_mixer.h>
 #include <math.h>
 
 class Missile{
 public:
-    void init(ParticleConfig* particleConfig, GameConfig& config);
+    void init(ParticleConfig* particleConfig, GameConfig& config, Mix_Chunk* launchSFX = NULL);
     void setPos(int posX, int posY);
     void setTarget(SDL_Rect* _target);
     void update(float deltaTime);
@@ -34,4 +35,5 @@ private:
     LTimer particleTimer;
     ThrustParticle particles[PARTICLE_NUMBER];
     SDL_Point particleOffset;
+    Mix_Chunk* mLaunchSFX = NULL;
 };

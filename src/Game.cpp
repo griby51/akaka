@@ -42,6 +42,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mPlayers.resize(mPlayerNumber);
     mParticleTimers.resize(mPlayerNumber);
     mMissileTimers.resize(mPlayerNumber);
+    mMissiles.resize(MISSILE_NUMBER);
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
@@ -65,7 +66,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     for(int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].init(&mConfig, i);
         mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
-        mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
+        mPlayers[i].setMissileTable(mMissiles.data(), MISSILE_NUMBER, &mCurrentMissile);
         if(playerSlot[i].presetIndex >= 0){
             mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
         }
@@ -125,7 +126,7 @@ bool Game::loadMedia() {
         return false;
     }
     
-    gFireLoop = Mix_LoadWAV("assets/sounds/sfx/fireLoop.wav");
+    gFireLoop = Mix_LoadWAV("assets/sounds/sfx/jetpackThrust.wav");
     if(gFireLoop == NULL){
         printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
         return false;
@@ -134,7 +135,12 @@ bool Game::loadMedia() {
     gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
     //https://opengameart.org/content/engine-loop-heavy-vehicletank
     if(gJetpackThrustSFX == NULL){
-        printf("Failed to load jetpackThrust SFX : %S\n", Mix_GetError());
+        printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());
+    }
+
+    gMissileLaunchSFX = Mix_LoadWAV("assets/sounds/sfx/rocket_launch_1.wav");
+    if(gMissileLaunchSFX == NULL){
+        printf("Failed to load missile launch SFX : %s\n", Mix_GetError());
     }
 
     return true;
@@ -144,6 +150,7 @@ void Game::start(){
 
     for(int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].setParticleConfig(mThrustParticleGameConfig);
+        mPlayers[i].setSFX(gFireLoop);
     }
 
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
@@ -164,7 +171,7 @@ void Game::start(){
     }
 
     for(int i = 0; i < MISSILE_NUMBER; i++){
-        mMissiles[i].init(&mThrustParticleConfig, mMissileConfig);
+        mMissiles[i].init(&mThrustParticleConfig, mMissileConfig, gMissileLaunchSFX);
         mMissiles[i].setPos(100000, 100000);
     }
 
@@ -267,8 +274,6 @@ void Game::render(){
     for (int i = 0; i < MISSILE_NUMBER; i++){
         if(mMissiles[i].isAlive){
             mMissileTexture.render(mMissiles[i].getX(), mMissiles[i].getY(), NULL, mMissiles[i].getAngleInDegree() + 90);
-
-            Mix_PlayChannel(-1, gFireLoop, 0);
         }
         mMissiles[i].renderParticles(mRenderer);
     }
