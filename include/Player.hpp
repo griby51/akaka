@@ -12,6 +12,7 @@
 
 class Player{
     public:
+        ~Player();
         void init(GameConfig* config, int _index);
 
         void render(SDL_Renderer* renderer);

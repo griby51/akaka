@@ -29,6 +29,8 @@ void Missile::setTarget(SDL_Rect* _target){
 }
 
 void Missile::update(float deltaTime){
+
+
     for(int i = 0; i < PARTICLE_NUMBER; i++){
         particles[i].update(deltaTime);
     }

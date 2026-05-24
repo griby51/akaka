@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "CollisionSystem.hpp"
 #include "ScoreCollectable.hpp"
+#include "GameScene.hpp"
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
@@ -135,7 +136,7 @@ bool Game::loadMedia() {
     gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
     //https://opengameart.org/content/engine-loop-heavy-vehicletank
     if(gJetpackThrustSFX == NULL){
-        printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());
+        //printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());
     }
 
     gMissileLaunchSFX = Mix_LoadWAV("assets/sounds/sfx/rocket_launch_1.wav");
@@ -246,6 +247,16 @@ void Game::update(float deltaTime){
 
     for(int i = 0; i < mPizza.size(); i++){
         mPizza[i].update(deltaTime, &mPlayers);
+    }
+
+    int playersAlive = 0;
+
+    for(int i = 0; i < mPlayers.size(); i++){
+        if(mPlayers[i].isAlive) playersAlive++;
+    }
+
+    if (playersAlive <= 1){
+        mQuit = true;
     }
 
     if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){

@@ -22,7 +22,10 @@ void GameScene::handleEvent(const SDL_Event& e){
 
 void GameScene::update(float deltaTime){
     if(mGame->isOver()){
-        mDone = true;
+        //mDone = true;
+        //
+        Mix_HaltChannel(-1);
+        mManager.pop();
         return;
     }
     mGame->update(deltaTime);

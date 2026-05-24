@@ -157,6 +157,7 @@ void Player::setKeyPreset(KeyPreset preset){
 }
 
 void Player::handleInput(const Uint8* keys){
+    if(mJoystickId != -1) return;
     if(keys[mPreset.left]){
         move(-1);
     }
@@ -209,7 +210,7 @@ void Player::spawnMissile(){
     score-=scoreToLaunchMissile;
     missileTimer.start();
 
-    while(target == index){
+    while(target == index || !players[target].isAlive){
         target = rand() % playerTableSize;
     }
 
@@ -258,7 +259,19 @@ void Player::handleJoystickInput(SDL_Joystick* joystick){
     if(axisX < -DEAD_ZONE) move(-1);
     else if(axisX > DEAD_ZONE) move(1);
 
-    if(SDL_JoystickGetButton(joystick, 0)) jetpack();
+    if(SDL_JoystickGetButton(joystick, 0)){
+        jetpack();
+        if(!mJetpackActive){
+            jetpackChannel = Mix_PlayChannel(-1, jetpackSFX, -1);
+            mJetpackActive = true;
+        }
+    }else{
+        if(mJetpackActive){
+            Mix_HaltChannel(jetpackChannel);
+            jetpackChannel = -1;
+            mJetpackActive = false;
+        }
+    }
 
     if(SDL_JoystickGetButton(joystick, 1)) spawnMissile();
 }
@@ -272,4 +285,8 @@ LTexture* Player::getHat() { return hat; }
 
 void Player::setSFX(Mix_Chunk* jetpack){
     jetpackSFX = jetpack;
+}
+
+Player::~Player(){
+    Mix_HaltChannel(jetpackChannel);
 }
