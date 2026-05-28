@@ -18,6 +18,7 @@
 #include "CollisionSystem.hpp"
 #include "Missile.hpp"
 #include "ScoreCollectable.hpp"
+#include "ExplosionManager.hpp"
 
 class Game {
 public:
@@ -105,4 +106,6 @@ private:
     Mix_Chunk* gFireLoop = NULL;
     Mix_Chunk* gJetpackThrustSFX = NULL;
     Mix_Chunk* gMissileLaunchSFX = NULL;
+
+    explode::ExplosionManager explosionManager;
  };

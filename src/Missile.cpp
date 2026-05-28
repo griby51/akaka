@@ -1,7 +1,10 @@
 #include "Missile.hpp"
+#include "Explosion.hpp"
+#include "ExplosionManager.hpp"
 #include <SDL2/SDL_mixer.h>
 
 void Missile::init(ParticleConfig* particleConfig, GameConfig& config, Mix_Chunk* launchSFX){
+    particles.resize(PARTICLE_NUMBER);
     for(int i = 0; i < PARTICLE_NUMBER; i++){
         particles[i].init(particleConfig);
     }
@@ -15,6 +18,7 @@ void Missile::init(ParticleConfig* particleConfig, GameConfig& config, Mix_Chunk
     collider.x = 0;
     collider.y = 0;
     mLaunchSFX = launchSFX;
+
 }
 
 void Missile::setPos(int posX, int posY){
@@ -114,4 +118,9 @@ void Missile::reset(){
 void Missile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){
     SDL_SetRenderDrawColor(renderer, color->r, color->g, color->b, color->a);
     SDL_RenderDrawRect(renderer, &collider);
+}
+
+void Missile::explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg){
+    mgr.spawn(x, y, cfg);
+    isAlive = false;
 }

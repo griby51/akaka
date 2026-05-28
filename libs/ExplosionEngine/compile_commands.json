@@ -1,0 +1,15 @@
+[
+  {
+    "file": "src/ExplosionManager.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-Iinclude",
+      "-c",
+      "src/ExplosionManager.cpp",
+      "-o",
+      "build/ExplosionManager.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/ExplosionEngine",
+    "output": "build/ExplosionManager.o"
+  }
+]

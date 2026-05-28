@@ -1,5 +1,7 @@
 #pragma once
 #include "Particle.hpp"
+#include "ExplosionManager.hpp"
+#include "Explosion.hpp"
 #include <SDL2/SDL.h>
 #include "Config.hpp"
 #include "LTimer.hpp"
@@ -20,6 +22,7 @@ public:
     int getY();
     bool isAlive = false;
     SDL_Rect collider;
+    void explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg);
 private:
     float rotation;
     float x, y;
@@ -33,7 +36,7 @@ private:
     int particleSpawnTicks = 5;
     int currentParticle = 0;
     LTimer particleTimer;
-    ThrustParticle particles[PARTICLE_NUMBER];
+    std::vector<ThrustParticle> particles;
     SDL_Point particleOffset;
     Mix_Chunk* mLaunchSFX = NULL;
 };

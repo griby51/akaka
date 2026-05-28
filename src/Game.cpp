@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include "CollisionSystem.hpp"
+#include "Explosion.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
 #include <SDL2/SDL_joystick.h>
@@ -219,12 +220,17 @@ void Game::update(float deltaTime){
         mScrollingOffset = 0;
     }
 
+    explosionManager.update(deltaTime);
+
     for (int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].update(deltaTime);
         for (int j = 0; j < MISSILE_NUMBER; j++){
             if(mMissiles[j].isAlive && Collision::collide(&mMissiles[j].collider, &mPlayers[i].collider)){
                 mPlayers[i].updateLife(-25);
-                mMissiles[j].isAlive = false;
+                explode::ExplosionConfig cfg;
+                cfg.power = 2.5f;
+                cfg.embers = false;
+                mMissiles[j].explode(explosionManager, cfg);
             }
         }
 
@@ -277,6 +283,8 @@ void Game::render(){
 
     mBGTexture.render(mScrollingOffset, 0);
     mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
+
+    explosionManager.render(mRenderer);
 
     for (int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].render(mRenderer);
