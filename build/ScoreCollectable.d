@@ -4,8 +4,7 @@ build/ScoreCollectable.o: src/ScoreCollectable.cpp \
  include/LTimer.hpp include/Particle.hpp include/KeyPreset.hpp \
  include/Missile.hpp libs/ExplosionEngine/include/ExplosionManager.hpp \
  libs/ExplosionEngine/include/Explosion.hpp \
- libs/ExplosionEngine/include/BaseParticle.hpp \
- include/CollisionSystem.hpp
+ libs/ExplosionEngine/include/BaseParticle.hpp include/Utils.hpp
 include/ScoreCollectable.hpp:
 include/Collectable.hpp:
 include/LTexture.hpp:
@@ -18,4 +17,4 @@ include/Missile.hpp:
 libs/ExplosionEngine/include/ExplosionManager.hpp:
 libs/ExplosionEngine/include/Explosion.hpp:
 libs/ExplosionEngine/include/BaseParticle.hpp:
-include/CollisionSystem.hpp:
+include/Utils.hpp:

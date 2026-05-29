@@ -3,8 +3,7 @@ build/Collectable.o: src/Collectable.cpp include/Collectable.hpp \
  include/LTimer.hpp include/Particle.hpp include/KeyPreset.hpp \
  include/Missile.hpp libs/ExplosionEngine/include/ExplosionManager.hpp \
  libs/ExplosionEngine/include/Explosion.hpp \
- libs/ExplosionEngine/include/BaseParticle.hpp \
- include/CollisionSystem.hpp
+ libs/ExplosionEngine/include/BaseParticle.hpp include/Utils.hpp
 include/Collectable.hpp:
 include/LTexture.hpp:
 include/Player.hpp:
@@ -16,4 +15,4 @@ include/Missile.hpp:
 libs/ExplosionEngine/include/ExplosionManager.hpp:
 libs/ExplosionEngine/include/Explosion.hpp:
 libs/ExplosionEngine/include/BaseParticle.hpp:
-include/CollisionSystem.hpp:
+include/Utils.hpp:

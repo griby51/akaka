@@ -41,6 +41,8 @@ void Missile::update(float deltaTime){
 
     if (!isAlive) return;
 
+    
+
     int targetX = target->x + (target->w / 2);
     int targetY = target->y + (target->h / 2);
     float xDist = targetX - x;

@@ -1,5 +1,5 @@
 #include "ScoreCollectable.hpp"
-#include "CollisionSystem.hpp"
+#include "Utils.hpp"
 
 void ScoreCollectable::init(int scoreOnHit, LTexture* texture){
     cTexture = texture;
@@ -13,7 +13,7 @@ void ScoreCollectable::update(float deltaTime, std::vector<Player>* players){
     collider.y = y;
 
     for(int i = 0; i < players->size(); i++){
-        if(Collision::collide(&(*players)[i].collider, &collider)){
+        if(util::collide((*players)[i].collider, collider)){
             onHit((*players)[i]);
         }
     }

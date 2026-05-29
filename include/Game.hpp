@@ -15,7 +15,7 @@
 #include "Player.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
-#include "CollisionSystem.hpp"
+#include "Utils.hpp"
 #include "Missile.hpp"
 #include "ScoreCollectable.hpp"
 #include "ExplosionManager.hpp"

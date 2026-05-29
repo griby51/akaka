@@ -6,8 +6,7 @@ build/GameScene.o: src/GameScene.cpp include/GameScene.hpp \
  libs/ExplosionEngine/include/ExplosionManager.hpp \
  libs/ExplosionEngine/include/Explosion.hpp \
  libs/ExplosionEngine/include/BaseParticle.hpp include/PlayerSlot.hpp \
- include/CollisionSystem.hpp include/ScoreCollectable.hpp \
- include/Collectable.hpp
+ include/Utils.hpp include/ScoreCollectable.hpp include/Collectable.hpp
 include/GameScene.hpp:
 include/Scene.hpp:
 include/SceneManager.hpp:
@@ -25,6 +24,6 @@ libs/ExplosionEngine/include/ExplosionManager.hpp:
 libs/ExplosionEngine/include/Explosion.hpp:
 libs/ExplosionEngine/include/BaseParticle.hpp:
 include/PlayerSlot.hpp:
-include/CollisionSystem.hpp:
+include/Utils.hpp:
 include/ScoreCollectable.hpp:
 include/Collectable.hpp:

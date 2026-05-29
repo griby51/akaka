@@ -5,9 +5,9 @@ build/main.o: src/main.cpp include/Game.hpp include/Config.hpp \
  libs/ExplosionEngine/include/ExplosionManager.hpp \
  libs/ExplosionEngine/include/Explosion.hpp \
  libs/ExplosionEngine/include/BaseParticle.hpp include/PlayerSlot.hpp \
- include/CollisionSystem.hpp include/ScoreCollectable.hpp \
- include/Collectable.hpp include/SceneManager.hpp include/Scene.hpp \
- include/MenuScene.hpp include/GameScene.hpp
+ include/Utils.hpp include/ScoreCollectable.hpp include/Collectable.hpp \
+ include/SceneManager.hpp include/Scene.hpp include/MenuScene.hpp \
+ include/GameScene.hpp
 include/Game.hpp:
 include/Config.hpp:
 include/LTexture.hpp:
@@ -22,7 +22,7 @@ libs/ExplosionEngine/include/ExplosionManager.hpp:
 libs/ExplosionEngine/include/Explosion.hpp:
 libs/ExplosionEngine/include/BaseParticle.hpp:
 include/PlayerSlot.hpp:
-include/CollisionSystem.hpp:
+include/Utils.hpp:
 include/ScoreCollectable.hpp:
 include/Collectable.hpp:
 include/SceneManager.hpp:

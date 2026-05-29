@@ -5,7 +5,7 @@
 
 #include "LTexture.hpp"
 #include "Player.hpp"
-#include "CollisionSystem.hpp"
+#include "Utils.hpp"
 
 class Collectable{
 public:

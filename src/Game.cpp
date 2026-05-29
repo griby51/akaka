@@ -1,5 +1,4 @@
 #include "Game.hpp"
-#include "CollisionSystem.hpp"
 #include "Explosion.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
@@ -224,15 +223,6 @@ void Game::update(float deltaTime){
 
     for (int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].update(deltaTime);
-        for (int j = 0; j < MISSILE_NUMBER; j++){
-            if(mMissiles[j].isAlive && Collision::collide(&mMissiles[j].collider, &mPlayers[i].collider)){
-                mPlayers[i].updateLife(-25);
-                explode::ExplosionConfig cfg;
-                cfg.power = 2.5f;
-                cfg.embers = false;
-                mMissiles[j].explode(explosionManager, cfg);
-            }
-        }
 
         if(mPlayers[i].getScore() < 0){
             mPlayers[i].updateScore(-mPlayers[i].getScore());
