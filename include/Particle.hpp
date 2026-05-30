@@ -13,7 +13,7 @@ class ParticleConfig{
 
         void load(GameConfig& config);
         SDL_Color getCurrentColor(int currentTime);
-        int getMaxTime();
+        const int getMaxTime();
         float growRate;
         float friction;
         float riseForce;
@@ -55,7 +55,6 @@ public:
     void reset() override;
     void update(float deltaTime) override;
     void render(SDL_Renderer* renderer) override;
-
 private:
     float vx = 0;
     float vy = 0;

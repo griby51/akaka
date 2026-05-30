@@ -18,4 +18,47 @@ namespace util{
 
         return(dx*dx + dy*dy) < (threshold*threshold);
     }
+
+    SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect&> targets){
+        SDL_Rect* nearest = NULL;
+        float distanceSquare = 1000000000000.0f;
+        for(SDL_Rect& target : targets){
+            float dx = target.x + target.w / 2.0f - tested.x - tested.w / 2.0f;
+            float dy = target.y + target.h / 2.0f - tested.y - tested.h / 2.0f;
+            float distance = dx*dx + dy*dy;
+            if(distance < distanceSquare){
+                distanceSquare = distance;
+                nearest = &target;
+            }
+        }
+
+        return nearest;
+    }
+
+    SDL_Point spawnOffScreen(int screenWidth, int screenHeight, int margin){
+        int side = rand() % 4;
+
+        SDL_Point p;
+
+        switch(side){
+            case 0: // haut
+                p.x = rand() % (screenWidth + 2*margin) - margin;
+                p.y = -margin;
+                break;
+            case 1: // bas
+                p.x = rand() % (screenWidth + 2*margin) - margin;
+                p.y = screenHeight + margin;
+                break;
+            case 2: // gauche
+                p.x = -margin;
+                p.y = rand() % (screenHeight + 2*margin) - margin;
+                break;
+            case 3: // droite
+                p.x = screenWidth + margin;
+                p.y = rand() % (screenHeight + 2*margin) - margin;
+                break;
+        }
+
+        return p;
+    }
 }

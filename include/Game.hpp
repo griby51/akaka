@@ -62,7 +62,9 @@ private:
 
     std::vector<Player> mPlayers;
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
-    std::vector<Missile> mMissiles;
+
+    missile::MissileManager mMissileManager;
+
     Dot mDot;
 
     LTexture mSquirellTexture;

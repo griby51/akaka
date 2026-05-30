@@ -1,128 +1,114 @@
 #include "Missile.hpp"
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
+#include "Utils.hpp"
 #include <SDL2/SDL_mixer.h>
+#include <math.h>
 
-void Missile::init(ParticleConfig* particleConfig, GameConfig& config, Mix_Chunk* launchSFX){
-    particles.resize(PARTICLE_NUMBER);
-    for(int i = 0; i < PARTICLE_NUMBER; i++){
-        particles[i].init(particleConfig);
-    }
+namespace missile{
+    Missile::Missile(float x, float y, MissileConfig& missileConfig)
+    : x(x), y(y), missileConfig(missileConfig){
+        collider.x = x + missileConfig.collider.x;
+        collider.y = y + missileConfig.collider.y;
+        collider.w = missileConfig.collider.w;
+        collider.h = missileConfig.collider.h;
 
-    precision = config.getFloat("precision", 3.0f);
-    velocity = config.getFloat("velocity", 700.0f);
-    angle = config.getFloat("angle", -90.0f);
-
-    collider.h = 10;
-    collider.w = 10;
-    collider.x = 0;
-    collider.y = 0;
-    mLaunchSFX = launchSFX;
-
-}
-
-void Missile::setPos(int posX, int posY){
-    x = posX;
-    y = posY;
-    collider.x = posX;
-    collider.y = posY;
-}
-
-void Missile::setTarget(SDL_Rect* _target){
-    target = _target;
-}
-
-void Missile::update(float deltaTime){
-
-
-    for(int i = 0; i < PARTICLE_NUMBER; i++){
-        particles[i].update(deltaTime);
-    }
-
-    if (!isAlive) return;
-
-    
-
-    int targetX = target->x + (target->w / 2);
-    int targetY = target->y + (target->h / 2);
-    float xDist = targetX - x;
-    float yDist = targetY - y;
-    float dist = sqrt(pow(xDist, 2) + pow(yDist, 2));
-
-    double targetedAngle = atan2(yDist, xDist);
-
-    double diff = targetedAngle - angle;
-    while (diff > M_PI) diff -= 2 * M_PI;
-    while (diff < -M_PI) diff += 2 * M_PI;
-
-    float maxTurn = precision * deltaTime;
-
-    if(diff > maxTurn){
-        angle += maxTurn;
-    }else if(diff < -maxTurn){
-        angle -= maxTurn;
-    }else{
-        angle= targetedAngle;
-    }
-    float alignRatio = 1.0f - (std::abs(diff) / M_PI);
-    currentVelocity = velocity * std::max(0.3f, alignRatio);
-
-    vx = std::cos(angle) * currentVelocity;
-    vy = std::sin(angle) * currentVelocity;
-
-    x+=vx * deltaTime;
-    y+=vy * deltaTime;
-    collider.x = x;
-    collider.y = y;
-
-    float centerX = x + 16;
-    float centerY = y + 16;
-
-    float backX = centerX - std::cos(angle) * 16;
-    float backY = centerY - std::sin(angle) * 16;
-
-    if(particleTimer.getTicks() >= particleSpawnTicks){
+        particles.resize(missileConfig.particleNumber);
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].init(&missileConfig.particleConfig);
+            particles[i].reset();
+            particles[i].setPos(10000, 10000);
+        }
         particleTimer.start();
-        particles[currentParticle].setPos(backX, backY);
-        particles[currentParticle].reset();
-        currentParticle = (currentParticle + 1) % PARTICLE_NUMBER;
+        Mix_PlayChannel(-1, missileConfig.launchSFX, 0);
     }
-}
 
-double Missile::getAngleInDegree(){
-    return angle * (180 / M_PI);
-}
+    void Missile::render(SDL_Renderer* renderer){
+        if (!isAlive) return;
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].render(renderer);
+        }
+        missileConfig.texture->render(x, y, NULL, angle * (180 / M_PI));
 
-int Missile::getX(){
-    return x;
-}
-
-int Missile::getY(){
-    return y;
-}
-
-void Missile::renderParticles(SDL_Renderer* renderer){
-    for(int i = 0; i < PARTICLE_NUMBER; i++){
-        particles[i].render(renderer);
+        if(missileConfig.showCollider){
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderDrawRect(renderer, &collider);
+        }
     }
-}
 
-void Missile::reset(){
-    angle = -90.0f;
-    particleTimer.start();
-    for(int i = 0; i < PARTICLE_NUMBER; i++){
-        particles[i].reset();
-        particles[i].setPos(10000, 10000);
+    void Missile::update(float deltaTime){
+        if (!isAlive) return;
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].update(deltaTime);
+        }
+
+        std::vector<SDL_Rect&> playersColliders;
+        for(int i = 0; i < missileConfig.players.size(); i++){
+            playersColliders.push_back(missileConfig.players[i].collider);
+        }
+
+        SDL_Rect* target = util::theNearest(collider, playersColliders);
+
+        int targetX = target->x + (target->w / 2);
+        int targetY = target->y + (target->h / 2);
+        float xDist = targetX - x;
+        float yDist = targetY - y;
+        float dist = sqrt(pow(xDist, 2) + pow(yDist, 2));
+
+        double targetedAngle = atan2(yDist, xDist);
+
+        double diff = targetedAngle - angle;
+        while (diff > M_PI) diff -= 2 * M_PI;
+        while (diff < -M_PI) diff += 2 * M_PI;
+
+        float maxTurn = missileConfig.precision * deltaTime;
+
+        if(diff > maxTurn){
+            angle += maxTurn;
+        }else if(diff < -maxTurn){
+            angle -= maxTurn;
+        }else{
+            angle= targetedAngle;
+        }
+        float alignRatio = 1.0f - (std::abs(diff) / M_PI);
+        currentVelocity = velocity * std::max(0.3f, alignRatio);
+
+        vx = std::cos(angle) * currentVelocity;
+        vy = std::sin(angle) * currentVelocity;
+
+        x+=vx * deltaTime;
+        y+=vy * deltaTime;
+        collider.x = x;
+        collider.y = y;
+
+        float centerX = x + 16;
+        float centerY = y + 16;
+
+        float backX = centerX - std::cos(angle) * 16;
+        float backY = centerY - std::sin(angle) * 16;
+
+        if(particleTimer.getTicks() >= particleSpawnTicks){
+            particleTimer.start();
+            particles[currentParticle].setPos(backX, backY);
+            particles[currentParticle].reset();
+            currentParticle = (currentParticle + 1) % missileConfig.particleNumber;
+        }
+
+        if(dist < missileConfig.explosionTriggerRange){
+            if(!explosionTriggered){
+                explosionTimer.start();
+                explosionTriggered = true;
+            }
+        }
+
+        if(explosionTriggered && explosionTimer.getTicks() >= missileConfig.explosionDelay){
+            explode(missileConfig.explosionManager, missileConfig.explosionConfig);
+            isAlive = false;
+        }
     }
-    Mix_PlayChannel(-1, mLaunchSFX, 0); 
-}
 
-void Missile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){
-    SDL_SetRenderDrawColor(renderer, color->r, color->g, color->b, color->a);
-    SDL_RenderDrawRect(renderer, &collider);
-}
-
-void Missile::explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg){
-    mgr.spawn(x, y, cfg);
-    isAlive = false;
+    void Missile::explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg){
+        mgr.spawn(x, y, cfg);
+        isAlive = false;
+    }
 }

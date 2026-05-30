@@ -50,7 +50,7 @@ void ParticleConfig::setColorFrameList(){
     printf("Table size: %i\n", tableSize);
 }
 
-int ParticleConfig::getMaxTime(){
+const int ParticleConfig::getMaxTime(){
     return keyframes.back().time - 1;
 }
 

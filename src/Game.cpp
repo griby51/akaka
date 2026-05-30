@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include "Explosion.hpp"
+#include "MissileManager.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
 #include <SDL2/SDL_joystick.h>
@@ -13,14 +14,11 @@
 
 Game::Game()
     : mConfig("assets/config.ini"),
-    mThrustParticleGameConfig("assets/playerThrustParticle.ini"),
-    mMissileConfig("assets/missileConfig.ini")
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini")
 {
     mScreenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
     mScreenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
     mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
-    mScoreToLaunchMissile = mConfig.getInt("scoreToLaunchMissile", 100);
-    mMissileScorePenality = mConfig.getInt("missileScorePenality", -500);
 }
 
 Game::~Game() {
@@ -42,8 +40,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     
     mPlayers.resize(mPlayerNumber);
     mParticleTimers.resize(mPlayerNumber);
-    mMissileTimers.resize(mPlayerNumber);
-    mMissiles.resize(MISSILE_NUMBER);
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
@@ -67,7 +63,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     for(int i = 0; i < mPlayerNumber; i++){
         mPlayers[i].init(&mConfig, i);
         mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
-        mPlayers[i].setMissileTable(mMissiles.data(), MISSILE_NUMBER, &mCurrentMissile);
         if(playerSlot[i].presetIndex >= 0){
             mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
         }
@@ -167,13 +162,7 @@ void Game::start(){
         mPlayers[i].setScreenSize(mScreenWidth, mEffectiveHeight);
         mPlayers[i].setPos(mScreenWidth / 2, mEffectiveHeight / 4);
         mPlayers[i].setCollider(0, 0, 32, 32);
-        mMissileTimers[i].start();
         mParticleTimers[i].start();
-    }
-
-    for(int i = 0; i < MISSILE_NUMBER; i++){
-        mMissiles[i].init(&mThrustParticleConfig, mMissileConfig, gMissileLaunchSFX);
-        mMissiles[i].setPos(100000, 100000);
     }
 
     mPizzaTimeUntilNext = rand() % 10000;
@@ -219,6 +208,7 @@ void Game::update(float deltaTime){
         mScrollingOffset = 0;
     }
 
+    mMissileManager.update(deltaTime);
     explosionManager.update(deltaTime);
 
     for (int i = 0; i < mPlayerNumber; i++){
@@ -227,10 +217,6 @@ void Game::update(float deltaTime){
         if(mPlayers[i].getScore() < 0){
             mPlayers[i].updateScore(-mPlayers[i].getScore());
         }
-    }
-
-    for(int i = 0; i < MISSILE_NUMBER; i++){
-        mMissiles[i].update(deltaTime);
     }
 
     mPizza.erase(
@@ -280,13 +266,6 @@ void Game::render(){
         mPlayers[i].render(mRenderer);
     }
 
-    for (int i = 0; i < MISSILE_NUMBER; i++){
-        if(mMissiles[i].isAlive){
-            mMissileTexture.render(mMissiles[i].getX(), mMissiles[i].getY(), NULL, mMissiles[i].getAngleInDegree() + 90);
-        }
-        mMissiles[i].renderParticles(mRenderer);
-    }
-
     for (int i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);
     }
@@ -296,6 +275,8 @@ void Game::render(){
     indicatorRect.w = mScreenWidth / mPlayerNumber;
     indicatorRect.h = 50;
     indicatorRect.y = mScreenHeight - indicatorRect.h;
+
+    mMissileManager.render(mRenderer);
 
 
     for(int i = 0; i < mPlayerNumber; i++){
