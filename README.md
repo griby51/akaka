@@ -144,3 +144,14 @@ akaka/
 - [  ] Faire en sorte que les missiles spawn aléatoirement autour de l'ecran
 - [  ] Ajouter des explosions pour les missiles avec souffle qui decale le joueur, screen shaking et bien d'autres
 - [  ] Ajouter une capa qui fait un truc explosif qui sort du jetpack avec grosse poussé et qui a l'impact (d'un joueur ou du sol explose)
+
+---
+
+## New project structure cause its actually function weird
+
+### Scene :
+
+- SceneManager
+- MainMenu
+- GameScene
+

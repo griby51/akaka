@@ -6,7 +6,7 @@ void ScoreCollectable::init(int scoreOnHit, LTexture* texture){
     cScore = scoreOnHit;
 }
 
-void ScoreCollectable::update(float deltaTime, std::vector<Player>* players){
+void ScoreCollectable::update(float deltaTime, std::vector<player::Player>* players){
     x += vx * deltaTime;
     y += vy * deltaTime;
     collider.x = x;
@@ -19,7 +19,7 @@ void ScoreCollectable::update(float deltaTime, std::vector<Player>* players){
     }
 }
 
-void ScoreCollectable::onHit(Player& player){
+void ScoreCollectable::onHit(player::Player& player){
     player.updateScore(cScore);
     isAlive = false;
 }

@@ -107,7 +107,7 @@ bool Game::loadMedia() {
         printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
         return false;
     }
-    gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
+    gJetpackThrustSFX = Mix_LoadWAV("assets/sounds/sfx/jetpackThrust.wav");
     //https://opengameart.org/content/engine-loop-heavy-vehicletank
     if(gJetpackThrustSFX == NULL){
         //printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());

@@ -50,6 +50,7 @@ namespace player{
     class Player{
     public:
         Player(PlayerConfig& config);
+        ~Player();
 
         void render(SDL_Renderer* renderer);
         void move(int direction);

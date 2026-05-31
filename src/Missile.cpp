@@ -1,4 +1,5 @@
 #include "Missile.hpp"
+#include "Player.hpp"
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
 #include "Utils.hpp"
@@ -6,7 +7,7 @@
 #include <math.h>
 
 namespace missile{
-    Missile::Missile(float x, float y, MissileConfig& missileConfig)
+    Missile::Missile(float x, float y, MissileConfig missileConfig)
     : x(x), y(y), missileConfig(missileConfig){
         collider.x = x + missileConfig.collider.x;
         collider.y = y + missileConfig.collider.y;
@@ -43,9 +44,10 @@ namespace missile{
         }
 
         std::vector<SDL_Rect*> playersColliders;
-        for(auto& player : missileConfig.players){
+        for(int i = 0; i < missileConfig.players->size(); i++){
+            player::Player& player = (*missileConfig.players)[i];
             if(!player.isAlive) continue;
-            if(&player == missileConfig.thrower) continue;
+            if(i == missileConfig.throwerIndex) continue;
             playersColliders.push_back(&player.collider);
         }
 
@@ -73,7 +75,7 @@ namespace missile{
             angle= targetedAngle;
         }
         float alignRatio = 1.0f - (std::abs(diff) / M_PI);
-        currentVelocity = velocity * std::max(0.3f, alignRatio);
+        currentVelocity = missileConfig.velocity * std::max(0.3f, alignRatio);
 
         vx = std::cos(angle) * currentVelocity;
         vy = std::sin(angle) * currentVelocity;

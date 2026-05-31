@@ -142,11 +142,26 @@ namespace player{
     }
 
     void Player::spawnMissile(){
-        config.missileConfig.thrower = *this;
+        if(score < config.scoreToLaunchMissile) return;
+
+        int myIndex = -1;
+        if(config.missileConfig.players){
+            for(int i = 0; i < config.missileConfig.players->size(); i++){
+                if(&(*config.missileConfig.players)[i] == this){
+                    myIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        missile::MissileConfig cfg = config.missileConfig;
+        cfg.throwerIndex = myIndex;
+
+        score -= config.scoreToLaunchMissile;
 
         SDL_Point p = util::spawnOffScreen(config.screenWidth, config.screenHeight, 200);
 
-        config.missileManager->spawn(p.x, p.y, config.missileConfig);
+        config.missileManager->spawn(p.x, p.y, cfg);
 
         missileTimer.start();
     }

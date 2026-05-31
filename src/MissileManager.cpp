@@ -1,7 +1,7 @@
 #include "MissileManager.hpp"
 
 namespace missile{
-    void MissileManager::spawn(float x, float y, const MissileConfig& cfg){
+    void MissileManager::spawn(float x, float y, MissileConfig cfg){
         missiles.emplace_back(x, y, cfg);
     }
 

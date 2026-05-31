@@ -5,7 +5,7 @@
 namespace missile{
     class MissileManager{
     public:
-        void spawn(float x, float y, const MissileConfig& cfg);
+        void spawn(float x, float y, MissileConfig cfg);
         void update(float deltaTime);
         void render(SDL_Renderer* renderer);
     private:

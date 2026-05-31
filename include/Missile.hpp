@@ -2,19 +2,20 @@
 #include "Particle.hpp"
 #include "ExplosionManager.hpp"
 #include "Explosion.hpp"
+#include "LTexture.hpp"
 #include <SDL2/SDL.h>
-#include "Config.hpp"
 #include "LTimer.hpp"
 #include <SDL2/SDL_mixer.h>
 #include <math.h>
 #include <vector>
-#include "Player.hpp"
+
+namespace player {class Player; }
 
 namespace missile{
     struct MissileConfig{
-        std::vector<player::Player>& players;
+        std::vector<player::Player>* players = nullptr;
 
-        player::Player* thrower;
+        int throwerIndex = -1;
         float precision = 3.0f;
         float velocity = 700.0f;
         float explosionTriggerRange = 50.0f;
@@ -31,7 +32,7 @@ namespace missile{
 
     class Missile{
     public:
-        Missile(float x, float y, MissileConfig& missileConfig);
+        Missile(float x, float y, MissileConfig missileConfig);
         void update(float deltaTime);
         void render(SDL_Renderer* renderer);
         bool isAlive = false;
@@ -43,7 +44,7 @@ namespace missile{
         float x, y;
         float vx, vy;
         SDL_Rect* target;
-        float currentVelocity = velocity;
+        float currentVelocity = 0.f;
         int particleSpawnTicks = 5;
         int currentParticle = 0;
         LTimer particleTimer;
