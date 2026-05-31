@@ -12,7 +12,9 @@
 
 namespace missile{
     struct MissileConfig{
-        std::vector<Player&> players;
+        std::vector<player::Player>& players;
+
+        player::Player* thrower;
         float precision = 3.0f;
         float velocity = 700.0f;
         float explosionTriggerRange = 50.0f;
@@ -21,7 +23,7 @@ namespace missile{
         SDL_Rect collider = {0, 0, 32, 32};
         bool showCollider = false;
         ParticleConfig particleConfig;
-        explode::ExplosionManager& explosionManager;
+        explode::ExplosionManager* explosionManager;
         explode::ExplosionConfig explosionConfig;
         int particleNumber = 500;
         int explosionDelay = 500;

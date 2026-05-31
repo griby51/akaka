@@ -42,9 +42,11 @@ namespace missile{
             particles[i].update(deltaTime);
         }
 
-        std::vector<SDL_Rect&> playersColliders;
-        for(int i = 0; i < missileConfig.players.size(); i++){
-            playersColliders.push_back(missileConfig.players[i].collider);
+        std::vector<SDL_Rect*> playersColliders;
+        for(auto& player : missileConfig.players){
+            if(!player.isAlive) continue;
+            if(&player == missileConfig.thrower) continue;
+            playersColliders.push_back(&player.collider);
         }
 
         SDL_Rect* target = util::theNearest(collider, playersColliders);
@@ -102,7 +104,7 @@ namespace missile{
         }
 
         if(explosionTriggered && explosionTimer.getTicks() >= missileConfig.explosionDelay){
-            explode(missileConfig.explosionManager, missileConfig.explosionConfig);
+            explode(*missileConfig.explosionManager, missileConfig.explosionConfig);
             isAlive = false;
         }
     }

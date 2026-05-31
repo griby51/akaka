@@ -12,13 +12,13 @@
 #include "LTimer.hpp"
 #include "Projectile.hpp"
 #include "Dot.hpp"
-#include "Player.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
 #include "Utils.hpp"
 #include "Missile.hpp"
 #include "ScoreCollectable.hpp"
 #include "ExplosionManager.hpp"
+#include "PlayerManager.hpp"
 
 class Game {
 public:
@@ -60,10 +60,11 @@ private:
     static constexpr int MISSILE_NUMBER = 500;
     static constexpr float GLOBAL_SPEED = 50.0f;
 
-    std::vector<Player> mPlayers;
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
 
     missile::MissileManager mMissileManager;
+    explode::ExplosionManager explosionManager;
+    player::PlayerManager playerManager;
 
     Dot mDot;
 
@@ -109,5 +110,5 @@ private:
     Mix_Chunk* gJetpackThrustSFX = NULL;
     Mix_Chunk* gMissileLaunchSFX = NULL;
 
-    explode::ExplosionManager explosionManager;
+    missile::MissileConfig missileConfig;
  };

@@ -19,16 +19,16 @@ namespace util{
         return(dx*dx + dy*dy) < (threshold*threshold);
     }
 
-    SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect&> targets){
+    SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets){
         SDL_Rect* nearest = NULL;
         float distanceSquare = 1000000000000.0f;
-        for(SDL_Rect& target : targets){
-            float dx = target.x + target.w / 2.0f - tested.x - tested.w / 2.0f;
-            float dy = target.y + target.h / 2.0f - tested.y - tested.h / 2.0f;
+        for(SDL_Rect* target : targets){
+            float dx = target->x + target->w / 2.0f - tested.x - tested.w / 2.0f;
+            float dy = target->y + target->h / 2.0f - tested.y - tested.h / 2.0f;
             float distance = dx*dx + dy*dy;
             if(distance < distanceSquare){
                 distanceSquare = distance;
-                nearest = &target;
+                nearest = target;
             }
         }
 

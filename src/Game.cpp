@@ -32,14 +32,9 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mPlayerNumber = joinedCount;
     mWindow = window;
 
-    
-
     SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
 
     mEffectiveHeight = mScreenHeight - 50;
-    
-    mPlayers.resize(mPlayerNumber);
-    mParticleTimers.resize(mPlayerNumber);
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
@@ -57,18 +52,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
             tex->loadFromeFile(entry.path().string().c_str());
             skins.push_back(tex);
         }
-    }
-
-
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].init(&mConfig, i);
-        mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
-        if(playerSlot[i].presetIndex >= 0){
-            mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
-        }
-        mPlayers[i].setSkin(skins[playerSlot[i].skinIndex]);
-        mPlayers[i].setHat(hats[playerSlot[i].hatIndex]);
-        mPlayers[i].setJoystickId(playerSlot[i].joystickId);
     }
 
     return true;
@@ -91,12 +74,10 @@ bool Game::loadMedia() {
         printf("Font error: %s\n", TTF_GetError());
         success = false; 
     }
-
     if(!mPizzaTexture.loadFromeFile("assets/collectables/pizza.png")){
         printf("Error loading pizza texture\n");
         success = false;
     }
-
     if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
         printf("Error loading score texture\n");
         success = false;
@@ -120,20 +101,17 @@ bool Game::loadMedia() {
     if (!mSquirellTexture.loadFromeFile("assets/skins/squirell.png")){
         printf("Error loading squirell texture");
         return false;
-    }
-    
+    }  
     gFireLoop = Mix_LoadWAV("assets/sounds/sfx/jetpackThrust.wav");
     if(gFireLoop == NULL){
         printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
         return false;
     }
-
     gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
     //https://opengameart.org/content/engine-loop-heavy-vehicletank
     if(gJetpackThrustSFX == NULL){
         //printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());
     }
-
     gMissileLaunchSFX = Mix_LoadWAV("assets/sounds/sfx/rocket_launch_1.wav");
     if(gMissileLaunchSFX == NULL){
         printf("Failed to load missile launch SFX : %s\n", Mix_GetError());
@@ -144,11 +122,6 @@ bool Game::loadMedia() {
 
 void Game::start(){
 
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].setParticleConfig(mThrustParticleGameConfig);
-        mPlayers[i].setSFX(gFireLoop);
-    }
-
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
@@ -157,13 +130,6 @@ void Game::start(){
     }
 
     srand(time(0));
-
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].setScreenSize(mScreenWidth, mEffectiveHeight);
-        mPlayers[i].setPos(mScreenWidth / 2, mEffectiveHeight / 4);
-        mPlayers[i].setCollider(0, 0, 32, 32);
-        mParticleTimers[i].start();
-    }
 
     mPizzaTimeUntilNext = rand() % 10000;
     printf("pizzaTimer delay : %i\n", mPizzaTimeUntilNext);
@@ -174,30 +140,6 @@ void Game::handleEvents(const SDL_Event& e) {
     if (e.type == SDL_QUIT){
         mQuit = true;
         return;
-    }
-    if (e.type == SDL_JOYAXISMOTION && e.jaxis.which == 0 && e.jaxis.axis == 0) {
-        if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
-            mXJoystickDir = -1;
-        }
-        else if (e.jaxis.value >  JOYSTICK_DEAD_ZONE){
-            mXJoystickDir =  1;
-        }
-        else{
-            mXJoystickDir =  0;
-        }
-    }
-}
-void Game::handleInput(){
-    const Uint8* keys = SDL_GetKeyboardState(NULL);
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].handleInput(keys);
-
-        int joyId = mPlayers[i].getJoystickId();
-
-        if (joyId >= 0){
-            SDL_Joystick* joy = SDL_JoystickFromInstanceID(joyId);
-            mPlayers[i].handleJoystickInput(joy);
-        }
     }
 }
 
@@ -210,14 +152,7 @@ void Game::update(float deltaTime){
 
     mMissileManager.update(deltaTime);
     explosionManager.update(deltaTime);
-
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].update(deltaTime);
-
-        if(mPlayers[i].getScore() < 0){
-            mPlayers[i].updateScore(-mPlayers[i].getScore());
-        }
-    }
+    playerManager.update(deltaTime);
 
     mPizza.erase(
             std::remove_if(mPizza.begin(), mPizza.end(),
@@ -228,17 +163,7 @@ void Game::update(float deltaTime){
             );
 
     for(int i = 0; i < mPizza.size(); i++){
-        mPizza[i].update(deltaTime, &mPlayers);
-    }
-
-    int playersAlive = 0;
-
-    for(int i = 0; i < mPlayers.size(); i++){
-        if(mPlayers[i].isAlive) playersAlive++;
-    }
-
-    if (playersAlive <= 1){
-        mQuit = true;
+        mPizza[i].update(deltaTime, &playerManager.players);
     }
 
     if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){
@@ -261,10 +186,7 @@ void Game::render(){
     mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
 
     explosionManager.render(mRenderer);
-
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].render(mRenderer);
-    }
+    playerManager.render(mRenderer);
 
     for (int i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);
@@ -279,11 +201,11 @@ void Game::render(){
     mMissileManager.render(mRenderer);
 
 
-    for(int i = 0; i < mPlayerNumber; i++){
+    for(int i = 0; i < playerManager.players.size(); i++){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
-        std::string score = std::to_string(mPlayers[i].getScore());
-        std::string life = std::to_string(mPlayers[i].getLife());
+        std::string score = std::to_string(playerManager.players[i].getScore());
+        std::string life = std::to_string(playerManager.players[i].getLife());
 
         LTexture scoreTexture;
         LTexture lifeTexture;
@@ -301,10 +223,9 @@ void Game::render(){
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
 
         SDL_RenderFillRect(mRenderer, &indicatorRect);
-        mPlayers[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
-        mPlayers[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
-        
         playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
         lifeTexture.render(indicatorRect.x, indicatorRect.y + playerNumberTexture.getHeight() + 10);
         scoreTexture.render(indicatorRect.x + lifeTexture.getWidth() + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
