@@ -30,7 +30,6 @@ public:
     void close();
     void start();
     void handleEvents(const SDL_Event& e);
-    void handleInput();
     void update(float deltaTime);
     void render();
     bool isOver();
@@ -41,7 +40,6 @@ private:
 
     GameConfig mConfig;
     GameConfig mThrustParticleGameConfig;
-    GameConfig mMissileConfig;
 
     int mScreenWidth;
     int mScreenHeight;

@@ -9,6 +9,6 @@ namespace missile{
         void update(float deltaTime);
         void render(SDL_Renderer* renderer);
     private:
-        std::vector<Missile> missiles;
+        std::vector<std::unique_ptr<Missile>> missiles;
     };
 }

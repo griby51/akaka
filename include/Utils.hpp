@@ -7,4 +7,5 @@ namespace util{
     bool isWithinDistance(SDL_Rect& a, SDL_Rect& b, float threshold);
     SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets);
     SDL_Point spawnOffScreen(int screenWidth, int screenHeight, int margin);
+    float distSq(SDL_Rect& a, SDL_Rect& b);
 }

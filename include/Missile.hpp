@@ -16,9 +16,9 @@ namespace missile{
         std::vector<player::Player>* players = nullptr;
 
         int throwerIndex = -1;
-        float precision = 3.0f;
-        float velocity = 700.0f;
-        float explosionTriggerRange = 50.0f;
+        float precision = 3.f;
+        float velocity = 1000.0f;
+        float explosionTriggerRange = 70.0f;
         Mix_Chunk* launchSFX = NULL;
         LTexture* texture = NULL;
         SDL_Rect collider = {0, 0, 32, 32};
@@ -27,7 +27,7 @@ namespace missile{
         explode::ExplosionManager* explosionManager;
         explode::ExplosionConfig explosionConfig;
         int particleNumber = 500;
-        int explosionDelay = 500;
+        int explosionDelay = 70;
     };
 
     class Missile{

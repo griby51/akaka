@@ -15,8 +15,8 @@ namespace player{
         float maxVy = 600.0f;
         float maxVx = 400.0f;
         float acceleration = 1000.0f;
-        float deceleration = 1000.0f;
-        float gravityForce = 1000.0f;
+        float deceleration = 0.50f;
+        float gravityForce = -500.0f;
         float bounceRestitution = 0.4f;
 
         int maxHealth = 100;
@@ -49,7 +49,7 @@ namespace player{
 
     class Player{
     public:
-        Player(PlayerConfig& config);
+        Player(PlayerConfig config);
         ~Player();
 
         void render(SDL_Renderer* renderer);
@@ -69,6 +69,8 @@ namespace player{
         void update(float deltaTime);
         
         void spawnMissile();
+
+        void applyKnockBack(float forceX, float forceY);
 
         void updateLife(int toAdd);
         int getLife();
@@ -95,6 +97,7 @@ namespace player{
 
         LTimer thrustParticlesTimer;
         ThrustParticle thrustParticles[500];
+        ParticleConfig thrustParticleConfig;
 
         int currentThrustParticle;
 

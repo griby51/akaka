@@ -12,7 +12,17 @@ namespace explode{
             return (int)mExplosions.size();
         }
 
+        void triggerShake(float intensity, float duration);
+
+        int getShakeX() const { return shakeX; }
+        int getShakeY() const { return shakeY; }
+
     private:
         std::vector<Explosion> mExplosions;
+
+        float shakeIntensity = 0.f;
+        float shakeDuration = 0.f;
+        int shakeX = 0;
+        int shakeY = 0;
     };
 }

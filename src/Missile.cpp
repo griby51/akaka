@@ -14,9 +14,11 @@ namespace missile{
         collider.w = missileConfig.collider.w;
         collider.h = missileConfig.collider.h;
 
+        isAlive = true;
+
         particles.resize(missileConfig.particleNumber);
         for(int i = 0; i < missileConfig.particleNumber; i++){
-            particles[i].init(&missileConfig.particleConfig);
+            particles[i].init(&this->missileConfig.particleConfig);
             particles[i].reset();
             particles[i].setPos(10000, 10000);
         }
@@ -29,7 +31,7 @@ namespace missile{
         for(int i = 0; i < missileConfig.particleNumber; i++){
             particles[i].render(renderer);
         }
-        missileConfig.texture->render(x, y, NULL, angle * (180 / M_PI));
+        missileConfig.texture->render(x, y, NULL, angle * (180 / M_PI) + 90);
 
         if(missileConfig.showCollider){
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -75,7 +77,7 @@ namespace missile{
             angle= targetedAngle;
         }
         float alignRatio = 1.0f - (std::abs(diff) / M_PI);
-        currentVelocity = missileConfig.velocity * std::max(0.3f, alignRatio);
+        currentVelocity = missileConfig.velocity * std::max(0.8f, alignRatio);
 
         vx = std::cos(angle) * currentVelocity;
         vy = std::sin(angle) * currentVelocity;
@@ -113,6 +115,35 @@ namespace missile{
 
     void Missile::explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg){
         mgr.spawn(x, y, cfg);
+        
+        float maxRadius = cfg.power * 50.f;
+        float maxRadiusSq = maxRadius * maxRadius;
+        float maxDamage = 40.f;
+        float maxForce = cfg.power * 500.f;
+
+        for(auto& player : *this->missileConfig.players){
+            if(!player.isAlive) continue;
+
+            float distSq = util::distSq(this->collider, player.collider);
+
+            if(distSq < maxRadiusSq){
+                float factor = 1.f - (distSq / maxRadiusSq);
+
+                player.updateLife(-maxDamage * factor);
+
+                float dx = (player.collider.x + player.collider.w / 2.0f) - (this->collider.x + this->collider.w / 2.0f);
+                float dy = (player.collider.y + player.collider.h / 2.0f) - (this->collider.y + this->collider.h / 2.0f);
+
+                float forceX = (dx > 0.f ? maxForce : -maxForce) * factor;
+                float forceY = (dy > 0.f ? maxForce : -maxForce) * factor;
+
+                player.applyKnockBack(forceX, forceY);
+
+            }
+    }
+
+        mgr.triggerShake(8.f, 0.3f);
+
         isAlive = false;
     }
 }

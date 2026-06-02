@@ -64,7 +64,6 @@ void MenuScene::handleEvent(const SDL_Event &e){
         if(e.button.button == SDL_BUTTON_LEFT){
             SDL_Point mouse = {e.button.x, e.button.y};
             if(SDL_PointInRect(&mouse, &playBtnHitbox)){
-                printf("Play button clicked\n");
                 startGame();
             }
         }
@@ -84,7 +83,6 @@ void MenuScene::handleEvent(const SDL_Event &e){
                         taken = true;
                         if(key == presets[i].right){
                             mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
-                            printf("Skin selected : %i", mSlots[j].hatIndex);
                         }
                         break;
                     }
@@ -94,13 +92,11 @@ void MenuScene::handleEvent(const SDL_Event &e){
                     mSlots[mJoinedCount].presetIndex = i;
                     mJoinedCount++;
                 }
-                printf("Preset : %i, taken: %d, playerJoined : %i\n", i, taken, mJoinedCount);
             }
         }
     }
 
     if(e.type == SDL_JOYBUTTONDOWN){
-        printf("Joytick button pressed\n");
         int joyId = e.jbutton.which;
 
         bool taken = false;
@@ -109,14 +105,12 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 taken = true;
                 if(e.jbutton.button == 1){
                     mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
-                    printf("Skin selected : %i", mSlots[j].hatIndex);
                 }
                 break;
             }
         }
 
         if(e.jbutton.button == 7){
-            printf("Start button pressed on the controller\n");
             startGame();
         }
 
@@ -124,7 +118,6 @@ void MenuScene::handleEvent(const SDL_Event &e){
             mSlots[mJoinedCount].presetIndex = -1;
             mSlots[mJoinedCount].joystickId = joyId;
             mJoinedCount++;
-            printf("Player %d joined with %d joystick\n", mJoinedCount, joyId);
         }
     }
 }

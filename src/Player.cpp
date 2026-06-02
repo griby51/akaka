@@ -5,22 +5,26 @@
 #include <SDL2/SDL_mixer.h>
 
 namespace player{
-    Player::Player(PlayerConfig& config) : config(config){
+    Player::Player(PlayerConfig config) : config(config){
         isAlive = true;
         thrustParticlesTimer.start();
         currentThrustParticle = 0;
         missileTimer.start();
+
+        x = config.screenWidth / 2.0f;
+        y = config.screenHeight / 4.0f;
 
         collider.x = config.collider.x + x;
         collider.y = config.collider.y + y;
         collider.w = config.collider.w;
         collider.h = config.collider.h;
 
+
         for (int i = 0; i < 500; i++){
-            thrustParticles[i].init(&config.thrustParticleConfig);
-            thrustParticles[i].reset();
-            thrustParticles[i].setPos(10000, 10000);
+            thrustParticles[i].init(&this->config.thrustParticleConfig);
         }
+
+        life = config.maxHealth;
     }
 
     void Player::updateScore(int toAdd){
@@ -35,8 +39,8 @@ namespace player{
         if (!isAlive) return;
 
         config.skin->render(x, y);
-        if(hat != nullptr){
-            hat->render(x, y);
+        if(config.hat != nullptr){
+            config.hat->render(x, y);
         }
 
         if(config.showCollider){
@@ -115,29 +119,29 @@ namespace player{
         if(config.joystickId != -1){
             SDL_Joystick* joystick = SDL_JoystickFromInstanceID(config.joystickId);
             handleJoystickInput(joystick);
-        };
-
-        if(keys[config.keyPreset.left]){
-            move(-1);
-        }
-        if(keys[config.keyPreset.right]){
-            move(1);
-        }
-        if(keys[config.keyPreset.thrust]){
-            jetpack();
-            if(!mJetpackActive){
-                jetpackChannel = Mix_PlayChannel(-1, config.jetpackSFX, -1);
-                mJetpackActive = true;
-            }
         }else{
-            if(mJetpackActive){
-                Mix_HaltChannel(jetpackChannel);
-                jetpackChannel = -1;
-                mJetpackActive = false;
+            if(keys[config.keyPreset.left]){
+                move(-1);
             }
-        }
-        if(keys[config.keyPreset.missile]){
-            spawnMissile();
+            if(keys[config.keyPreset.right]){
+                move(1);
+            }
+            if(keys[config.keyPreset.thrust]){
+                jetpack();
+                if(!mJetpackActive){
+                    jetpackChannel = Mix_PlayChannel(-1, config.jetpackSFX, -1);
+                    mJetpackActive = true;
+                }
+            }else{
+                if(mJetpackActive){
+                    Mix_HaltChannel(jetpackChannel);
+                    jetpackChannel = -1;
+                    mJetpackActive = false;
+                }
+            }
+            if(keys[config.keyPreset.missile]){
+                spawnMissile();
+            }    
         }
     }
 
@@ -198,10 +202,19 @@ namespace player{
         life+=toAdd;
     }
 
-    LTexture* Player::getSkin() { return skin; }
-    LTexture* Player::getHat() { return hat; }
+    LTexture* Player::getSkin() { return config.skin; }
+    LTexture* Player::getHat() { return config.hat; }
 
     Player::~Player(){
         Mix_HaltChannel(jetpackChannel);
+    }
+
+    void Player::move(int direction){
+        dir = direction;
+    }
+
+    void Player::applyKnockBack(float forceX, float forceY){
+        vx += forceX;
+        vy += forceY;
     }
 }

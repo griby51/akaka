@@ -59,7 +59,6 @@ int main(int argc, char* args[]){
                 if(joy){
                     int instanceId = SDL_JoystickInstanceID(joy);
                     openJoysticks[instanceId] = joy;
-                    printf("Controller plugged : %d", instanceId);
                 }
             }
 
@@ -68,7 +67,6 @@ int main(int argc, char* args[]){
                 if(openJoysticks.count(instanceId)){
                     SDL_JoystickClose(openJoysticks[instanceId]);
                     openJoysticks.erase(instanceId);
-                    printf("Controller unplugged : %d\n", instanceId);
                 }
             }
 

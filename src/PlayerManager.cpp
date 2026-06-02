@@ -2,8 +2,7 @@
 
 namespace player{
     void PlayerManager::addPlayer(PlayerConfig& config){
-        Player player(config);
-        players.push_back(player);
+        players.emplace_back(config);
     }
 
     void PlayerManager::update(float deltaTime){

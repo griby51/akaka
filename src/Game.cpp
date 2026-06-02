@@ -1,6 +1,8 @@
 #include "Game.hpp"
 #include "Explosion.hpp"
+#include "Missile.hpp"
 #include "MissileManager.hpp"
+#include "Player.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
 #include <SDL2/SDL_joystick.h>
@@ -27,6 +29,7 @@ Game::~Game() {
 
 bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlot, int joinedCount){
     srand(time(NULL));
+    mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     mRenderer = renderer;
     mPlayerNumber = joinedCount;
@@ -52,6 +55,38 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
             tex->loadFromeFile(entry.path().string().c_str());
             skins.push_back(tex);
         }
+    }
+
+    playerManager.players.reserve(joinedCount);
+
+    for(int i = 0; i < joinedCount; i++){
+        player::PlayerConfig cfg;
+
+        missile::MissileConfig missileCfg;
+        
+        explode::ExplosionConfig explosionConfig;
+        explosionConfig.embers = false;
+
+        missileCfg.particleConfig = mThrustParticleConfig;
+        missileCfg.players = &playerManager.players;
+        missileCfg.texture = &mMissileTexture;
+        missileCfg.explosionConfig = explosionConfig;
+        missileCfg.explosionManager = &explosionManager;
+
+        cfg.players = &playerManager.players;
+        cfg.skin = skins[playerSlot[i].skinIndex];
+        cfg.hat = hats[playerSlot[i].hatIndex];
+        if(playerSlot[i].presetIndex >= 0){
+            cfg.keyPreset = presets[playerSlot[i].presetIndex];
+        }
+        cfg.joystickId = playerSlot[i].joystickId;
+        cfg.thrustParticleConfig = mThrustParticleConfig;
+        cfg.screenWidth = mScreenWidth;
+        cfg.screenHeight = mEffectiveHeight;
+        cfg.missileManager = &mMissileManager;
+        cfg.missileConfig = missileCfg;
+
+        playerManager.addPlayer(cfg);
     }
 
     return true;
@@ -124,7 +159,6 @@ void Game::start(){
 
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
-    mThrustParticleConfig.load(mThrustParticleGameConfig);
     for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         mThrustParticles[i].init(&mThrustParticleConfig);
     }
@@ -179,6 +213,13 @@ void Game::update(float deltaTime){
 }
 
 void Game::render(){
+    int offsetX = explosionManager.getShakeX();
+    int offsetY = explosionManager.getShakeY();
+
+    SDL_Rect viewport = {offsetX, offsetY, mScreenWidth, mScreenHeight};
+
+    SDL_RenderSetViewport(mRenderer, &viewport);
+
     SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
     SDL_RenderClear(mRenderer);
 
@@ -199,6 +240,8 @@ void Game::render(){
     indicatorRect.y = mScreenHeight - indicatorRect.h;
 
     mMissileManager.render(mRenderer);
+
+    SDL_RenderSetViewport(mRenderer, NULL);
 
 
     for(int i = 0; i < playerManager.players.size(); i++){

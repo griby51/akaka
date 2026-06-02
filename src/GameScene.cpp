@@ -5,7 +5,6 @@ GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& m
     : mManager(manager)
 {
     mGame = new Game();
-    
 
     mGame->init(renderer, window, playerSlots, joinedCount);
     mGame->loadMedia();
@@ -29,7 +28,6 @@ void GameScene::update(float deltaTime){
         return;
     }
     mGame->update(deltaTime);
-    mGame->handleInput();
 }
 
 void GameScene::render(){

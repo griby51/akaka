@@ -7,6 +7,10 @@ namespace util{
     }
 
     bool isWithinDistance(SDL_Rect& a, SDL_Rect& b, float threshold){
+        return (distSq(a, b)) < (threshold*threshold);
+    }
+
+    float distSq(SDL_Rect& a, SDL_Rect& b){
         float cx1 = a.x + a.w / 2.0f;
         float cy1 = a.y + a.h / 2.0f;
 
@@ -16,7 +20,7 @@ namespace util{
         float dx = cx2 - cx1;
         float dy = cy2 - cy1;
 
-        return(dx*dx + dy*dy) < (threshold*threshold);
+        return (dx*dx + dy*dy);
     }
 
     SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets){
