@@ -25,6 +25,7 @@ namespace player{
         }
 
         life = config.maxHealth;
+        score = 0;
     }
 
     void Player::updateScore(int toAdd){

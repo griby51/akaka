@@ -1,24 +1,68 @@
-CXX = C:/msys64/mingw64/bin/g++.exe
-TARGET = main.exe
+CXX = g++
+CXXFLAGS = -std=c++17 -D_USE_MATH_DEFINES -Iinclude $(LIB_INCLUDES) -g -MMD -MP
+
+# Dossier de déploiement final
+DEPLOY_DIR = Debug
+TARGET     = $(DEPLOY_DIR)/main.exe
+
+# Détection des bibliothèques internes
+LIB_INCLUDES = $(patsubst %,-I%,$(wildcard libs/*/include))
+LIB_SRCS     = $(wildcard libs/*/src/*.cpp)
+LIB_OBJS     = $(patsubst libs/%.cpp,build/libs/%.o,$(LIB_SRCS))
+LIB_ARCHIVE  = build/libmeslibs.a
+
+# Sources de l'application principale
 SRCS = $(wildcard src/*.cpp)
 OBJS = $(SRCS:src/%.cpp=build/%.o)
+DEPS = $(OBJS:.o=.d) $(LIB_OBJS:.o=.d)
 
-CXXFLAGS = -IC:/msys64/mingw64/include/SDL2 -Dmain=SDL_main -g
+LIBS_SDL = -Wl,-subsystem,console -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 
-LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image \
-          -lsetupapi -lcfgmgr32 -lole32 -luuid -lversion \
-          -static-libgcc -static-libstdc++ -Wl,--subsystem,windows \
-          -LC:/msys64/mingw64/lib
+.PHONY: all clean cleanapp deploy_dlls deploy_assets
 
-all: build $(TARGET)
+# La cible principale appelle la copie des DLLs locales et des assets
+all: build $(LIB_ARCHIVE) $(TARGET) deploy_dlls deploy_assets
 
-$(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)
+build:
+	mkdir -p build
+	mkdir -p $(sort $(dir $(LIB_OBJS)))
+	mkdir -p $(DEPLOY_DIR)
 
+# Compilation de la bibliothèque statique
+$(LIB_ARCHIVE): $(LIB_OBJS)
+	ar rcs $@ $(LIB_OBJS)
+
+# Compilation du gros exécutable directement dans le dossier Debug
+$(TARGET): $(OBJS) $(LIB_ARCHIVE)
+	$(CXX) $(OBJS) $(LIB_ARCHIVE) -o $(TARGET) $(LIBS_SDL)
+
+# Compilation des objets de l'application
 build/%.o: src/%.cpp
-	$(CXX) $(CXXFLAGS) -Iinclude -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Compilation des objets des libs internes
+build/libs/%.o: libs/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# [MODIFIÉ] Copie de toutes les DLLs depuis ton dossier local 'dll' vers 'Debug'
+deploy_dlls:
+	@echo "Copie des DLLs locales depuis le dossier dll/ vers $(DEPLOY_DIR)..."
+	@mkdir -p $(DEPLOY_DIR)
+	@cp -ru dll/* $(DEPLOY_DIR)/ 2>/dev/null || true
+
+# Copie du dossier assets dans le dossier Debug
+deploy_assets:
+	@echo "Synchronisation des assets dans $(DEPLOY_DIR)..."
+	@mkdir -p $(DEPLOY_DIR)/assets
+	@cp -ru assets/* $(DEPLOY_DIR)/assets/ 2>/dev/null || true
+
+-include $(DEPS)
+
+# CLEAN TOTAL : Supprime build ET le dossier de déploiement Debug
 clean:
-	rm -rf build $(TARGET)
+	rm -rf build $(DEPLOY_DIR)
 
-.PHONY: all clean build
+# CLEAN INTELLIGENT : Supprime l'exe du dossier Debug mais garde les libs et les DLLs
+cleanapp:
+	rm -f $(OBJS) $(DEPS) $(TARGET)
+	@echo "Application nettoyée dans $(DEPLOY_DIR). Les bibliothèques et DLLs sont préservées !"

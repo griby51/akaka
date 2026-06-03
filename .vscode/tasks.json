@@ -1,0 +1,53 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Make: Build complet",
+            "type": "shell",
+            "command": "C:\\msys64\\msys2_shell.cmd",
+            "args": [
+                "-ucrt64",
+                "-defterm",
+                "-no-start",
+                "-here",
+                "-c",
+                "mingw32-make -f makefile.win -j$(nproc)"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Make: Clean App (Garder les libs)",
+            "type": "shell",
+            "command": "C:\\msys64\\msys2_shell.cmd",
+            "args": [
+                "-ucrt64",
+                "-defterm",
+                "-no-start",
+                "-here",
+                "-c",
+                "mingw32-make -f makefile.win cleanapp"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Make: Clean Total",
+            "type": "shell",
+            "command": "C:\\msys64\\msys2_shell.cmd",
+            "args": [
+                "-ucrt64",
+                "-defterm",
+                "-no-start",
+                "-here",
+                "-c",
+                "mingw32-make -f makefile.win clean"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

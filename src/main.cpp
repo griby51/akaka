@@ -14,7 +14,6 @@
 #include <SDL2/SDL_video.h>
 #include <map>
 
-
 int main(int argc, char* args[]){
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
     IMG_Init(IMG_INIT_PNG);
