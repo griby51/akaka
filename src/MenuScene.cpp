@@ -2,6 +2,7 @@
 #include "GameScene.hpp"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_mouse.h>
 #include <filesystem>
 
@@ -67,6 +68,10 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 startGame();
             }
         }
+    }
+    if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+        mManager.pop();
+        mDone = true;
     }
     if(e.type == SDL_KEYDOWN){
         SDL_Scancode key = e.key.keysym.scancode;
