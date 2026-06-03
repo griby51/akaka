@@ -69,22 +69,22 @@ namespace player{
 
         if(x < 0){
             x = 0;
-            vx = config.bounce ? -vx : 0;
+            vx = config.bounce ? -vx * config.bounceRestitution : 0;
         }
 
         if(x > config.screenWidth - collider.w){
             x = config.screenWidth - collider.w;
-            vx = config.bounce ? -vx : 0;
+            vx = config.bounce ? -vx * config.bounceRestitution : 0;
         }
 
         if(y < 0){
             y = 0;
-            vy = config.bounce ? -vy : 0;
+            vy = config.bounce ? -vy * config.bounceRestitution : 0;
         }
 
         if(y > config.screenHeight - collider.h){
             y = config.screenHeight - collider.h;
-            vy = config.bounce ? -vy : 0;
+            vy = config.bounce ? -vy * config.bounceRestitution : 0;
         }
 
         jetpackThrust = 0.0f;

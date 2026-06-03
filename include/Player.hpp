@@ -13,7 +13,7 @@ namespace player{
     struct PlayerConfig{
         float jetpackForce = 700.0f;
         float maxVy = 600.0f;
-        float maxVx = 400.0f;
+        float maxVx = 1000.0f;
         float acceleration = 1000.0f;
         float deceleration = 0.50f;
         float gravityForce = -500.0f;
