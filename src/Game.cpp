@@ -65,7 +65,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         missile::MissileConfig missileCfg;
         
         explode::ExplosionConfig explosionConfig;
-        explosionConfig.embers = false;
+        explosionConfig.embers = true;
+        explosionConfig.power = 2.f;
 
         missileCfg.particleConfig = mThrustParticleConfig;
         missileCfg.players = &playerManager.players;
@@ -73,9 +74,29 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         missileCfg.explosionConfig = explosionConfig;
         missileCfg.explosionManager = &explosionManager;
 
+        missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
+        missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
+        missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
+        missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
+        missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
+        missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
+
         cfg.players = &playerManager.players;
         cfg.skin = skins[playerSlot[i].skinIndex];
         cfg.hat = hats[playerSlot[i].hatIndex];
+
+        cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
+        cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
+        cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
+        cfg.deceleration = mConfig.getFloat("player_deceleration", 0.8f);
+        cfg.maxHealth = mConfig.getInt("player_health", 100);
+        cfg.bounce = mConfig.getBool("player_bounce", true);
+        cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
+        cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
+        cfg.showCollider = mConfig.getBool("show_player_collider", false);
+        cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
+        
+
         if(playerSlot[i].presetIndex >= 0){
             cfg.keyPreset = presets[playerSlot[i].presetIndex];
         }

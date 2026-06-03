@@ -26,6 +26,7 @@ namespace missile{
         ParticleConfig particleConfig;
         explode::ExplosionManager* explosionManager;
         explode::ExplosionConfig explosionConfig;
+        float maxDamage = 50.f;
         int particleNumber = 500;
         int explosionDelay = 70;
     };

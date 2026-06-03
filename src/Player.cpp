@@ -51,6 +51,7 @@ namespace player{
     }
 
     void Player::update(float deltaTime){
+
         for (int i = 0; i < 500; i++){
             thrustParticles[i].update(deltaTime);
         }
@@ -117,6 +118,8 @@ namespace player{
     }
 
     void Player::handleInput(const Uint8* keys){
+        if(!isAlive) return;
+
         if(config.joystickId != -1){
             SDL_Joystick* joystick = SDL_JoystickFromInstanceID(config.joystickId);
             handleJoystickInput(joystick);

@@ -53,7 +53,14 @@ namespace missile{
             playersColliders.push_back(&player.collider);
         }
 
-        SDL_Rect* target = util::theNearest(collider, playersColliders);
+        SDL_Rect* target;
+
+        if(playersColliders.size() == 0){
+            target = &(*missileConfig.players)[missileConfig.throwerIndex].collider; 
+        }else{
+            target = util::theNearest(collider, playersColliders);
+        }
+
 
         int targetX = target->x + (target->w / 2);
         int targetY = target->y + (target->h / 2);
@@ -118,7 +125,7 @@ namespace missile{
         
         float maxRadius = cfg.power * 50.f;
         float maxRadiusSq = maxRadius * maxRadius;
-        float maxDamage = 40.f;
+        float maxDamage = missileConfig.maxDamage;
         float maxForce = cfg.power * 500.f;
 
         for(auto& player : *this->missileConfig.players){
