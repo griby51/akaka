@@ -166,6 +166,7 @@ bool Game::loadMedia() {
     audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
     audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
     audioManager.loadSFX("explosion", "assets/sounds/sfx/synthetic_explosion_1.wav");
+    audioManager.loadMusic("miniloop14", "assets/sounds/musics/22PurgatoryPackMiniLoop14.ogg");
 
     return true;
 }
@@ -173,6 +174,9 @@ bool Game::loadMedia() {
 void Game::start(){
 
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
+
+    audioManager.playMusic("miniloop14");
+    audioManager.setMusicVolume(32);
 
     for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         mThrustParticles[i].init(&mThrustParticleConfig);
