@@ -34,6 +34,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mRenderer = renderer;
     mPlayerNumber = joinedCount;
     mWindow = window;
+    
+    audioManager.init();
 
     SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
 
@@ -73,6 +75,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         missileCfg.texture = &mMissileTexture;
         missileCfg.explosionConfig = explosionConfig;
         missileCfg.explosionManager = &explosionManager;
+        missileCfg.audioManager = &audioManager;
 
         missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
         missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
@@ -84,6 +87,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.players = &playerManager.players;
         cfg.skin = skins[playerSlot[i].skinIndex];
         cfg.hat = hats[playerSlot[i].hatIndex];
+        cfg.audioManager = &audioManager;
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
         cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
@@ -158,20 +162,10 @@ bool Game::loadMedia() {
         printf("Error loading squirell texture");
         return false;
     }  
-    gFireLoop = Mix_LoadWAV("assets/sounds/sfx/jetpackThrust.wav");
-    if(gFireLoop == NULL){
-        printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
-        return false;
-    }
-    gJetpackThrustSFX = Mix_LoadWAV("assets/sounds/sfx/jetpackThrust.wav");
-    //https://opengameart.org/content/engine-loop-heavy-vehicletank
-    if(gJetpackThrustSFX == NULL){
-        //printf("Failed to load jetpackThrust SFX : %s\n", Mix_GetError());
-    }
-    gMissileLaunchSFX = Mix_LoadWAV("assets/sounds/sfx/rocket_launch_1.wav");
-    if(gMissileLaunchSFX == NULL){
-        printf("Failed to load missile launch SFX : %s\n", Mix_GetError());
-    }
+
+    audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
+    audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
+    audioManager.loadSFX("explosion", "assets/sounds/sfx/synthetic_explosion_1.wav");
 
     return true;
 }

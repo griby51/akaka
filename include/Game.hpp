@@ -19,6 +19,7 @@
 #include "ScoreCollectable.hpp"
 #include "ExplosionManager.hpp"
 #include "PlayerManager.hpp"
+#include "AudioManager.hpp"
 
 class Game {
 public:
@@ -63,6 +64,7 @@ private:
     missile::MissileManager mMissileManager;
     explode::ExplosionManager explosionManager;
     player::PlayerManager playerManager;
+    AudioManager audioManager;
 
     Dot mDot;
 

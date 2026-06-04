@@ -133,12 +133,12 @@ namespace player{
             if(keys[config.keyPreset.thrust]){
                 jetpack();
                 if(!mJetpackActive){
-                    jetpackChannel = Mix_PlayChannel(-1, config.jetpackSFX, -1);
+                    jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
                     mJetpackActive = true;
                 }
             }else{
                 if(mJetpackActive){
-                    Mix_HaltChannel(jetpackChannel);
+                    config.audioManager->stopChannel(jetpackChannel);
                     jetpackChannel = -1;
                     mJetpackActive = false;
                 }
@@ -184,12 +184,12 @@ namespace player{
         if(SDL_JoystickGetButton(joystick, 0)){
             jetpack();
             if(!mJetpackActive){
-                jetpackChannel = Mix_PlayChannel(-1, config.jetpackSFX, -1);
+                jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
                 mJetpackActive = true;
             }
         }else{
             if(mJetpackActive){
-                Mix_HaltChannel(jetpackChannel);
+                config.audioManager->stopChannel(jetpackChannel);
                 jetpackChannel = -1;
                 mJetpackActive = false;
             }

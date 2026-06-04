@@ -1,6 +1,7 @@
 #pragma once
 #include "Particle.hpp"
 #include "ExplosionManager.hpp"
+#include "AudioManager.hpp"
 #include "Explosion.hpp"
 #include "LTexture.hpp"
 #include <SDL2/SDL.h>
@@ -29,6 +30,7 @@ namespace missile{
         float maxDamage = 50.f;
         int particleNumber = 500;
         int explosionDelay = 70;
+        AudioManager* audioManager;
     };
 
     class Missile{
@@ -52,6 +54,8 @@ namespace missile{
         LTimer explosionTimer;
         bool explosionTriggered = false;
         std::vector<ThrustParticle> particles;
+
+        int audioChannel;
 };
 }
 

@@ -2,12 +2,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
-#include "Config.hpp"
 #include "LTimer.hpp"
 #include "LTexture.hpp"
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
 #include "MissileManager.hpp"
+#include "AudioManager.hpp"
 
 namespace player{
     struct PlayerConfig{
@@ -39,12 +39,11 @@ namespace player{
 
         missile::MissileManager* missileManager;
         missile::MissileConfig missileConfig;
+        AudioManager* audioManager;
 
         std::vector<Player>* players;
 
         ParticleConfig thrustParticleConfig;
-
-        Mix_Chunk* jetpackSFX = NULL;
     };
 
     class Player{

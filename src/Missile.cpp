@@ -1,4 +1,5 @@
 #include "Missile.hpp"
+#include "AudioManager.hpp"
 #include "Player.hpp"
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
@@ -23,7 +24,7 @@ namespace missile{
             particles[i].setPos(10000, 10000);
         }
         particleTimer.start();
-        Mix_PlayChannel(-1, missileConfig.launchSFX, 0);
+        audioChannel = missileConfig.audioManager->playSFX("missileLaunch");
     }
 
     void Missile::render(SDL_Renderer* renderer){
@@ -147,7 +148,10 @@ namespace missile{
                 player.applyKnockBack(forceX, forceY);
 
             }
-    }
+        }
+
+        missileConfig.audioManager->stopChannel(audioChannel);
+        missileConfig.audioManager->playSFX("explosion");
 
         mgr.triggerShake(8.f, 0.3f);
 
