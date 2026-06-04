@@ -166,6 +166,8 @@ bool Game::loadMedia() {
     audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
     audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
     audioManager.loadSFX("explosion", "assets/sounds/sfx/synthetic_explosion_1.wav");
+    audioManager.loadSFX("boing", "assets/sounds/sfx/boiiing.wav");
+
     audioManager.loadMusic("miniloop14", "assets/sounds/musics/22PurgatoryPackMiniLoop14.ogg");
 
     return true;

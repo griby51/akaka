@@ -72,21 +72,33 @@ namespace player{
         if(x < 0){
             x = 0;
             vx = config.bounce ? -vx * config.bounceRestitution : 0;
+            if(config.bounce && abs(vx) > 5){
+                config.audioManager->playSFX("boing");
+            }
         }
 
         if(x > config.screenWidth - collider.w){
             x = config.screenWidth - collider.w;
             vx = config.bounce ? -vx * config.bounceRestitution : 0;
+            if(config.bounce && abs(vx) > 5){
+                config.audioManager->playSFX("boing");
+            }
         }
 
         if(y < 0){
             y = 0;
             vy = config.bounce ? -vy * config.bounceRestitution : 0;
+            if(config.bounce && abs(vy) > 5){
+                config.audioManager->playSFX("boing");
+            }
         }
 
         if(y > config.screenHeight - collider.h){
             y = config.screenHeight - collider.h;
             vy = config.bounce ? -vy * config.bounceRestitution : 0;
+            if(config.bounce && abs(vy) > 5){
+                config.audioManager->playSFX("boing");
+            }
         }
 
         jetpackThrust = 0.0f;
