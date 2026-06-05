@@ -15,6 +15,9 @@ namespace missile{
         collider.w = missileConfig.collider.w;
         collider.h = missileConfig.collider.h;
 
+        vx=0.f;
+        vy=0.f;
+
         isAlive = true;
 
         particles.resize(missileConfig.particleNumber);

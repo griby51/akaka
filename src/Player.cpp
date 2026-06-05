@@ -14,6 +14,10 @@ namespace player{
         x = config.screenWidth / 2.0f;
         y = config.screenHeight / 4.0f;
 
+        vx = 0.f;
+        vy =0.f;
+        dir = 0;
+
         collider.x = config.collider.x + x;
         collider.y = config.collider.y + y;
         collider.w = config.collider.w;
