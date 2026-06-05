@@ -1,5 +1,5 @@
 CXX = x86_64-w64-mingw32-g++
-TARGET = dll/main.exe
+TARGET = main.exe
 LIB_INCLUDES = $(patsubst %,-I%,$(wildcard libs/*/include))
 LIB_SRCS     = $(wildcard libs/*/src/*.cpp)
 LIB_OBJS     = $(patsubst libs/%.cpp,build/libs/%.o,$(LIB_SRCS))
