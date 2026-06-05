@@ -5,7 +5,6 @@ GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& m
     : mManager(manager)
 {
     mGame = new Game();
-    
 
     mGame->init(renderer, window, playerSlots, joinedCount);
     mGame->loadMedia();
@@ -22,11 +21,13 @@ void GameScene::handleEvent(const SDL_Event& e){
 
 void GameScene::update(float deltaTime){
     if(mGame->isOver()){
-        mDone = true;
+        //mDone = true;
+        //
+        Mix_HaltChannel(-1);
+        mManager.pop();
         return;
     }
     mGame->update(deltaTime);
-    mGame->handleInput();
 }
 
 void GameScene::render(){

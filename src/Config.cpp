@@ -75,7 +75,7 @@ bool GameConfig::save(){
         data += p.first + "=" + p.second + "\n";
     }
 
-    SDL_RWops* file = SDL_RWFromFile("config.ini", "w");
+    SDL_RWops* file = SDL_RWFromFile("assets/config.ini", "w");
     if(!file) return false;
 
     SDL_RWwrite(file, data.c_str(), 1, data.size());

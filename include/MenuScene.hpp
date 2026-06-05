@@ -34,4 +34,7 @@ private:
 
     std::vector<LTexture> skins;
     std::vector<LTexture*> hats;
+    
+    void startGame();
 };
+

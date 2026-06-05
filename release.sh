@@ -15,6 +15,7 @@ read -p "Want you to publish a release ? [y/n] " RELEASEANSWER
 if [[ $RELEASEANSWER == "y" ]]; then
     read -p "Release version: " VERSION
     read -p "Release notes: " NOTES
+    read -p "Is this a pre-release ? [y/N] " PRE_RELEASE
     
     # Spinner function
     spinner() {
@@ -81,8 +82,11 @@ if [[ $RELEASEANSWER == "y" ]]; then
     ls -lh v$VERSION-*.zip
     read -p "Publish to GitHub? [y/N]: " CONFIRM
     if [[ $CONFIRM =~ ^[Yy]$ ]]; then
-        gh release create "v$VERSION" "./v$VERSION-linux.zip" "./v$VERSION-windows.zip" \
-            --title "Version $VERSION" --notes "$NOTES"
+        GH_FLAGS="--title 'Version $VERSION' --notes '$NOTES'"
+        if [[ $PRE_RELEASE =~ ^[Yy]$ ]]; then
+            GH_FLAGS="$GF_FLAGS --prerelease"
+        fi
+        gh release create "v$VERSION" "./v$VERSION-linux.zip" "./v$VERSION-windows.zip" \ "$GH_FLAGS"
         echo "✅ Published!"
         # Nettoyage
         rm -rf windows linux v$VERSION-*.zip
@@ -90,4 +94,5 @@ if [[ $RELEASEANSWER == "y" ]]; then
         rm -rf windows linux v$VERSION-*.zip
         echo "❌ Cancelled."
     fi
+    make clean
 fi

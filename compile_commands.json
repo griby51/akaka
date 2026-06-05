@@ -1,9 +1,140 @@
 [
   {
+    "file": "src/Collectable.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Collectable.cpp",
+      "-o",
+      "build/Collectable.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Collectable.o"
+  },
+  {
+    "file": "src/CollisionSystem.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/CollisionSystem.cpp",
+      "-o",
+      "build/CollisionSystem.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/CollisionSystem.o"
+  },
+  {
+    "file": "src/Config.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Config.cpp",
+      "-o",
+      "build/Config.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Config.o"
+  },
+  {
+    "file": "src/Dot.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Dot.cpp",
+      "-o",
+      "build/Dot.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Dot.o"
+  },
+  {
+    "file": "src/Game.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Game.cpp",
+      "-o",
+      "build/Game.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Game.o"
+  },
+  {
+    "file": "src/GameScene.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/GameScene.cpp",
+      "-o",
+      "build/GameScene.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/GameScene.o"
+  },
+  {
+    "file": "src/LTexture.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/LTexture.cpp",
+      "-o",
+      "build/LTexture.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/LTexture.o"
+  },
+  {
+    "file": "src/LTimer.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/LTimer.cpp",
+      "-o",
+      "build/LTimer.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/LTimer.o"
+  },
+  {
     "file": "src/main.cpp",
     "arguments": [
       "/usr/bin/g++",
+      "-std=c++17",
       "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
       "-c",
       "src/main.cpp",
       "-o",
@@ -11,5 +142,181 @@
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
     "output": "build/main.o"
+  },
+  {
+    "file": "src/MenuScene.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/MenuScene.cpp",
+      "-o",
+      "build/MenuScene.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/MenuScene.o"
+  },
+  {
+    "file": "src/Missile.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Missile.cpp",
+      "-o",
+      "build/Missile.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Missile.o"
+  },
+  {
+    "file": "src/Particle.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Particle.cpp",
+      "-o",
+      "build/Particle.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Particle.o"
+  },
+  {
+    "file": "src/Player.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Player.cpp",
+      "-o",
+      "build/Player.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Player.o"
+  },
+  {
+    "file": "src/Projectile.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/Projectile.cpp",
+      "-o",
+      "build/Projectile.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/Projectile.o"
+  },
+  {
+    "file": "src/SceneManager.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/SceneManager.cpp",
+      "-o",
+      "build/SceneManager.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/SceneManager.o"
+  },
+  {
+    "file": "src/ScoreCollectable.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "src/ScoreCollectable.cpp",
+      "-o",
+      "build/ScoreCollectable.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/ScoreCollectable.o"
+  },
+  {
+    "file": "libs/ExplosionEngine/src/EmberParticle.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "libs/ExplosionEngine/src/EmberParticle.cpp",
+      "-o",
+      "build/libs/ExplosionEngine/src/EmberParticle.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/ExplosionEngine/src/EmberParticle.o"
+  },
+  {
+    "file": "libs/ExplosionEngine/src/Explosion.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "libs/ExplosionEngine/src/Explosion.cpp",
+      "-o",
+      "build/libs/ExplosionEngine/src/Explosion.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/ExplosionEngine/src/Explosion.o"
+  },
+  {
+    "file": "libs/ExplosionEngine/src/ExplosionManager.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "libs/ExplosionEngine/src/ExplosionManager.cpp",
+      "-o",
+      "build/libs/ExplosionEngine/src/ExplosionManager.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/ExplosionEngine/src/ExplosionManager.o"
+  },
+  {
+    "file": "libs/ExplosionEngine/src/FireballParticle.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Iinclude",
+      "-Ilibs/ExplosionEngine/include",
+      "-g",
+      "-c",
+      "libs/ExplosionEngine/src/FireballParticle.cpp",
+      "-o",
+      "build/libs/ExplosionEngine/src/FireballParticle.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/ExplosionEngine/src/FireballParticle.o"
   }
 ]

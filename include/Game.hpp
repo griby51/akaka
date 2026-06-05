@@ -12,12 +12,14 @@
 #include "LTimer.hpp"
 #include "Projectile.hpp"
 #include "Dot.hpp"
-#include "Player.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
-#include "CollisionSystem.hpp"
+#include "Utils.hpp"
 #include "Missile.hpp"
 #include "ScoreCollectable.hpp"
+#include "ExplosionManager.hpp"
+#include "PlayerManager.hpp"
+#include "AudioManager.hpp"
 
 class Game {
 public:
@@ -29,7 +31,6 @@ public:
     void close();
     void start();
     void handleEvents(const SDL_Event& e);
-    void handleInput();
     void update(float deltaTime);
     void render();
     bool isOver();
@@ -40,7 +41,6 @@ private:
 
     GameConfig mConfig;
     GameConfig mThrustParticleGameConfig;
-    GameConfig mMissileConfig;
 
     int mScreenWidth;
     int mScreenHeight;
@@ -59,9 +59,13 @@ private:
     static constexpr int MISSILE_NUMBER = 500;
     static constexpr float GLOBAL_SPEED = 50.0f;
 
-    std::vector<Player> mPlayers;
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
-    Missile mMissiles[MISSILE_NUMBER];
+
+    missile::MissileManager mMissileManager;
+    explode::ExplosionManager explosionManager;
+    player::PlayerManager playerManager;
+    AudioManager audioManager;
+
     Dot mDot;
 
     LTexture mSquirellTexture;
@@ -104,4 +108,7 @@ private:
 
     Mix_Chunk* gFireLoop = NULL;
     Mix_Chunk* gJetpackThrustSFX = NULL;
+    Mix_Chunk* gMissileLaunchSFX = NULL;
+
+    missile::MissileConfig missileConfig;
  };

@@ -2,36 +2,62 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
-#include "Config.hpp"
 #include "LTimer.hpp"
 #include "LTexture.hpp"
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
-#include "Missile.hpp"
+#include "MissileManager.hpp"
+#include "AudioManager.hpp"
 
+namespace player{
+    struct PlayerConfig{
+        float jetpackForce = 700.0f;
+        float maxVy = 600.0f;
+        float maxVx = 1000.0f;
+        float acceleration = 1000.0f;
+        float deceleration = 0.50f;
+        float gravityForce = -500.0f;
+        float bounceRestitution = 0.4f;
 
-class Player{
+        int maxHealth = 100;
+
+        int scoreToLaunchMissile = 200;
+        bool bounce = false;
+
+        int screenWidth = 800;
+        int screenHeight = 600;
+
+        bool showCollider = false;
+        SDL_Rect collider = {0, 0, 32, 32};
+        SDL_Color colliderColor = {255, 0, 255, 255};
+
+        KeyPreset keyPreset;
+        int joystickId = -1;
+
+        LTexture* skin;
+        LTexture* hat;
+
+        missile::MissileManager* missileManager;
+        missile::MissileConfig missileConfig;
+        AudioManager* audioManager;
+
+        std::vector<Player>* players;
+
+        ParticleConfig thrustParticleConfig;
+    };
+
+    class Player{
     public:
-        void init(GameConfig* config, int _index);
+        Player(PlayerConfig config);
+        ~Player();
 
         void render(SDL_Renderer* renderer);
-        void setPos(float posX, float posY);
         void move(int direction);
         void jetpack();
 
-        void setScreenSize(int width, int height);
-
         void updateScore(int toAdd);
-        void setCollider(int colX, int colY, int colW, int colH);
-
-        void drawCollider(SDL_Renderer* renderer, SDL_Color* color);
-
-        LTexture* getSkin();
-        LTexture* getHat();
 
         int getScore();
-
-        void setKeyPreset(KeyPreset preset);
         
         void handleInput(const Uint8* keys);
         void handleJoystickInput(SDL_Joystick* joystick);
@@ -40,25 +66,18 @@ class Player{
         int getJoystickId();
 
         void update(float deltaTime);
-        void setSkin(LTexture* _skin);
-        void setHat(LTexture* _hat);
-
-        int getX();
-        int getY();
         
-        void setParticleConfig(GameConfig config);
-
-        void setMissileTable(Missile* _missiles, int tableSize, int* _currentMissile);
-        void setPlayerTable(Player* _players, int tableSize);
-
         void spawnMissile();
+
+        void applyKnockBack(float forceX, float forceY);
 
         void updateLife(int toAdd);
         int getLife();
 
         bool isAlive;
 
-        void setSFX(Mix_Chunk* jetpack);
+        LTexture* getSkin();
+        LTexture* getHat();
 
         SDL_Rect collider;
 
@@ -68,41 +87,19 @@ class Player{
         int score;
         int dir;
 
-        int index;
-
-        int mJoystickId = -1;
         static constexpr int DEAD_ZONE = 8000;
 
         LTexture* skin;
         LTexture* hat;
 
-        GameConfig* g_config;
-        int distanceBetweenColliderXAnd0;
-        int distanceBetweenColliderYAnd0;
-
         float jetpackThrust = 0.0f;
-
-        float JETPACK_FORCE;
-        float MAX_VY;
-        float MAX_VX;
-        float ACCELERATION;
-        float DECELERATION;
-        float GRAVITY_FORCE;
-        float BOUNCE_RESTITUTION; 
-        bool BOUNCE;
-
-        KeyPreset mPreset;
-
-        int SCREEN_WIDTH, SCREEN_HEIGHT;
 
         LTimer thrustParticlesTimer;
         ThrustParticle thrustParticles[500];
         ParticleConfig thrustParticleConfig;
-        int currentThrustParticle;
-        
-        int* currentMissile;
 
-        Missile* missiles;
+        int currentThrustParticle;
+
         int missileTableSize;
 
         Player* players;
@@ -112,6 +109,10 @@ class Player{
         int scoreToLaunchMissile;
         
         int life;
-        Mix_Chunk* jetpackSFX;
         int jetpackChannel = -1;
-};
+        bool mJetpackActive = false;
+
+        PlayerConfig config;
+    };
+}
+

@@ -1,6 +1,10 @@
 #include "Game.hpp"
-#include "CollisionSystem.hpp"
+#include "Explosion.hpp"
+#include "Missile.hpp"
+#include "MissileManager.hpp"
+#include "Player.hpp"
 #include "ScoreCollectable.hpp"
+#include "GameScene.hpp"
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
@@ -12,14 +16,11 @@
 
 Game::Game()
     : mConfig("assets/config.ini"),
-    mThrustParticleGameConfig("assets/playerThrustParticle.ini"),
-    mMissileConfig("assets/missileConfig.ini")
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini")
 {
     mScreenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
     mScreenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
     mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
-    mScoreToLaunchMissile = mConfig.getInt("scoreToLaunchMissile", 100);
-    mMissileScorePenality = mConfig.getInt("missileScorePenality", -500);
 }
 
 Game::~Game() {
@@ -28,20 +29,17 @@ Game::~Game() {
 
 bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlot, int joinedCount){
     srand(time(NULL));
+    mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     mRenderer = renderer;
     mPlayerNumber = joinedCount;
     mWindow = window;
-
     
+    audioManager.init();
 
     SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
 
     mEffectiveHeight = mScreenHeight - 50;
-    
-    mPlayers.resize(mPlayerNumber);
-    mParticleTimers.resize(mPlayerNumber);
-    mMissileTimers.resize(mPlayerNumber);
 
     for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
         if(entry.path().extension() == ".png"){
@@ -61,17 +59,59 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         }
     }
 
+    playerManager.players.reserve(joinedCount);
 
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].init(&mConfig, i);
-        mPlayers[i].setPlayerTable(mPlayers.data(), mPlayerNumber);
-        mPlayers[i].setMissileTable(mMissiles, MISSILE_NUMBER, &mCurrentMissile);
+    for(int i = 0; i < joinedCount; i++){
+        player::PlayerConfig cfg;
+
+        missile::MissileConfig missileCfg;
+        
+        explode::ExplosionConfig explosionConfig;
+        explosionConfig.embers = true;
+        explosionConfig.power = 2.f;
+
+        missileCfg.particleConfig = mThrustParticleConfig;
+        missileCfg.players = &playerManager.players;
+        missileCfg.texture = &mMissileTexture;
+        missileCfg.explosionConfig = explosionConfig;
+        missileCfg.explosionManager = &explosionManager;
+        missileCfg.audioManager = &audioManager;
+
+        missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
+        missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
+        missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
+        missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
+        missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
+        missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
+
+        cfg.players = &playerManager.players;
+        cfg.skin = skins[playerSlot[i].skinIndex];
+        cfg.hat = hats[playerSlot[i].hatIndex];
+        cfg.audioManager = &audioManager;
+
+        cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
+        cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
+        cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
+        cfg.deceleration = mConfig.getFloat("player_deceleration", 0.8f);
+        cfg.maxHealth = mConfig.getInt("player_health", 100);
+        cfg.bounce = mConfig.getBool("player_bounce", true);
+        cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
+        cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
+        cfg.showCollider = mConfig.getBool("show_player_collider", false);
+        cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
+        
+
         if(playerSlot[i].presetIndex >= 0){
-            mPlayers[i].setKeyPreset(presets[playerSlot[i].presetIndex]);
+            cfg.keyPreset = presets[playerSlot[i].presetIndex];
         }
-        mPlayers[i].setSkin(skins[playerSlot[i].skinIndex]);
-        mPlayers[i].setHat(hats[playerSlot[i].hatIndex]);
-        mPlayers[i].setJoystickId(playerSlot[i].joystickId);
+        cfg.joystickId = playerSlot[i].joystickId;
+        cfg.thrustParticleConfig = mThrustParticleConfig;
+        cfg.screenWidth = mScreenWidth;
+        cfg.screenHeight = mEffectiveHeight;
+        cfg.missileManager = &mMissileManager;
+        cfg.missileConfig = missileCfg;
+
+        playerManager.addPlayer(cfg);
     }
 
     return true;
@@ -94,12 +134,10 @@ bool Game::loadMedia() {
         printf("Font error: %s\n", TTF_GetError());
         success = false; 
     }
-
     if(!mPizzaTexture.loadFromeFile("assets/collectables/pizza.png")){
         printf("Error loading pizza texture\n");
         success = false;
     }
-
     if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
         printf("Error loading score texture\n");
         success = false;
@@ -123,50 +161,30 @@ bool Game::loadMedia() {
     if (!mSquirellTexture.loadFromeFile("assets/skins/squirell.png")){
         printf("Error loading squirell texture");
         return false;
-    }
-    
-    gFireLoop = Mix_LoadWAV("assets/sounds/sfx/fireLoop.wav");
-    if(gFireLoop == NULL){
-        printf("Failed to laod fire loop sound effect! Error : %s\n", Mix_GetError());
-        return false;
-    }
+    }  
 
-    gJetpackThrustSFX = Mix_LoadWAV("assets/sounds:sfx/jetpackThrust.wav");
-    //https://opengameart.org/content/engine-loop-heavy-vehicletank
-    if(gJetpackThrustSFX == NULL){
-        printf("Failed to load jetpackThrust SFX : %S\n", Mix_GetError());
-    }
+    audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
+    audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
+    audioManager.loadSFX("explosion", "assets/sounds/sfx/synthetic_explosion_1.wav");
+    audioManager.loadSFX("boing", "assets/sounds/sfx/boiiing.wav");
+
+    audioManager.loadMusic("miniloop14", "assets/sounds/musics/22PurgatoryPackMiniLoop14.ogg");
 
     return true;
 }
 
 void Game::start(){
 
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].setParticleConfig(mThrustParticleGameConfig);
-    }
-
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
-    mThrustParticleConfig.load(mThrustParticleGameConfig);
+    audioManager.playMusic("miniloop14");
+    audioManager.setMusicVolume(32);
+
     for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
         mThrustParticles[i].init(&mThrustParticleConfig);
     }
 
     srand(time(0));
-
-    for(int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].setScreenSize(mScreenWidth, mEffectiveHeight);
-        mPlayers[i].setPos(mScreenWidth / 2, mEffectiveHeight / 4);
-        mPlayers[i].setCollider(0, 0, 32, 32);
-        mMissileTimers[i].start();
-        mParticleTimers[i].start();
-    }
-
-    for(int i = 0; i < MISSILE_NUMBER; i++){
-        mMissiles[i].init(&mThrustParticleConfig, mMissileConfig);
-        mMissiles[i].setPos(100000, 100000);
-    }
 
     mPizzaTimeUntilNext = rand() % 10000;
     printf("pizzaTimer delay : %i\n", mPizzaTimeUntilNext);
@@ -178,30 +196,6 @@ void Game::handleEvents(const SDL_Event& e) {
         mQuit = true;
         return;
     }
-    if (e.type == SDL_JOYAXISMOTION && e.jaxis.which == 0 && e.jaxis.axis == 0) {
-        if(e.jaxis.value < -JOYSTICK_DEAD_ZONE){
-            mXJoystickDir = -1;
-        }
-        else if (e.jaxis.value >  JOYSTICK_DEAD_ZONE){
-            mXJoystickDir =  1;
-        }
-        else{
-            mXJoystickDir =  0;
-        }
-    }
-}
-void Game::handleInput(){
-    const Uint8* keys = SDL_GetKeyboardState(NULL);
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].handleInput(keys);
-
-        int joyId = mPlayers[i].getJoystickId();
-
-        if (joyId >= 0){
-            SDL_Joystick* joy = SDL_JoystickFromInstanceID(joyId);
-            mPlayers[i].handleJoystickInput(joy);
-        }
-    }
 }
 
 void Game::update(float deltaTime){
@@ -211,23 +205,9 @@ void Game::update(float deltaTime){
         mScrollingOffset = 0;
     }
 
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].update(deltaTime);
-        for (int j = 0; j < MISSILE_NUMBER; j++){
-            if(mMissiles[j].isAlive && Collision::collide(&mMissiles[j].collider, &mPlayers[i].collider)){
-                mPlayers[i].updateLife(-25);
-                mMissiles[j].isAlive = false;
-            }
-        }
-
-        if(mPlayers[i].getScore() < 0){
-            mPlayers[i].updateScore(-mPlayers[i].getScore());
-        }
-    }
-
-    for(int i = 0; i < MISSILE_NUMBER; i++){
-        mMissiles[i].update(deltaTime);
-    }
+    mMissileManager.update(deltaTime);
+    explosionManager.update(deltaTime);
+    playerManager.update(deltaTime);
 
     mPizza.erase(
             std::remove_if(mPizza.begin(), mPizza.end(),
@@ -238,7 +218,7 @@ void Game::update(float deltaTime){
             );
 
     for(int i = 0; i < mPizza.size(); i++){
-        mPizza[i].update(deltaTime, &mPlayers);
+        mPizza[i].update(deltaTime, &playerManager.players);
     }
 
     if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){
@@ -254,24 +234,21 @@ void Game::update(float deltaTime){
 }
 
 void Game::render(){
+    int offsetX = explosionManager.getShakeX();
+    int offsetY = explosionManager.getShakeY();
+
+    SDL_Rect viewport = {offsetX, offsetY, mScreenWidth, mScreenHeight};
+
+    SDL_RenderSetViewport(mRenderer, &viewport);
+
     SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
     SDL_RenderClear(mRenderer);
 
     mBGTexture.render(mScrollingOffset, 0);
     mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
 
-    for (int i = 0; i < mPlayerNumber; i++){
-        mPlayers[i].render(mRenderer);
-    }
-
-    for (int i = 0; i < MISSILE_NUMBER; i++){
-        if(mMissiles[i].isAlive){
-            mMissileTexture.render(mMissiles[i].getX(), mMissiles[i].getY(), NULL, mMissiles[i].getAngleInDegree() + 90);
-
-            Mix_PlayChannel(-1, gFireLoop, 0);
-        }
-        mMissiles[i].renderParticles(mRenderer);
-    }
+    explosionManager.render(mRenderer);
+    playerManager.render(mRenderer);
 
     for (int i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);
@@ -283,12 +260,16 @@ void Game::render(){
     indicatorRect.h = 50;
     indicatorRect.y = mScreenHeight - indicatorRect.h;
 
+    mMissileManager.render(mRenderer);
 
-    for(int i = 0; i < mPlayerNumber; i++){
+    SDL_RenderSetViewport(mRenderer, NULL);
+
+
+    for(int i = 0; i < playerManager.players.size(); i++){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
-        std::string score = std::to_string(mPlayers[i].getScore());
-        std::string life = std::to_string(mPlayers[i].getLife());
+        std::string score = std::to_string(playerManager.players[i].getScore());
+        std::string life = std::to_string(playerManager.players[i].getLife());
 
         LTexture scoreTexture;
         LTexture lifeTexture;
@@ -306,10 +287,9 @@ void Game::render(){
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
 
         SDL_RenderFillRect(mRenderer, &indicatorRect);
-        mPlayers[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
-        mPlayers[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
-        
         playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
         lifeTexture.render(indicatorRect.x, indicatorRect.y + playerNumberTexture.getHeight() + 10);
         scoreTexture.render(indicatorRect.x + lifeTexture.getWidth() + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);

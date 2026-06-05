@@ -22,6 +22,7 @@ void ParticleConfig::load(GameConfig& config){
     sizeMax = config.getInt("sizeMax" ,10);
 
     setColorFrameList();
+    printf("Color frame list size : %i\n", colorFrameList.size());
 }
 
 
@@ -41,6 +42,7 @@ void ParticleConfig::setColorFrameList(){
                 color.b = a.b + pct * (b.b - a.b);
                 color.a = a.a + pct * (b.a - a.a);
                 colorFrameList.push_back(color);
+    //printf("Current Time : %i Color : %i %i %i %i\n",t, color.r, color.g, color.b, color.a);
                 break;
             }
         }
@@ -50,7 +52,7 @@ void ParticleConfig::setColorFrameList(){
     printf("Table size: %i\n", tableSize);
 }
 
-int ParticleConfig::getMaxTime(){
+const int ParticleConfig::getMaxTime(){
     return keyframes.back().time - 1;
 }
 
@@ -113,6 +115,7 @@ void ThrustParticle::update(float deltaTime){
     if(!isAlive) return;
     if(!((lifeTime+=(deltaTime*1000.0f)) <= maxLifeTime)){
         isAlive = false;
+        //intCurrentTime = 0;
         return;
     };
     intCurrentTime = static_cast<int>(lifeTime);

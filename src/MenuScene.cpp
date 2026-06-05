@@ -1,6 +1,8 @@
 #include "MenuScene.hpp"
 #include "GameScene.hpp"
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_mouse.h>
 #include <filesystem>
 
@@ -63,14 +65,13 @@ void MenuScene::handleEvent(const SDL_Event &e){
         if(e.button.button == SDL_BUTTON_LEFT){
             SDL_Point mouse = {e.button.x, e.button.y};
             if(SDL_PointInRect(&mouse, &playBtnHitbox)){
-                printf("Play button clicked\n");
-                if(mJoinedCount <= 0){
-                    printf("No player");
-                }else{
-                    mManager.change(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
-                }
+                startGame();
             }
         }
+    }
+    if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+        mManager.pop();
+        mDone = true;
     }
     if(e.type == SDL_KEYDOWN){
         SDL_Scancode key = e.key.keysym.scancode;
@@ -87,7 +88,6 @@ void MenuScene::handleEvent(const SDL_Event &e){
                         taken = true;
                         if(key == presets[i].right){
                             mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
-                            printf("Skin selected : %i", mSlots[j].hatIndex);
                         }
                         break;
                     }
@@ -97,29 +97,40 @@ void MenuScene::handleEvent(const SDL_Event &e){
                     mSlots[mJoinedCount].presetIndex = i;
                     mJoinedCount++;
                 }
-                printf("Preset : %i, taken: %d, playerJoined : %i\n", i, taken, mJoinedCount);
             }
         }
     }
 
     if(e.type == SDL_JOYBUTTONDOWN){
-        printf("Joytick button pressed");
         int joyId = e.jbutton.which;
 
         bool taken = false;
         for (int j = 0; j < mJoinedCount; j++){
             if(mSlots[j].joystickId == joyId){
                 taken = true;
+                if(e.jbutton.button == 1){
+                    mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
+                }
                 break;
             }
+        }
+
+        if(e.jbutton.button == 7){
+            startGame();
         }
 
         if(!taken){
             mSlots[mJoinedCount].presetIndex = -1;
             mSlots[mJoinedCount].joystickId = joyId;
             mJoinedCount++;
-            printf("Player %d joined with %d joystick\n", mJoinedCount, joyId);
         }
     }
 }
 
+void MenuScene::startGame(){
+    if(mJoinedCount <= 0){
+        printf("No player");
+    }else{
+        mManager.push(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+    }
+}

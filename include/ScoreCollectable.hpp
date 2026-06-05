@@ -5,8 +5,8 @@
 class ScoreCollectable : public Collectable{
 public:
     void init(int scoreOnHit, LTexture* texture);
-    void update(float deltaTime, std::vector<Player>* players) override;
-    void onHit(Player& player) override;
+    void update(float deltaTime, std::vector<player::Player>* players) override;
+    void onHit(player::Player& player) override;
 private:
     int cScore = 0;
 };

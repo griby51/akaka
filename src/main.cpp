@@ -14,7 +14,6 @@
 #include <SDL2/SDL_video.h>
 #include <map>
 
-
 int main(int argc, char* args[]){
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
     IMG_Init(IMG_INIT_PNG);
@@ -59,7 +58,6 @@ int main(int argc, char* args[]){
                 if(joy){
                     int instanceId = SDL_JoystickInstanceID(joy);
                     openJoysticks[instanceId] = joy;
-                    printf("Controller plugged : %d", instanceId);
                 }
             }
 
@@ -68,7 +66,6 @@ int main(int argc, char* args[]){
                 if(openJoysticks.count(instanceId)){
                     SDL_JoystickClose(openJoysticks[instanceId]);
                     openJoysticks.erase(instanceId);
-                    printf("Controller unplugged : %d\n", instanceId);
                 }
             }
 
