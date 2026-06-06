@@ -18,6 +18,8 @@ namespace missile{
         vx=0.f;
         vy=0.f;
 
+        angle = 0.f;
+
         isAlive = true;
 
         particles.resize(missileConfig.particleNumber);

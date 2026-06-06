@@ -82,13 +82,22 @@ if [[ $RELEASEANSWER == "y" ]]; then
     ls -lh v$VERSION-*.zip
     read -p "Publish to GitHub? [y/N]: " CONFIRM
     if [[ $CONFIRM =~ ^[Yy]$ ]]; then
-        GH_FLAGS="--title 'Version $VERSION' --notes '$NOTES'"
         if [[ $PRE_RELEASE =~ ^[Yy]$ ]]; then
-            GH_FLAGS="$GF_FLAGS --prerelease"
+            gh release create "v$VERSION" \
+              "./v$VERSION-linux.zip" \
+              "./v$VERSION-windows.zip" \
+              --title "Version $VERSION" \
+              --notes "$NOTES" \
+              --prerelease
+        else
+            gh release create "v$VERSION" \
+              "./v$VERSION-linux.zip" \
+              "./v$VERSION-windows.zip" \
+              --title "Version $VERSION" \
+              --notes "$NOTES"
         fi
-        gh release create "v$VERSION" "./v$VERSION-linux.zip" "./v$VERSION-windows.zip" \ "$GH_FLAGS"
+
         echo "✅ Published!"
-        # Nettoyage
         rm -rf windows linux v$VERSION-*.zip
     else
         rm -rf windows linux v$VERSION-*.zip

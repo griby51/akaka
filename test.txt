@@ -1,0 +1,2499 @@
+#include "AudioManager.hpp"
+#include <SDL2/SDL_mixer.h>
+
+AudioManager::AudioManager(){}
+
+AudioManager::~AudioManager(){
+    clean();
+}
+
+bool AudioManager::init(){
+    if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0){
+        printf("SDL_Init audio err : %s\n", SDL_GetError());
+        return false;
+    }
+
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0){
+        printf("Mix_OpenAudio error: %s\n", Mix_GetError());
+        return false;
+    }
+
+    Mix_AllocateChannels(64);
+
+    return true;
+}
+
+bool AudioManager::loadMusic(const std::string& id, const std::string& path){
+    if(musicMap.find(id) != musicMap.end()){
+        return true;
+    }
+
+    Mix_Music* music = Mix_LoadMUS(path.c_str());
+    if(!music){
+        printf("Error loading music : %s, Error : %s\n", path.c_str(), Mix_GetError());
+        return false;
+    }
+
+    musicMap[id] = music;
+    return true;
+};
+
+bool AudioManager::loadSFX(const std::string& id, const std::string& path){
+    if(sfxMap.find(id) != sfxMap.end()){
+        return true;
+    }
+
+    Mix_Chunk* sfx = Mix_LoadWAV(path.c_str());
+    if(!sfx){
+        printf("Error loading sfx : %s, Error : %s\n", path.c_str(), Mix_GetError());
+        return false;
+    }
+
+    sfxMap[id] = sfx;
+    return true;
+}
+
+void AudioManager::playMusic(const std::string& id, int loops){
+    if(musicMap.find(id) != musicMap.end()){
+        Mix_PlayMusic(musicMap[id], loops);
+    }else{
+        printf("Music %s not found\n", id.c_str());
+    }
+}
+
+int AudioManager::playSFX(const std::string& id, int loops, int channel){
+    if(sfxMap.find(id) != sfxMap.end()){
+        return Mix_PlayChannel(channel, sfxMap[id], loops);
+    }else{
+        printf("SFX %s not found\n", id.c_str());
+        return -1;
+    }
+}
+
+void AudioManager::stopMusic(){
+    Mix_HaltMusic();
+}
+
+void AudioManager::setMusicVolume(int volume){
+    Mix_VolumeMusic(volume);
+}
+
+void AudioManager::clean(){
+    for(auto const& [id, music] : musicMap){
+        Mix_FreeMusic(music);
+    }
+
+    musicMap.clear();
+
+    for(auto const& [id, sfx] : sfxMap){
+        Mix_FreeChunk(sfx);
+    }
+
+    sfxMap.clear();
+
+    Mix_CloseAudio();
+}
+
+void AudioManager::stopChannel(int channel){
+    Mix_HaltChannel(-1);
+}
+#include "Collectable.hpp"
+
+void Collectable::render(SDL_Renderer* renderer){
+    cTexture->render(x, y);
+}
+
+void Collectable::setPos(float posX, float posY){
+    x = posX;
+    y = posY;
+    collider.x = x;
+    collider.y = y;
+}
+#include "Config.hpp"
+
+GameConfig::GameConfig(const std::string& filename){
+    SDL_RWops* file = SDL_RWFromFile(filename.c_str(), "r");
+    if(!file){
+        printf("Cannot load config file : %s, SDL_Error : %s\n", filename.c_str(), SDL_GetError());
+        return;
+    }
+
+    Sint64 size = SDL_RWsize(file);
+    char* buffer = new char[size + 1];
+    SDL_RWread(file, buffer, 1, size);
+    buffer[size] = '\0';
+
+    std::string content(buffer);
+    delete[] buffer;
+    SDL_RWclose(file);
+
+    size_t pos = 0;
+    std::string line;
+
+    while((pos = content.find('\n')) != std::string::npos){
+        line = content.substr(0, pos);
+        content.erase(0, pos+1);
+
+        if(line.empty() || line[0] == '#' || line[0] == ';'){
+            continue;
+        }
+
+        size_t eq = line.find('=');
+        if(eq != std::string::npos){
+            std::string key = line.substr(0, eq);
+            std::string val = line.substr(eq + 1);
+
+            key.erase(0, key.find_first_not_of(" \t"));
+            key.erase(key.find_last_not_of(" \t") + 1);
+            val.erase(0, val.find_first_not_of(" \t"));
+            val.erase(val.find_last_not_of(" \t") + 1);
+
+            values[key] = val;
+        }
+    }
+}
+
+int GameConfig::getInt(const std::string& key, int defaultVal){
+    auto it = values.find(key);
+    return it != values.end() ? std::stoi(it->second) : defaultVal;
+}
+
+float GameConfig::getFloat(const std::string& key, float defaultVal){
+    auto it = values.find(key);
+    return it != values.end() ? std::stof(it->second) : defaultVal;
+}
+
+bool GameConfig::getBool(const std::string& key, bool defaultVal){
+    auto it = values.find(key);
+    if( it!=values.end()){
+        std::string v = it->second;
+        for(char& c : v) c = tolower(c);
+        return v == "true" || v == "1" || v == "yes" || v == "on";
+    }
+    return defaultVal;
+}
+
+std::string GameConfig::getString(const std::string& key, const std::string& defaultVal){
+    auto it = values.find(key);
+    return it != values.end() ? it->second : defaultVal;
+}
+
+bool GameConfig::save(){
+    std::string data;
+    printf("Saving %zu keys\n", values.size());
+    for(const auto& p : values){
+        printf(" %s = %s\n", p.first.c_str(), p.second.c_str());
+        data += p.first + "=" + p.second + "\n";
+    }
+
+    SDL_RWops* file = SDL_RWFromFile("assets/config.ini", "w");
+    if(!file) return false;
+
+    SDL_RWwrite(file, data.c_str(), 1, data.size());
+    SDL_RWclose(file);
+    return true;
+}
+
+#include "Dot.hpp"
+
+Dot::Dot()
+{
+    mPosX = 0;
+    mPosY = 0;
+
+    mVelX = 0;
+    mVelY = 0;
+}
+
+void Dot::move()
+{
+    mPosX += mVelX;
+
+    if((mPosX < 0) || (mPosX + DOT_WIDTH > SCREEN_WIDTH)){
+        mPosX -= mVelX;
+    }
+
+    mPosY += mVelY;
+
+    if((mPosY < 0) || (mPosY + DOT_HEIGHT > SCREEN_HEIGHT)){
+        mPosY -= mVelY;
+    }
+}
+
+void Dot::render(LTexture &gDotTexture){
+    gDotTexture.render(mPosX, mPosY);
+}#include "Game.hpp"
+#include "Explosion.hpp"
+#include "Missile.hpp"
+#include "MissileManager.hpp"
+#include "Player.hpp"
+#include "ScoreCollectable.hpp"
+#include "GameScene.hpp"
+#include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_render.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <filesystem>
+#include <algorithm>
+
+Game::Game()
+    : mConfig("assets/config.ini"),
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini")
+{
+    mScreenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
+    mScreenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
+    mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
+}
+
+Game::~Game() {
+    close();
+}
+
+bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlot, int joinedCount){
+    srand(time(NULL));
+    mThrustParticleConfig.load(mThrustParticleGameConfig);
+
+    mRenderer = renderer;
+    mPlayerNumber = joinedCount;
+    mWindow = window;
+    
+    audioManager.init();
+
+    SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
+
+    mEffectiveHeight = mScreenHeight - 50;
+
+    for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
+        if(entry.path().extension() == ".png"){
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
+            hats.push_back(tex);
+        }
+    }
+
+    for(const auto& entry : std::filesystem::directory_iterator("assets/skins/")){
+        if(entry.path().extension() == ".png"){
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
+            skins.push_back(tex);
+        }
+    }
+
+    playerManager.players.reserve(joinedCount);
+
+    for(int i = 0; i < joinedCount; i++){
+        player::PlayerConfig cfg;
+
+        missile::MissileConfig missileCfg;
+        
+        explode::ExplosionConfig explosionConfig;
+        explosionConfig.embers = true;
+        explosionConfig.power = 2.f;
+
+        missileCfg.particleConfig = mThrustParticleConfig;
+        missileCfg.players = &playerManager.players;
+        missileCfg.texture = &mMissileTexture;
+        missileCfg.explosionConfig = explosionConfig;
+        missileCfg.explosionManager = &explosionManager;
+        missileCfg.audioManager = &audioManager;
+
+        missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
+        missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
+        missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
+        missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
+        missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
+        missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
+
+        cfg.players = &playerManager.players;
+        cfg.skin = skins[playerSlot[i].skinIndex];
+        cfg.hat = hats[playerSlot[i].hatIndex];
+        cfg.audioManager = &audioManager;
+
+        cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
+        cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
+        cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
+        cfg.deceleration = mConfig.getFloat("player_deceleration", 0.8f);
+        cfg.maxHealth = mConfig.getInt("player_health", 100);
+        cfg.bounce = mConfig.getBool("player_bounce", true);
+        cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
+        cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
+        cfg.showCollider = mConfig.getBool("show_player_collider", false);
+        cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
+        
+
+        if(playerSlot[i].presetIndex >= 0){
+            cfg.keyPreset = presets[playerSlot[i].presetIndex];
+        }
+        cfg.joystickId = playerSlot[i].joystickId;
+        cfg.thrustParticleConfig = mThrustParticleConfig;
+        cfg.screenWidth = mScreenWidth;
+        cfg.screenHeight = mEffectiveHeight;
+        cfg.missileManager = &mMissileManager;
+        cfg.missileConfig = missileCfg;
+
+        playerManager.addPlayer(cfg);
+    }
+
+    return true;
+}
+
+bool Game::loadMedia() {
+    int success = true;
+
+    mSquirellTexture.setRenderer(mRenderer);
+    mProjectileTexture.setRenderer(mRenderer);
+    mDotTexture.setRenderer(mRenderer);
+    mBGTexture.setRenderer(mRenderer);
+    mScoreTexture.setRenderer(mRenderer);
+    mMissileTexture.setRenderer(mRenderer);
+    mCowboyTexture.setRenderer(mRenderer);
+    mPizzaTexture.setRenderer(mRenderer);
+
+    mScoreFont = TTF_OpenFont("assets/Hypermonosaturation-zrMo0.ttf", 14);
+    if (!mScoreFont) {
+        printf("Font error: %s\n", TTF_GetError());
+        success = false; 
+    }
+    if(!mPizzaTexture.loadFromeFile("assets/collectables/pizza.png")){
+        printf("Error loading pizza texture\n");
+        success = false;
+    }
+    if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
+        printf("Error loading score texture\n");
+        success = false;
+    }
+    if (!mMissileTexture.loadFromeFile("assets/missile00.png")){
+        printf("Error loading missile texture\n");
+        return false;
+    }
+    if (!mDotTexture.loadFromeFile("assets/dot.bmp")){
+        printf("Error loading dot texture\n");
+        return false;
+    }
+    if (!mBGTexture.loadFromeFile("assets/abstract_seamless_bg_01.png")){
+        printf("Error loading background\n");
+        return false;
+    }
+    if (!mProjectileTexture.loadFromeFile("assets/cannonbob.png")){
+        printf("Error loading projectile texture\n");
+        return false;
+    }
+    if (!mSquirellTexture.loadFromeFile("assets/skins/squirell.png")){
+        printf("Error loading squirell texture");
+        return false;
+    }  
+
+    audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
+    audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
+    audioManager.loadSFX("explosion", "assets/sounds/sfx/synthetic_explosion_1.wav");
+    audioManager.loadSFX("boing", "assets/sounds/sfx/boiiing.wav");
+
+    audioManager.loadMusic("miniloop14", "assets/sounds/musics/22PurgatoryPackMiniLoop14.ogg");
+
+    return true;
+}
+
+void Game::start(){
+
+    SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
+
+    audioManager.playMusic("miniloop14");
+    audioManager.setMusicVolume(32);
+
+    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
+        mThrustParticles[i].init(&mThrustParticleConfig);
+    }
+
+    srand(time(0));
+
+    mPizzaTimeUntilNext = rand() % 10000;
+    printf("pizzaTimer delay : %i\n", mPizzaTimeUntilNext);
+    mPizzaTimer.start();
+}
+
+void Game::handleEvents(const SDL_Event& e) {
+    if (e.type == SDL_QUIT){
+        mQuit = true;
+        return;
+    }
+}
+
+void Game::update(float deltaTime){
+    mDot.move();
+    mScrollingOffset -= GLOBAL_SPEED * deltaTime;
+    if(mScrollingOffset < -mBGTexture.getWidth()){
+        mScrollingOffset = 0;
+    }
+
+    mMissileManager.update(deltaTime);
+    explosionManager.update(deltaTime);
+    playerManager.update(deltaTime);
+
+    mPizza.erase(
+            std::remove_if(mPizza.begin(), mPizza.end(),
+                [](const ScoreCollectable& col){
+                return !col.isAlive;
+                }),
+            mPizza.end()
+            );
+
+    for(int i = 0; i < mPizza.size(); i++){
+        mPizza[i].update(deltaTime, &playerManager.players);
+    }
+
+    if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){
+        mPizzaTimeUntilNext = rand() % 10000;
+        mPizzaTimer.start();
+        mPizza.emplace_back();
+        mPizza.back().init(100, &mPizzaTexture);
+        mPizza.back().setPos(mScreenWidth, rand() % (mEffectiveHeight - 16));
+        mPizza.back().vx = -GLOBAL_SPEED;
+        mPizza.back().collider.w = 16;
+        mPizza.back().collider.h = 16;
+    }
+}
+
+void Game::render(){
+    int offsetX = explosionManager.getShakeX();
+    int offsetY = explosionManager.getShakeY();
+
+    SDL_Rect viewport = {offsetX, offsetY, mScreenWidth, mScreenHeight};
+
+    SDL_RenderSetViewport(mRenderer, &viewport);
+
+    SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
+    SDL_RenderClear(mRenderer);
+
+    mBGTexture.render(mScrollingOffset, 0);
+    mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
+
+    explosionManager.render(mRenderer);
+    playerManager.render(mRenderer);
+
+    for (int i = 0; i < mPizza.size(); i++){
+        mPizza[i].render(mRenderer);
+    }
+
+
+    SDL_Rect indicatorRect;
+    indicatorRect.w = mScreenWidth / mPlayerNumber;
+    indicatorRect.h = 50;
+    indicatorRect.y = mScreenHeight - indicatorRect.h;
+
+    mMissileManager.render(mRenderer);
+
+    SDL_RenderSetViewport(mRenderer, NULL);
+
+
+    for(int i = 0; i < playerManager.players.size(); i++){
+        Uint8 greyIntensity = i*20 + 150;
+        std::string playerNumber = "Player " + std::to_string(i + 1);
+        std::string score = std::to_string(playerManager.players[i].getScore());
+        std::string life = std::to_string(playerManager.players[i].getLife());
+
+        LTexture scoreTexture;
+        LTexture lifeTexture;
+        LTexture playerNumberTexture;
+
+        scoreTexture.setRenderer(mRenderer);
+        lifeTexture.setRenderer(mRenderer);
+        playerNumberTexture.setRenderer(mRenderer);
+
+        playerNumberTexture.loadFromRenderedText(playerNumber, mWhite, mScoreFont);
+        lifeTexture.loadFromRenderedText(life, mRed, mScoreFont);
+        scoreTexture.loadFromRenderedText(score, mGreen, mScoreFont);
+
+        indicatorRect.x = i * indicatorRect.w;
+        SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
+
+        SDL_RenderFillRect(mRenderer, &indicatorRect);
+        playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+
+        playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
+        lifeTexture.render(indicatorRect.x, indicatorRect.y + playerNumberTexture.getHeight() + 10);
+        scoreTexture.render(indicatorRect.x + lifeTexture.getWidth() + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
+    }
+
+    SDL_RenderPresent(mRenderer);
+};
+
+void Game::close() {
+    mSquirellTexture.free();
+    mProjectileTexture.free();
+    mDotTexture.free();
+    mBGTexture.free();
+    mScoreTexture.free();
+    mMissileTexture.free();
+    mCowboyTexture.free();
+
+    Mix_FreeChunk(gFireLoop);
+    gFireLoop = NULL;
+
+    if (mScoreFont){
+        TTF_CloseFont(mScoreFont); mScoreFont = nullptr;
+    }
+    if (mController){
+        SDL_JoystickClose(mController); mController = nullptr;
+    }
+}
+
+bool Game::isOver(){
+    return mQuit;
+}
+#include "GameScene.hpp"
+#include "PlayerSlot.hpp"
+
+GameScene::GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager, PlayerSlot* playerSlots, int joinedCount)
+    : mManager(manager)
+{
+    mGame = new Game();
+
+    mGame->init(renderer, window, playerSlots, joinedCount);
+    mGame->loadMedia();
+    mGame->start();
+}
+
+void GameScene::handleEvent(const SDL_Event& e){
+    if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+        mManager.pop();
+        return;
+    }
+    mGame->handleEvents(e);
+}
+
+void GameScene::update(float deltaTime){
+    if(mGame->isOver()){
+        //mDone = true;
+        //
+        Mix_HaltChannel(-1);
+        mManager.pop();
+        return;
+    }
+    mGame->update(deltaTime);
+}
+
+void GameScene::render(){
+    mGame->render();
+}
+
+bool GameScene::isDone(){
+    return mDone;
+}
+#include "LTexture.hpp"
+
+LTexture::LTexture(){
+    mTexture = NULL;
+    mWidth = 0;
+    mHeight = 0;
+}
+
+LTexture::~LTexture(){
+    free();
+}
+
+void LTexture::setRenderer(SDL_Renderer* renderer){
+    gRenderer = renderer;
+}
+
+bool LTexture::loadFromeFile(std::string path){
+    free();
+
+    SDL_Texture* newTexture = NULL;
+
+    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+    if(loadedSurface == NULL){
+        printf("Unable to load image %s! SDL Error : %s\n", path.c_str(), SDL_GetError());
+    }else{
+        SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0xFF, 0, 0xFF));
+
+        newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+        if (newTexture == NULL) printf("Unable to create texture from %s ! SDL Error : %s\n", path.c_str(), SDL_GetError());
+        else{
+            mWidth = loadedSurface->w;
+            mHeight = loadedSurface->h;
+        }
+
+        SDL_FreeSurface(loadedSurface);
+    }
+
+    mTexture = newTexture;
+    return mTexture != NULL;
+}
+
+void LTexture::free()
+{
+    if(mTexture != NULL){
+        SDL_DestroyTexture(mTexture);
+        mTexture = NULL;
+        mWidth = 0;
+        mHeight = 0;
+    }
+}
+
+void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip){
+    SDL_Rect renderQuad = {x, y, mWidth, mHeight};
+
+    if(clip != NULL){
+        renderQuad.w = clip->w;
+        renderQuad.h = clip->h;
+    }
+
+    SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
+}
+
+void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue){
+    if(SDL_SetTextureColorMod(mTexture, red, green, blue) < 0) printf("Error while changing color : %s\n", SDL_GetError());
+}
+
+void LTexture::setBlendMode(SDL_BlendMode blending){
+    SDL_SetTextureBlendMode(mTexture, blending);
+}
+
+void LTexture::setAlpha(Uint8 alpha){
+    SDL_SetTextureAlphaMod(mTexture, alpha);
+}
+
+int LTexture::getWidth(){ return mWidth; }
+
+int LTexture::getHeight(){ return mHeight; }
+
+bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* gFont){
+    free();
+
+    SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
+
+    if(textSurface == NULL){
+        printf("Unable to render text surface. SDL_ttf error : %s\n", TTF_GetError);
+    }else{
+        mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+        if(mTexture == NULL){
+            printf("Unable to create texture from renderered text! SDL Error : %s", SDL_GetError());
+        }else{
+            mWidth = textSurface->w;
+            mHeight = textSurface->h;
+        }
+
+        SDL_FreeSurface(textSurface);
+    }
+
+    return mTexture != NULL;
+}
+#include "LTimer.hpp"
+
+LTimer::LTimer(){
+    mStartTicks = 0;
+    mPausedTicks = 0;
+
+    mPaused = false;
+    mStarted = false;
+}
+
+void LTimer::start(){
+    mStarted = true;
+
+    mPaused = false;
+
+    mStartTicks = SDL_GetTicks();
+    mPausedTicks = 0;
+}
+
+void LTimer::stop(){
+    mStarted = false;
+
+    mPaused = false;
+
+    mStartTicks = 0;
+    mPausedTicks = 0;
+}
+
+void LTimer::pause(){
+    if (mStarted && !mPaused){
+        mPaused = true;
+
+        mPausedTicks = SDL_GetTicks() - mStartTicks;
+        mStartTicks = 0;
+    }
+}
+
+void LTimer::unpause(){
+    if(mStarted && mPaused){
+        mPaused = false;
+
+        mStartTicks = SDL_GetTicks() - mPausedTicks;
+
+        mPausedTicks = 0;
+    }
+}
+
+Uint32 LTimer::getTicks(){
+    Uint32 time = 0;
+
+    if(mStarted){
+        if(mPaused){
+            time = mPausedTicks;
+        }else{
+            time = SDL_GetTicks() - mStartTicks;
+        }
+    }
+
+    return time;
+}
+
+bool LTimer::isStarted() {return mStarted;}
+
+bool LTimer::isPaused(){return mPaused && mStarted;}
+
+#include "Game.hpp"
+#include "SceneManager.hpp"
+#include "MenuScene.hpp"
+#include "GameScene.hpp"
+#include "LTimer.hpp"
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_video.h>
+#include <map>
+
+int main(int argc, char* args[]){
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
+    IMG_Init(IMG_INIT_PNG);
+    Mix_OpenAudio(48000, MIX_DEFAULT_FORMAT, 2, 2048);
+    TTF_Init();
+
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
+    std::map<int, SDL_Joystick*> openJoysticks;
+
+    SDL_Window* window = SDL_CreateWindow(
+            "Encore un jeu random",
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            1024,
+            576,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP
+    );
+
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    SDL_RenderSetLogicalSize(renderer, 1024, 576);
+
+    SceneManager manager;
+    manager.push(std::make_unique<MenuScene>(renderer, window, manager));
+
+    LTimer deltaTimer;
+    deltaTimer.start();
+
+    SDL_Event e;
+    while (!manager.isEmpty()){
+        float deltaTime = deltaTimer.getTicks() / 1000.0f;
+        if(deltaTime > 0.05f){
+            deltaTime = 0.05f;
+        }
+        deltaTimer.start();
+
+        while(SDL_PollEvent(&e)){
+            if(e.type == SDL_JOYDEVICEADDED){
+                int deviceIndex = e.jdevice.which;
+                SDL_Joystick* joy = SDL_JoystickOpen(deviceIndex);
+                if(joy){
+                    int instanceId = SDL_JoystickInstanceID(joy);
+                    openJoysticks[instanceId] = joy;
+                }
+            }
+
+            if(e.type == SDL_JOYDEVICEREMOVED){
+                int instanceId = e.jdevice.which;
+                if(openJoysticks.count(instanceId)){
+                    SDL_JoystickClose(openJoysticks[instanceId]);
+                    openJoysticks.erase(instanceId);
+                }
+            }
+
+            if (e.type == SDL_QUIT){
+                while(!manager.isEmpty()){
+                    manager.pop();
+                }
+            }
+            if(manager.current()){
+                manager.current()->handleEvent(e);
+            }
+        }
+
+        if(!manager.current()){
+            break;
+        }
+
+        manager.current()->update(deltaTime);
+        manager.current()->render();
+        SDL_Delay(16);
+    }
+
+    for (auto& [id, joy] : openJoysticks) SDL_JoystickClose(joy);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    TTF_Quit();
+    IMG_Quit();
+    SDL_Quit();
+
+    return 0;
+}
+#include "MenuScene.hpp"
+#include "GameScene.hpp"
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_joystick.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_mouse.h>
+#include <filesystem>
+
+MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& manager):
+    mManager(manager)
+{
+    mRenderer = renderer;
+    mWindow = window;
+    mScreenWidth = 1024;
+    mScreenHeight = 576;
+    playBtnHitbox = {mScreenWidth / 2 - 50, mScreenHeight / 2 - 10, 100, 20}; 
+    mPlayBtnTexture.setRenderer(mRenderer);
+    mPlayBtnTexture.loadFromeFile("assets/buttons/playBtn.png");
+
+
+    for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
+        if(entry.path().extension() == ".png"){
+            LTexture* tex = new LTexture();
+            tex->setRenderer(mRenderer);
+            tex->loadFromeFile(entry.path().string().c_str());
+            hats.push_back(tex);
+        }
+    }
+
+    for(const auto& entry : std::filesystem::directory_iterator("assets/skins/")){
+        if(entry.path().extension() == ".png"){
+            LTexture tex;
+            tex.setRenderer(mRenderer);
+            tex.loadFromeFile(entry.path().string().c_str());
+            skins.push_back(std::move(tex));
+        }
+    }
+}
+
+void MenuScene::update(float deltaTime){
+}
+
+MenuScene::~MenuScene(){
+    if(mFont) TTF_CloseFont(mFont);
+}
+
+void MenuScene::render(){
+    SDL_SetRenderDrawColor(mRenderer, 10, 10, 20, 255);
+    SDL_RenderClear(mRenderer);
+    SDL_SetRenderDrawColor(mRenderer, 255, 0, 0, 255);
+    mPlayBtnTexture.render(playBtnHitbox.x, playBtnHitbox.y);
+    //SDL_RenderFillRect(mRenderer, &playBtnHitbox);
+    for(int i =0; i < mJoinedCount; i++){
+        hats[mSlots[i].hatIndex]->render(100 + 100*i, 300);
+    }
+    SDL_RenderPresent(mRenderer);
+}
+
+bool MenuScene::isDone(){
+    return mDone;
+}
+
+void MenuScene::handleEvent(const SDL_Event &e){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            SDL_Point mouse = {e.button.x, e.button.y};
+            if(SDL_PointInRect(&mouse, &playBtnHitbox)){
+                startGame();
+            }
+        }
+    }
+    if(e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+        mManager.pop();
+        mDone = true;
+    }
+    if(e.type == SDL_KEYDOWN){
+        SDL_Scancode key = e.key.keysym.scancode;
+        for (int i = 0; i < 3; i++){
+            if(presets[i].left == key ||
+                presets[i].right == key ||
+                presets[i].thrust == key ||
+                presets[i].missile == key
+              )
+            {
+                bool taken = false;
+                for (int j = 0; j < mJoinedCount; j++){
+                    if(i == mSlots[j].presetIndex){
+                        taken = true;
+                        if(key == presets[i].right){
+                            mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
+                        }
+                        break;
+                    }
+                }
+
+                if(!taken){
+                    mSlots[mJoinedCount].presetIndex = i;
+                    mJoinedCount++;
+                }
+            }
+        }
+    }
+
+    if(e.type == SDL_JOYBUTTONDOWN){
+        int joyId = e.jbutton.which;
+
+        bool taken = false;
+        for (int j = 0; j < mJoinedCount; j++){
+            if(mSlots[j].joystickId == joyId){
+                taken = true;
+                if(e.jbutton.button == 1){
+                    mSlots[j].hatIndex = (mSlots[j].hatIndex + 1) % hats.size();
+                }
+                break;
+            }
+        }
+
+        if(e.jbutton.button == 7){
+            startGame();
+        }
+
+        if(!taken){
+            mSlots[mJoinedCount].presetIndex = -1;
+            mSlots[mJoinedCount].joystickId = joyId;
+            mJoinedCount++;
+        }
+    }
+}
+
+void MenuScene::startGame(){
+    if(mJoinedCount <= 0){
+        printf("No player");
+    }else{
+        mManager.push(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+    }
+}
+#include "Missile.hpp"
+#include "AudioManager.hpp"
+#include "Player.hpp"
+#include "Explosion.hpp"
+#include "ExplosionManager.hpp"
+#include "Utils.hpp"
+#include <SDL2/SDL_mixer.h>
+#include <math.h>
+
+namespace missile{
+    Missile::Missile(float x, float y, MissileConfig missileConfig)
+    : x(x), y(y), missileConfig(missileConfig){
+        collider.x = x + missileConfig.collider.x;
+        collider.y = y + missileConfig.collider.y;
+        collider.w = missileConfig.collider.w;
+        collider.h = missileConfig.collider.h;
+
+        vx=0.f;
+        vy=0.f;
+
+        isAlive = true;
+
+        particles.resize(missileConfig.particleNumber);
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].init(&this->missileConfig.particleConfig);
+            particles[i].reset();
+            particles[i].setPos(10000, 10000);
+        }
+        particleTimer.start();
+        audioChannel = missileConfig.audioManager->playSFX("missileLaunch");
+    }
+
+    void Missile::render(SDL_Renderer* renderer){
+        if (!isAlive) return;
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].render(renderer);
+        }
+        missileConfig.texture->render(x, y, NULL, angle * (180 / M_PI) + 90);
+
+        if(missileConfig.showCollider){
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderDrawRect(renderer, &collider);
+        }
+    }
+
+    void Missile::update(float deltaTime){
+        if (!isAlive) return;
+        for(int i = 0; i < missileConfig.particleNumber; i++){
+            particles[i].update(deltaTime);
+        }
+
+        std::vector<SDL_Rect*> playersColliders;
+        for(int i = 0; i < missileConfig.players->size(); i++){
+            player::Player& player = (*missileConfig.players)[i];
+            if(!player.isAlive) continue;
+            if(i == missileConfig.throwerIndex) continue;
+            playersColliders.push_back(&player.collider);
+        }
+
+        SDL_Rect* target;
+
+        if(playersColliders.size() == 0){
+            target = &(*missileConfig.players)[missileConfig.throwerIndex].collider; 
+        }else{
+            target = util::theNearest(collider, playersColliders);
+        }
+
+
+        int targetX = target->x + (target->w / 2);
+        int targetY = target->y + (target->h / 2);
+        float xDist = targetX - x;
+        float yDist = targetY - y;
+        float dist = sqrt(pow(xDist, 2) + pow(yDist, 2));
+
+        double targetedAngle = atan2(yDist, xDist);
+
+        double diff = targetedAngle - angle;
+        while (diff > M_PI) diff -= 2 * M_PI;
+        while (diff < -M_PI) diff += 2 * M_PI;
+
+        float maxTurn = missileConfig.precision * deltaTime;
+
+        if(diff > maxTurn){
+            angle += maxTurn;
+        }else if(diff < -maxTurn){
+            angle -= maxTurn;
+        }else{
+            angle= targetedAngle;
+        }
+        float alignRatio = 1.0f - (std::abs(diff) / M_PI);
+        currentVelocity = missileConfig.velocity * std::max(0.8f, alignRatio);
+
+        vx = std::cos(angle) * currentVelocity;
+        vy = std::sin(angle) * currentVelocity;
+
+        x+=vx * deltaTime;
+        y+=vy * deltaTime;
+        collider.x = x;
+        collider.y = y;
+
+        float centerX = x + 16;
+        float centerY = y + 16;
+
+        float backX = centerX - std::cos(angle) * 16;
+        float backY = centerY - std::sin(angle) * 16;
+
+        if(particleTimer.getTicks() >= particleSpawnTicks){
+            particleTimer.start();
+            particles[currentParticle].setPos(backX, backY);
+            particles[currentParticle].reset();
+            currentParticle = (currentParticle + 1) % missileConfig.particleNumber;
+        }
+
+        if(dist < missileConfig.explosionTriggerRange){
+            if(!explosionTriggered){
+                explosionTimer.start();
+                explosionTriggered = true;
+            }
+        }
+
+        if(explosionTriggered && explosionTimer.getTicks() >= missileConfig.explosionDelay){
+            explode(*missileConfig.explosionManager, missileConfig.explosionConfig);
+            isAlive = false;
+        }
+    }
+
+    void Missile::explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg){
+        mgr.spawn(x, y, cfg);
+        
+        float maxRadius = cfg.power * 50.f;
+        float maxRadiusSq = maxRadius * maxRadius;
+        float maxDamage = missileConfig.maxDamage;
+        float maxForce = cfg.power * 500.f;
+
+        for(auto& player : *this->missileConfig.players){
+            if(!player.isAlive) continue;
+
+            float distSq = util::distSq(this->collider, player.collider);
+
+            if(distSq < maxRadiusSq){
+                float factor = 1.f - (distSq / maxRadiusSq);
+
+                player.updateLife(-maxDamage * factor);
+
+                float dx = (player.collider.x + player.collider.w / 2.0f) - (this->collider.x + this->collider.w / 2.0f);
+                float dy = (player.collider.y + player.collider.h / 2.0f) - (this->collider.y + this->collider.h / 2.0f);
+
+                float forceX = (dx > 0.f ? maxForce : -maxForce) * factor;
+                float forceY = (dy > 0.f ? maxForce : -maxForce) * factor;
+
+                player.applyKnockBack(forceX, forceY);
+
+            }
+        }
+
+        missileConfig.audioManager->stopChannel(audioChannel);
+        missileConfig.audioManager->playSFX("explosion");
+
+        mgr.triggerShake(8.f, 0.3f);
+
+        isAlive = false;
+    }
+}
+#include "MissileManager.hpp"
+
+namespace missile{
+    void MissileManager::spawn(float x, float y, MissileConfig cfg){
+        missiles.push_back(std::make_unique<Missile>(x, y, cfg));
+    }
+
+    void MissileManager::update(float deltaTime){
+        for(auto& m : missiles){
+            m->update(deltaTime);
+        }
+
+        missiles.erase(
+            std::remove_if(missiles.begin(), missiles.end(),
+                [](const std::unique_ptr<Missile>& m){
+                    return !m->isAlive;
+                }
+            ),
+            missiles.end()
+        );
+    }
+
+    void MissileManager::render(SDL_Renderer* renderer){
+        for(auto& m : missiles){
+            m->render(renderer);
+        }
+    }
+}
+#include "Particle.hpp"
+
+void ParticleConfig::load(GameConfig& config){
+    int count = config.getInt("particle_color_count", 0);
+
+    keyframes.clear();
+    for(int i = 0; i < count; i++){
+        std::string key = "particle_color_" + std::to_string(i);
+        std::string val = config.getString(key, "255,255,255,255,500");
+        ColorKeyframe kf;
+        sscanf(val.c_str(), "%hhu,%hhu,%hhu,%hhu,%d",
+                &kf.r, &kf.g, &kf.b, &kf.a, &kf.time);
+        keyframes.push_back(kf);
+    }
+    growRate = config.getFloat("growRate", 0.0f);
+    friction = config.getFloat("friction", 0.0f);
+    riseForce = config.getFloat("riseForce", 0.0f);
+    vxSpread = config.getInt("vxSpread", 0);
+    vyMin = config.getInt("vyMin", 0);
+    vyMax = config.getInt("vyMax", 0);
+    sizeMin = config.getInt("sizeMin", 10);
+    sizeMax = config.getInt("sizeMax" ,10);
+
+    setColorFrameList();
+    printf("Color frame list size : %i\n", colorFrameList.size());
+}
+
+
+void ParticleConfig::setColorFrameList(){
+    int totalTime = keyframes.back().time;
+
+    for(int t = 0; t <= totalTime; t++){
+        for(int i = 0; i < (int)keyframes.size() - 1; i++){
+            ColorKeyframe& a = keyframes[i];
+            ColorKeyframe& b = keyframes[i + 1];
+
+            if(t >= a.time && t < b.time){
+                float pct = (float)(t - a.time) / (b.time - a.time);
+                SDL_Color color;
+                color.r = a.r + pct * (b.r - a.r);
+                color.g = a.g + pct * (b.g - a.g);
+                color.b = a.b + pct * (b.b - a.b);
+                color.a = a.a + pct * (b.a - a.a);
+                colorFrameList.push_back(color);
+    //printf("Current Time : %i Color : %i %i %i %i\n",t, color.r, color.g, color.b, color.a);
+                break;
+            }
+        }
+    }
+
+    int tableSize = colorFrameList.size();
+    printf("Table size: %i\n", tableSize);
+}
+
+const int ParticleConfig::getMaxTime(){
+    return keyframes.back().time - 1;
+}
+
+SDL_Color ParticleConfig::getCurrentColor(int currentTime){
+    SDL_Color color = colorFrameList[currentTime];
+    return color;
+}
+
+void Particle::setPos(int posX, int posY){
+    particleRect.x = posX;
+    particleRect.y = posY;
+    fx = posX;
+    fy = posY;
+}
+
+int Particle::getX(){
+    return particleRect.x;
+}
+
+int Particle::getY(){
+    return particleRect.y;
+}
+
+void ThrustParticle::init(ParticleConfig* particleConfig){
+    particleRect.x = 10000;
+    particleRect.y = 10000;
+    particleRect.w = 10;
+    particleRect.h = 10;
+    config = particleConfig;
+
+    maxLifeTime = static_cast<float>(config->getMaxTime());
+    isAlive = false;
+}
+
+void ThrustParticle::reset(){
+    lifeTime = 0.0f;
+    intCurrentTime = 0;
+    isAlive = true;
+    if(!(config->vxSpread == 0)){
+        vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
+    }
+
+    if(!(config->vyMax == config->vyMin)){
+        vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
+    }else{
+        vy = config->vyMax;
+    }
+
+    if(!(config->sizeMax == config->sizeMin)){
+        size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
+    }else{
+        size = config->sizeMax;
+    }
+
+    particleRect.w = size;
+    particleRect.h = size;
+}
+
+void ThrustParticle::update(float deltaTime){
+    if(!isAlive) return;
+    if(!((lifeTime+=(deltaTime*1000.0f)) <= maxLifeTime)){
+        isAlive = false;
+        //intCurrentTime = 0;
+        return;
+    };
+    intCurrentTime = static_cast<int>(lifeTime);
+
+    fx+=vx;
+    fy+=vy;
+
+    particleRect.x = fx;
+    particleRect.y = fy;
+    vy -= config->riseForce;
+    vx *= config->friction;
+
+    size += config->growRate;
+    particleRect.w = (int)size;
+    particleRect.h = (int)size;
+}
+
+void ThrustParticle::render(SDL_Renderer* renderer){
+    if(!isAlive){
+        return;
+    };
+    SDL_Color color = config->getCurrentColor(intCurrentTime);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &particleRect);
+}
+
+void ExplosionParticle::init(ParticleConfig* _colorsConfig){
+    colorsConfig = _colorsConfig;
+}
+
+void ExplosionParticle::update(float deltaTime){
+    
+}
+#include "Player.hpp"
+#include "KeyPreset.hpp"
+#include "Missile.hpp"
+#include "Utils.hpp"
+#include <SDL2/SDL_mixer.h>
+
+namespace player{
+    Player::Player(PlayerConfig config) : config(config){
+        isAlive = true;
+        thrustParticlesTimer.start();
+        currentThrustParticle = 0;
+        missileTimer.start();
+
+        x = config.screenWidth / 2.0f;
+        y = config.screenHeight / 4.0f;
+
+        vx = 0.f;
+        vy =0.f;
+        dir = 0;
+
+        collider.x = config.collider.x + x;
+        collider.y = config.collider.y + y;
+        collider.w = config.collider.w;
+        collider.h = config.collider.h;
+
+
+        for (int i = 0; i < 500; i++){
+            thrustParticles[i].init(&this->config.thrustParticleConfig);
+        }
+
+        life = config.maxHealth;
+        score = 0;
+    }
+
+    void Player::updateScore(int toAdd){
+        score += toAdd;
+    }
+
+    void Player::render(SDL_Renderer* renderer){
+        for(int i = 0; i < 500; i++){
+            thrustParticles[i].render(renderer);
+        }
+
+        if (!isAlive) return;
+
+        config.skin->render(x, y);
+        if(config.hat != nullptr){
+            config.hat->render(x, y);
+        }
+
+        if(config.showCollider){
+            SDL_SetRenderDrawColor(renderer, config.colliderColor.r, config.colliderColor.g, config.colliderColor.b, config.colliderColor.a);
+            SDL_RenderDrawRect(renderer, &config.collider);
+        }
+    }
+
+    void Player::update(float deltaTime){
+
+        for (int i = 0; i < 500; i++){
+            thrustParticles[i].update(deltaTime);
+        }
+
+        if(!isAlive) return;
+
+        vx = (vx + (config.acceleration * deltaTime * dir)) * (1  - ((1 - config.deceleration) * deltaTime));
+
+        if(vx > config.maxVx) vx = config.maxVx;
+        if (vx < -config.maxVx) vx = -config.maxVx;
+
+        vy -= jetpackThrust * deltaTime;
+        vy = vy - config.gravityForce * deltaTime;
+
+        x += vx * deltaTime;
+        y += vy * deltaTime;
+
+        if(x < 0){
+            x = 0;
+            vx = config.bounce ? -vx * config.bounceRestitution : 0;
+            if(config.bounce && abs(vx) > 5){
+                config.audioManager->playSFX("boing");
+            }
+        }
+
+        if(x > config.screenWidth - collider.w){
+            x = config.screenWidth - collider.w;
+            vx = config.bounce ? -vx * config.bounceRestitution : 0;
+            if(config.bounce && abs(vx) > 5){
+                config.audioManager->playSFX("boing");
+            }
+        }
+
+        if(y < 0){
+            y = 0;
+            vy = config.bounce ? -vy * config.bounceRestitution : 0;
+            if(config.bounce && abs(vy) > 5){
+                config.audioManager->playSFX("boing");
+            }
+        }
+
+        if(y > config.screenHeight - collider.h){
+            y = config.screenHeight - collider.h;
+            vy = config.bounce ? -vy * config.bounceRestitution : 0;
+            if(config.bounce && abs(vy) > 5){
+                config.audioManager->playSFX("boing");
+            }
+        }
+
+        jetpackThrust = 0.0f;
+
+        dir = 0;
+
+        collider.x = x;
+        collider.y = y;
+
+        if (life <= 0){
+            isAlive = false;
+            printf("Player dead\n");
+        }
+    }
+
+    void Player::jetpack(){
+        jetpackThrust = config.jetpackForce;
+
+        if(thrustParticlesTimer.getTicks() >= 20){
+            thrustParticlesTimer.start();
+            thrustParticles[currentThrustParticle].reset();
+            thrustParticles[currentThrustParticle].setPos(x + 5, y + 25);
+            currentThrustParticle = (currentThrustParticle + 1) % 500;
+        }
+    }
+
+    int Player::getScore(){
+        return score;
+    }
+
+    void Player::handleInput(const Uint8* keys){
+        if(!isAlive) return;
+
+        if(config.joystickId != -1){
+            SDL_Joystick* joystick = SDL_JoystickFromInstanceID(config.joystickId);
+            handleJoystickInput(joystick);
+        }else{
+            if(keys[config.keyPreset.left]){
+                move(-1);
+            }
+            if(keys[config.keyPreset.right]){
+                move(1);
+            }
+            if(keys[config.keyPreset.thrust]){
+                jetpack();
+                if(!mJetpackActive){
+                    jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
+                    mJetpackActive = true;
+                }
+            }else{
+                if(mJetpackActive){
+                    config.audioManager->stopChannel(jetpackChannel);
+                    jetpackChannel = -1;
+                    mJetpackActive = false;
+                }
+            }
+            if(keys[config.keyPreset.missile]){
+                spawnMissile();
+            }    
+        }
+    }
+
+    void Player::spawnMissile(){
+        if(score < config.scoreToLaunchMissile) return;
+
+        int myIndex = -1;
+        if(config.missileConfig.players){
+            for(int i = 0; i < config.missileConfig.players->size(); i++){
+                if(&(*config.missileConfig.players)[i] == this){
+                    myIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        missile::MissileConfig cfg = config.missileConfig;
+        cfg.throwerIndex = myIndex;
+
+        score -= config.scoreToLaunchMissile;
+
+        SDL_Point p = util::spawnOffScreen(config.screenWidth, config.screenHeight, 200);
+
+        config.missileManager->spawn(p.x, p.y, cfg);
+
+        missileTimer.start();
+    }
+
+    void Player::handleJoystickInput(SDL_Joystick* joystick){
+        if(!joystick) return;
+
+        Sint16 axisX = SDL_JoystickGetAxis(joystick, 0);
+        if(axisX < -DEAD_ZONE) move(-1);
+        else if(axisX > DEAD_ZONE) move(1);
+
+        if(SDL_JoystickGetButton(joystick, 0)){
+            jetpack();
+            if(!mJetpackActive){
+                jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
+                mJetpackActive = true;
+            }
+        }else{
+            if(mJetpackActive){
+                config.audioManager->stopChannel(jetpackChannel);
+                jetpackChannel = -1;
+                mJetpackActive = false;
+            }
+        }
+
+        if(SDL_JoystickGetButton(joystick, 1)) spawnMissile();
+    }
+
+    int Player::getLife(){
+        return life;
+    }
+
+    void Player::updateLife(int toAdd){
+        life+=toAdd;
+    }
+
+    LTexture* Player::getSkin() { return config.skin; }
+    LTexture* Player::getHat() { return config.hat; }
+
+    Player::~Player(){
+        Mix_HaltChannel(jetpackChannel);
+    }
+
+    void Player::move(int direction){
+        dir = direction;
+    }
+
+    void Player::applyKnockBack(float forceX, float forceY){
+        vx += forceX;
+        vy += forceY;
+    }
+}
+#include "PlayerManager.hpp"
+
+namespace player{
+    void PlayerManager::addPlayer(PlayerConfig& config){
+        players.emplace_back(config);
+    }
+
+    void PlayerManager::update(float deltaTime){
+        const Uint8* keys = SDL_GetKeyboardState(NULL);
+        for (auto& player : players) {
+            player.update(deltaTime);
+            player.handleInput(keys);
+        }
+    }
+
+    void PlayerManager::render(SDL_Renderer* renderer){
+        for (auto& player : players) {
+            player.render(renderer);
+        }
+    }
+}
+#include "Projectile.hpp"
+
+Projectile::Projectile(){
+    x = 0;
+    y = 0;
+    vx = 0;
+    vy = 0;
+    collider.x = 0;
+    collider.y = 0;
+    collider.w = 0;
+    collider.h = 0;
+}
+
+int Projectile::getX(){return x;}
+int Projectile::getY(){return y;}
+int Projectile::getVelX(){return vx;}
+int Projectile::getVelY(){return vy;}
+
+void Projectile::update(){
+    x+=vx;
+    y+=vy;
+    collider.x = x + distanceBetweenColliderXAnd0;
+    collider.y = y + distanceBetweenColliderYAnd0;
+}
+
+void Projectile::setPos(int posX, int posY){
+    x = posX;
+    y = posY;
+}
+
+void Projectile::setVelocity(int velocityX, int velocityY){
+    vx = velocityX;
+    vy = velocityY;
+}
+
+void Projectile::setCollider(int colX, int colY, int colW, int colH){
+    distanceBetweenColliderXAnd0 = colX;
+    distanceBetweenColliderYAnd0 = colY;
+    colX += x;
+    colY += y;
+    collider.x = colX;
+    collider.y = colY;
+    collider.w = colW;
+    collider.h = colH;
+}
+
+void Projectile::drawCollider(SDL_Renderer* renderer, SDL_Color* color){
+    SDL_SetRenderDrawColor(renderer, color->r, color->g, color->b, color->a);
+    SDL_RenderDrawRect(renderer, &collider);
+}
+#include "SceneManager.hpp"
+
+void SceneManager::change(std::unique_ptr<Scene> scene){
+    if(!mStack.empty()) mStack.pop();
+    mStack.push(std::move(scene));
+}
+
+void SceneManager::push(std::unique_ptr<Scene> scene){
+    mStack.push(std::move(scene));
+}
+
+void SceneManager::pop(){
+    if(!mStack.empty()){
+        mStack.pop();
+    }
+}
+
+Scene* SceneManager::current(){
+    return mStack.empty() ? nullptr : mStack.top().get();
+}
+
+bool SceneManager::isEmpty(){
+    return mStack.empty();
+}
+#include "ScoreCollectable.hpp"
+#include "Utils.hpp"
+
+void ScoreCollectable::init(int scoreOnHit, LTexture* texture){
+    cTexture = texture;
+    cScore = scoreOnHit;
+}
+
+void ScoreCollectable::update(float deltaTime, std::vector<player::Player>* players){
+    x += vx * deltaTime;
+    y += vy * deltaTime;
+    collider.x = x;
+    collider.y = y;
+
+    for(int i = 0; i < players->size(); i++){
+        if(util::collide((*players)[i].collider, collider)){
+            if(!(*players)[i].isAlive) return;
+
+            onHit((*players)[i]);
+        }
+    }
+}
+
+void ScoreCollectable::onHit(player::Player& player){
+    player.updateScore(cScore);
+    isAlive = false;
+}
+
+#include "Utils.hpp"
+
+namespace util{
+    bool collide(SDL_Rect& a, SDL_Rect& b){
+        SDL_Rect intersection;
+        return SDL_IntersectRect(&a, &b, &intersection) == SDL_TRUE;
+    }
+
+    bool isWithinDistance(SDL_Rect& a, SDL_Rect& b, float threshold){
+        return (distSq(a, b)) < (threshold*threshold);
+    }
+
+    float distSq(SDL_Rect& a, SDL_Rect& b){
+        float cx1 = a.x + a.w / 2.0f;
+        float cy1 = a.y + a.h / 2.0f;
+
+        float cx2 = b.x + b.w / 2.0f;
+        float cy2 = b.y + b.h / 2.0f;
+
+        float dx = cx2 - cx1;
+        float dy = cy2 - cy1;
+
+        return (dx*dx + dy*dy);
+    }
+
+    SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets){
+        SDL_Rect* nearest = NULL;
+        float distanceSquare = 1000000000000.0f;
+        for(SDL_Rect* target : targets){
+            float dx = target->x + target->w / 2.0f - tested.x - tested.w / 2.0f;
+            float dy = target->y + target->h / 2.0f - tested.y - tested.h / 2.0f;
+            float distance = dx*dx + dy*dy;
+            if(distance < distanceSquare){
+                distanceSquare = distance;
+                nearest = target;
+            }
+        }
+
+        return nearest;
+    }
+
+    SDL_Point spawnOffScreen(int screenWidth, int screenHeight, int margin){
+        int side = rand() % 4;
+
+        SDL_Point p;
+
+        switch(side){
+            case 0: // haut
+                p.x = rand() % (screenWidth + 2*margin) - margin;
+                p.y = -margin;
+                break;
+            case 1: // bas
+                p.x = rand() % (screenWidth + 2*margin) - margin;
+                p.y = screenHeight + margin;
+                break;
+            case 2: // gauche
+                p.x = -margin;
+                p.y = rand() % (screenHeight + 2*margin) - margin;
+                break;
+            case 3: // droite
+                p.x = screenWidth + margin;
+                p.y = rand() % (screenHeight + 2*margin) - margin;
+                break;
+        }
+
+        return p;
+    }
+}
+#pragma once
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+#include <string>
+#include <unordered_map>
+#include <cstdio>
+
+class AudioManager{
+private:
+    std::unordered_map<std::string, Mix_Music*> musicMap;
+    std::unordered_map<std::string, Mix_Chunk*> sfxMap;
+public:
+    AudioManager();
+    ~AudioManager();
+
+    bool init();
+    void clean();
+
+    bool loadMusic(const std::string& id, const std::string& path);
+    bool loadSFX(const std::string& id, const std::string& path);
+
+    void playMusic(const std::string& id, int loops=-1);
+    int playSFX(const std::string& id, int loops=0, int channel = -1);
+
+    void stopMusic();
+    void setMusicVolume(int volume);
+
+    void stopChannel(int channel);
+};
+
+#pragma once
+
+#include <SDL2/SDL.h>
+#include <vector>
+
+#include "LTexture.hpp"
+#include "Player.hpp"
+#include "Utils.hpp"
+
+class Collectable{
+public:
+    void render(SDL_Renderer* renderer);
+    void setPos(float posX, float posY);
+
+    virtual void update(float deltaTime, std::vector<player::Player>* players) = 0;
+    virtual void onHit(player::Player& player) = 0;
+
+    float x, y;
+    float vx, vy;
+    SDL_Rect collider;
+    bool isAlive = true;
+protected:
+    LTexture* cTexture;
+};
+#pragma once
+
+#include <SDL2/SDL.h>
+#include <unordered_map>
+#include <string>
+#include <vector>
+#include <cstdio>
+
+class GameConfig{
+    private:
+        std::unordered_map<std::string, std::string> values;
+    public:
+        GameConfig(const std::string& filename = "config.ini");
+
+        int getInt(const std::string& key, int defaultVal);
+        float getFloat(const std::string& key, float defaultVal);
+        bool getBool(const std::string& key, bool defaultVal);
+        std::string getString(const std::string& key, const std::string& defaultVal);
+
+        bool save();
+};
+
+extern GameConfig g_config;
+#pragma once
+
+#include <SDL2/SDL.h>
+#include "LTexture.hpp"
+
+class Dot
+{
+    public:
+        static const int DOT_WIDTH = 20;
+        static const int DOT_HEIGHT = 20;
+
+        const int SCREEN_WIDTH = 640;
+        const int SCREEN_HEIGHT = 450;
+
+        static const int DOT_VEL = 10;
+
+        Dot();
+
+        void move();
+
+        void render(LTexture &gDotTexture);
+
+        private:
+            int mPosX, mPosY;
+
+            int mVelX, mVelY;
+};#pragma once
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
+#include <string>
+#include <sstream>
+#include <memory>
+
+#include "Config.hpp"
+#include "LTexture.hpp"
+#include "LTimer.hpp"
+#include "Projectile.hpp"
+#include "Dot.hpp"
+#include "Particle.hpp"
+#include "PlayerSlot.hpp"
+#include "Utils.hpp"
+#include "Missile.hpp"
+#include "ScoreCollectable.hpp"
+#include "ExplosionManager.hpp"
+#include "PlayerManager.hpp"
+#include "AudioManager.hpp"
+
+class Game {
+public:
+    Game();
+    ~Game();
+
+    bool init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlots, int joinedCount);
+    bool loadMedia();
+    void close();
+    void start();
+    void handleEvents(const SDL_Event& e);
+    void update(float deltaTime);
+    void render();
+    bool isOver();
+private:
+    SDL_Window* mWindow = nullptr;
+    SDL_Renderer* mRenderer = nullptr;
+    SDL_Joystick* mController = nullptr;
+
+    GameConfig mConfig;
+    GameConfig mThrustParticleGameConfig;
+
+    int mScreenWidth;
+    int mScreenHeight;
+    int mEffectiveHeight;
+    int mPlayerNumber;
+    int mScoreToLaunchMissile;
+    int mMissileScorePenality;
+    int mPizzaTimeUntilNext;
+
+    bool mQuit = false;
+    
+    static constexpr int FPS = 60;
+    static constexpr int TICKS_PER_FRAME = 1000 / 60;
+    static constexpr int JOYSTICK_DEAD_ZONE = 8000;
+    static constexpr int THRUST_PARTICLE_NUMBER = 500;
+    static constexpr int MISSILE_NUMBER = 500;
+    static constexpr float GLOBAL_SPEED = 50.0f;
+
+    ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
+
+    missile::MissileManager mMissileManager;
+    explode::ExplosionManager explosionManager;
+    player::PlayerManager playerManager;
+    AudioManager audioManager;
+
+    Dot mDot;
+
+    LTexture mSquirellTexture;
+    LTexture mProjectileTexture;
+    LTexture mDotTexture;
+    LTexture mBGTexture;
+    LTexture mScoreTexture;
+    LTexture mMissileTexture;
+    LTexture mCowboyTexture;
+    LTexture mPizzaTexture;
+
+    TTF_Font* mScoreFont = nullptr;
+
+    LTimer mCapTimer;
+    LTimer mDeltaTimer;
+    LTimer mPizzaTimer;
+    std::vector<LTimer> mParticleTimers;
+    std::vector<LTimer> mMissileTimers;
+    
+
+    SDL_Rect mProjectileRect;
+    float mScrollingOffset = 0;
+    int mCurrentMissile = 0;
+    int mCurrentThrustParticle = 0;
+    int mXJoystickDir = 0;
+
+    std::vector<LTexture*> hats;
+    std::vector<LTexture*> skins;
+
+    ParticleConfig mThrustParticleConfig;
+
+    SDL_Color mWhite = {255, 255, 255, 255};
+    SDL_Color mRed = {255, 0, 0, 255};
+    SDL_Color mGreen = {0, 255, 0, 255};
+
+    std::vector<ScoreCollectable> mPizza;
+
+    void playerThrust(int playerIndex);
+    void spawnMissile(int playerWhoSpawn);
+
+    Mix_Chunk* gFireLoop = NULL;
+    Mix_Chunk* gJetpackThrustSFX = NULL;
+    Mix_Chunk* gMissileLaunchSFX = NULL;
+
+    missile::MissileConfig missileConfig;
+ };
+#pragma once
+#include "Scene.hpp"
+#include "SceneManager.hpp"
+#include "Game.hpp"
+#include "PlayerSlot.hpp"
+
+class GameScene : public Scene{
+public:
+    GameScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager, PlayerSlot* slots, int joinedCount);
+
+    void handleEvent(const SDL_Event& e) override;
+    void update(float deltaTime) override;
+    void render() override;
+    bool isDone() override;
+
+private:
+SceneManager& mManager;
+    Game* mGame;
+    bool mDone = false;
+};
+#pragma once
+#include <SDL2/SDL.h>
+
+struct KeyPreset{
+    SDL_Scancode left;
+    SDL_Scancode right;
+    SDL_Scancode thrust;
+    SDL_Scancode missile;
+};
+
+inline KeyPreset presets[3] = {                                                                       
+    {SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_S, SDL_SCANCODE_W},                          
+    {SDL_SCANCODE_J, SDL_SCANCODE_L, SDL_SCANCODE_K, SDL_SCANCODE_I},                          
+    {SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6, SDL_SCANCODE_KP_5, SDL_SCANCODE_KP_8}               
+ };
+#pragma once
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <string>
+#include <stdio.h>
+#include <SDL2/SDL_ttf.h>
+
+class LTexture
+{
+    public:
+        LTexture();
+        ~LTexture();
+
+        void setRenderer(SDL_Renderer* renderer);
+
+        bool loadFromeFile(std::string path);
+
+        bool loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* gFont);
+
+        void free();
+
+        void setColor(Uint8 red, Uint8 green, Uint8 blue);
+
+        void setBlendMode(SDL_BlendMode blending);
+        
+        void setAlpha(Uint8);
+
+        void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+        int getWidth();
+        int getHeight();
+    
+    private: 
+        SDL_Texture* mTexture;
+
+        SDL_Renderer* gRenderer;
+        int mWidth;
+        int mHeight;
+};
+#pragma once
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+
+class LTimer
+{
+    public:
+        LTimer();
+
+        void start();
+        void stop();
+
+        void pause();
+        void unpause();
+
+        Uint32 getTicks();
+
+        bool isStarted();
+        bool isPaused();
+    
+        private:
+            Uint32 mStartTicks;
+            Uint32 mPausedTicks;
+
+            bool mPaused;
+            bool mStarted;
+};#pragma once
+#include "Scene.hpp"
+#include "SceneManager.hpp"
+#include "LTexture.hpp"
+#include "PlayerSlot.hpp"
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <string>
+#include <vector>
+
+class MenuScene : public Scene{
+public:
+    MenuScene(SDL_Renderer* renderer, SDL_Window* window, SceneManager& manager);
+    ~MenuScene();
+
+    void handleEvent(const SDL_Event &e) override;
+    void update(float deltaTime) override;
+    void render() override;
+    bool isDone() override;
+
+private:
+    SDL_Renderer* mRenderer = nullptr;
+    SceneManager& mManager;
+    SDL_Window* mWindow;
+    TTF_Font* mFont = nullptr;
+    bool mDone = false;
+    SDL_Rect playBtnHitbox;
+    int mScreenWidth, mScreenHeight;
+    LTexture mPlayBtnTexture;
+
+    PlayerSlot mSlots[4];
+    int mJoinedCount = 0;
+
+    std::vector<LTexture> skins;
+    std::vector<LTexture*> hats;
+    
+    void startGame();
+};
+
+#pragma once
+#include "Particle.hpp"
+#include "ExplosionManager.hpp"
+#include "AudioManager.hpp"
+#include "Explosion.hpp"
+#include "LTexture.hpp"
+#include <SDL2/SDL.h>
+#include "LTimer.hpp"
+#include <SDL2/SDL_mixer.h>
+#include <math.h>
+#include <vector>
+
+namespace player {class Player; }
+
+namespace missile{
+    struct MissileConfig{
+        std::vector<player::Player>* players = nullptr;
+
+        int throwerIndex = -1;
+        float precision = 3.f;
+        float velocity = 1000.0f;
+        float explosionTriggerRange = 70.0f;
+        Mix_Chunk* launchSFX = NULL;
+        LTexture* texture = NULL;
+        SDL_Rect collider = {0, 0, 32, 32};
+        bool showCollider = false;
+        ParticleConfig particleConfig;
+        explode::ExplosionManager* explosionManager;
+        explode::ExplosionConfig explosionConfig;
+        float maxDamage = 50.f;
+        int particleNumber = 500;
+        int explosionDelay = 70;
+        AudioManager* audioManager;
+    };
+
+    class Missile{
+    public:
+        Missile(float x, float y, MissileConfig missileConfig);
+        void update(float deltaTime);
+        void render(SDL_Renderer* renderer);
+        bool isAlive = false;
+        SDL_Rect collider;
+        void explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg);
+    private:
+        MissileConfig missileConfig;
+        float angle;
+        float x, y;
+        float vx, vy;
+        SDL_Rect* target;
+        float currentVelocity = 0.f;
+        int particleSpawnTicks = 5;
+        int currentParticle = 0;
+        LTimer particleTimer;
+        LTimer explosionTimer;
+        bool explosionTriggered = false;
+        std::vector<ThrustParticle> particles;
+
+        int audioChannel;
+};
+}
+
+#pragma once
+#include "Missile.hpp"
+#include <vector>
+
+namespace missile{
+    class MissileManager{
+    public:
+        void spawn(float x, float y, MissileConfig cfg);
+        void update(float deltaTime);
+        void render(SDL_Renderer* renderer);
+    private:
+        std::vector<std::unique_ptr<Missile>> missiles;
+    };
+}
+#pragma once
+#include <SDL2/SDL.h>
+#include "Config.hpp"
+#include <vector>
+
+struct ColorKeyframe{
+    Uint8 r, g, b, a;
+    int time;
+};
+
+class ParticleConfig{
+    public:
+
+        void load(GameConfig& config);
+        SDL_Color getCurrentColor(int currentTime);
+        const int getMaxTime();
+        float growRate;
+        float friction;
+        float riseForce;
+        int vxSpread;
+        int vyMin;
+        int vyMax;
+        int sizeMin;
+        int sizeMax;
+
+    private:
+        void setColorFrameList();
+
+        std::vector<ColorKeyframe> keyframes;
+        std::vector<SDL_Color> colorFrameList;
+};
+
+class Particle{
+public:
+    bool isAlive = false;
+    void setPos(int posX, int posY);
+    int getX();
+    int getY();
+    
+    virtual void render(SDL_Renderer* renderer) = 0;
+    virtual void reset() = 0;
+    virtual void update(float deltaTime) = 0;
+protected:
+    SDL_Rect particleRect;
+    float size = 10;
+    float fx, fy;
+    float lifeTime = 0;
+    float maxLifeTime;
+    int intCurrentTime = 0;
+};
+
+class ThrustParticle : public Particle{
+public:
+    void init(ParticleConfig* config);
+    void reset() override;
+    void update(float deltaTime) override;
+    void render(SDL_Renderer* renderer) override;
+private:
+    float vx = 0;
+    float vy = 0;
+
+    float growRate;
+    float friction;
+    float riseForce;
+    float vyMin, vyMax;
+    ParticleConfig* config;
+};
+
+
+class ExplosionParticle : public Particle{
+public:
+    void init(ParticleConfig* _colorsConfig);
+    void reset() override;
+    void update(float deltaTime) override;
+    void render(SDL_Renderer* renderer) override;
+
+private:
+    float vx, vy;
+    float power;
+    float friction;
+    float angle;
+    float gravity;
+    float lifeTime;
+
+    ParticleConfig* colorsConfig;
+};
+#pragma once
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
+#include "LTimer.hpp"
+#include "LTexture.hpp"
+#include "Particle.hpp"
+#include "KeyPreset.hpp"
+#include "MissileManager.hpp"
+#include "AudioManager.hpp"
+
+namespace player{
+    struct PlayerConfig{
+        float jetpackForce = 700.0f;
+        float maxVy = 600.0f;
+        float maxVx = 1000.0f;
+        float acceleration = 1000.0f;
+        float deceleration = 0.50f;
+        float gravityForce = -500.0f;
+        float bounceRestitution = 0.4f;
+
+        int maxHealth = 100;
+
+        int scoreToLaunchMissile = 200;
+        bool bounce = false;
+
+        int screenWidth = 800;
+        int screenHeight = 600;
+
+        bool showCollider = false;
+        SDL_Rect collider = {0, 0, 32, 32};
+        SDL_Color colliderColor = {255, 0, 255, 255};
+
+        KeyPreset keyPreset;
+        int joystickId = -1;
+
+        LTexture* skin;
+        LTexture* hat;
+
+        missile::MissileManager* missileManager;
+        missile::MissileConfig missileConfig;
+        AudioManager* audioManager;
+
+        std::vector<Player>* players;
+
+        ParticleConfig thrustParticleConfig;
+    };
+
+    class Player{
+    public:
+        Player(PlayerConfig config);
+        ~Player();
+
+        void render(SDL_Renderer* renderer);
+        void move(int direction);
+        void jetpack();
+
+        void updateScore(int toAdd);
+
+        int getScore();
+        
+        void handleInput(const Uint8* keys);
+        void handleJoystickInput(SDL_Joystick* joystick);
+
+        void setJoystickId(int id);
+        int getJoystickId();
+
+        void update(float deltaTime);
+        
+        void spawnMissile();
+
+        void applyKnockBack(float forceX, float forceY);
+
+        void updateLife(int toAdd);
+        int getLife();
+
+        bool isAlive;
+
+        LTexture* getSkin();
+        LTexture* getHat();
+
+        SDL_Rect collider;
+
+    private:
+        float x, y; 
+        float vx, vy;
+        int score;
+        int dir;
+
+        static constexpr int DEAD_ZONE = 8000;
+
+        LTexture* skin;
+        LTexture* hat;
+
+        float jetpackThrust = 0.0f;
+
+        LTimer thrustParticlesTimer;
+        ThrustParticle thrustParticles[500];
+        ParticleConfig thrustParticleConfig;
+
+        int currentThrustParticle;
+
+        int missileTableSize;
+
+        Player* players;
+        int playerTableSize;
+
+        LTimer missileTimer;
+        int scoreToLaunchMissile;
+        
+        int life;
+        int jetpackChannel = -1;
+        bool mJetpackActive = false;
+
+        PlayerConfig config;
+    };
+}
+
+#pragma once
+
+#include "Player.hpp"
+#include <vector>
+
+namespace player{
+    class PlayerManager{
+    public:
+        void update(float deltaTime);
+        void render(SDL_Renderer* renderer);
+        void addPlayer(PlayerConfig& config);
+        std::vector<Player> players;
+    };
+}#pragma once
+#include "LTexture.hpp"
+
+struct PlayerSlot{
+    int presetIndex = -1;
+    bool ready = false;
+    int skinIndex = 0;
+    int hatIndex = 0;
+    int joystickId = -1;
+};
+#pragma once
+
+#include <SDL2/SDL.h>
+
+class Projectile{
+    public:
+        Projectile();
+        void update();
+
+        int getX(), getY(), getVelX(), getVelY();
+        bool isInScreen = false;
+
+        void setPos(int posX, int posY);
+        void setVelocity(int vx, int vy);
+
+        void setCollider(int colX, int colY, int colW, int colH);
+
+        void drawCollider(SDL_Renderer* renderer, SDL_Color* color);
+
+        SDL_Rect collider;
+
+    private:
+        int x, y;
+        int vx, vy;
+
+        float velocity = 10;
+        int distanceBetweenColliderXAnd0;
+        int distanceBetweenColliderYAnd0;
+};
+#pragma once
+#include <SDL2/SDL.h>
+
+class Scene{
+public:
+    virtual ~Scene() = default;
+    virtual void handleEvent(const SDL_Event& e) = 0;
+    virtual void update(float deltaTime) = 0;
+    virtual void render() = 0;
+    virtual bool isDone() = 0;
+};
+#pragma once
+#include "Scene.hpp"
+#include <memory>
+#include <stack>
+
+class SceneManager{
+public:
+    void change(std::unique_ptr<Scene> scene);
+    void push(std::unique_ptr<Scene> scene);
+    void pop();
+    Scene* current();
+    bool isEmpty();
+private:
+    std::stack<std::unique_ptr<Scene>> mStack;
+};
+#pragma once
+
+#include "Collectable.hpp"
+
+class ScoreCollectable : public Collectable{
+public:
+    void init(int scoreOnHit, LTexture* texture);
+    void update(float deltaTime, std::vector<player::Player>* players) override;
+    void onHit(player::Player& player) override;
+private:
+    int cScore = 0;
+};
+#pragma once
+#include <SDL2/SDL.h>
+#include <vector>
+
+namespace util{
+    bool collide(SDL_Rect& a, SDL_Rect& b);
+    bool isWithinDistance(SDL_Rect& a, SDL_Rect& b, float threshold);
+    SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets);
+    SDL_Point spawnOffScreen(int screenWidth, int screenHeight, int margin);
+    float distSq(SDL_Rect& a, SDL_Rect& b);
+}
+
