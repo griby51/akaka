@@ -32,6 +32,13 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
 }
 
 void MenuScene::update(float deltaTime){
+
+    if(starting){
+        ticksLeft-=deltaTime*1000;
+        if(ticksLeft <= 0){
+            startGame();
+        }
+    }
 }
 
 MenuScene::~MenuScene(){
@@ -67,6 +74,10 @@ void MenuScene::render(){
             }
         }else{
             drawEmptySlot(colX, colWidth);
+        }
+
+        if(starting){
+            renderText("Game start in " + std::to_string(ticksLeft/ 1000 + 1) + "...", 10, 10, SDL_Color{255, 255, 255, 0});
         }
     }
     
@@ -153,6 +164,8 @@ void MenuScene::handleEvent(const SDL_Event &e){
     if(pIndex == -1 && mJoinedCount < 4){
         if(e.type == SDL_JOYAXISMOTION && abs(e.jaxis.value) < 8000) return;
 
+        starting = false;
+
         pIndex = mJoinedCount;
         mSlots[pIndex].presetIndex = inputPresetId;
         mSlots[pIndex].joystickId = inputJoyId;
@@ -215,7 +228,12 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 if(!allReady) break;
             }
 
-            if(allReady) startGame();
+            if(allReady){
+                starting = true;
+                ticksLeft = 5000;
+            }else{
+                starting = false;
+            }
         }
     }
 }
@@ -225,6 +243,13 @@ void MenuScene::startGame(){
         printf("No player");
     }else{
         mManager.push(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+    }
+
+    starting = false;
+
+    for(int i = 0; i < mJoinedCount; i++){
+        mSlots[i].ready = false;
+        mSlots[i].menuCursorY = 0;
     }
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 #include "Scene.hpp"
 #include "SceneManager.hpp"
-#include "LTexture.hpp"
 #include "PlayerSlot.hpp"
+#include "LTimer.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -33,6 +33,9 @@ private:
 
     std::vector<std::string> mSkinIds;
     std::vector<std::string> mHatIds;
+
+    int ticksLeft = 5000;
+    bool starting = false;
     
     void startGame();
 
