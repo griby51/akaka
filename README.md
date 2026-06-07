@@ -143,8 +143,18 @@ akaka/
 - [  ] Refaire toute les textures
 - [  ] Faire en sorte que les missiles spawn aléatoirement autour de l'ecran
 - [  ] Ajouter des explosions pour les missiles avec souffle qui decale le joueur, screen shaking et bien d'autres
-- [  ] Ajouter une capa qui fait un truc explosif qui sort du jetpack avec grosse poussé et qui a l'impact (d'un joueur ou du sol explose)
-- [.] Rajouter du gore et 1000 points quand tu ramasses la tete de quelquun 
+- [  ] Ajouter une capa qui fait un truc explosif qui sort du jetpack avec grosse poussé et qui a l'impact (d'un joueur ou du sol) explose
+- [  ] Rajouter du gore et 1000 points quand tu ramasses la tete de quelquun 
+- [  ] La capa du plot c de faire spawn des plots sur le sol qui s'envolent tout droit quand qq les trigger et explose
+- [  ] La capa du pere noel c a peu pres la meme que ds Worldbox (a etoffer)
+- [  ] Passif de l'ecureuil c 200% de point quand il ramasse une pizza
+- [  ] Les missiles ce sera un event aleatoire pour nous eteindre
+- [  ] Collision entre joueur
+- [  ] Perso ou son jetpack devient un missile nucleaire
+- [  ] Le cuistot il peut lacher de la bouffe empoisoné (ou qui explose jsp)
+- [  ] Soldat peut faire un call strategique (mais quoi ?)
+- [  ] Cowboy ralentit le temps sauf pr lui (dead eye)
+- [  ] Le diplomé ramene un powerpoint qui vient t'arracher
 
 ---
 
