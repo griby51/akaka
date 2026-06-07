@@ -21,7 +21,7 @@ namespace missile{
         float velocity = 1000.0f;
         float explosionTriggerRange = 70.0f;
         Mix_Chunk* launchSFX = NULL;
-        LTexture* texture = NULL;
+        std::string textureId = "missile";
         SDL_Rect collider = {0, 0, 32, 32};
         bool showCollider = false;
         ParticleConfig particleConfig;

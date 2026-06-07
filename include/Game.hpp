@@ -68,14 +68,7 @@ private:
 
     Dot mDot;
 
-    LTexture mSquirellTexture;
-    LTexture mProjectileTexture;
-    LTexture mDotTexture;
-    LTexture mBGTexture;
     LTexture mScoreTexture;
-    LTexture mMissileTexture;
-    LTexture mCowboyTexture;
-    LTexture mPizzaTexture;
 
     TTF_Font* mScoreFont = nullptr;
 
@@ -92,9 +85,6 @@ private:
     int mCurrentThrustParticle = 0;
     int mXJoystickDir = 0;
 
-    std::vector<LTexture*> hats;
-    std::vector<LTexture*> skins;
-
     ParticleConfig mThrustParticleConfig;
 
     SDL_Color mWhite = {255, 255, 255, 255};
@@ -105,10 +95,6 @@ private:
 
     void playerThrust(int playerIndex);
     void spawnMissile(int playerWhoSpawn);
-
-    Mix_Chunk* gFireLoop = NULL;
-    Mix_Chunk* gJetpackThrustSFX = NULL;
-    Mix_Chunk* gMissileLaunchSFX = NULL;
 
     missile::MissileConfig missileConfig;
  };

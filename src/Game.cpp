@@ -1,10 +1,12 @@
 #include "Game.hpp"
 #include "Explosion.hpp"
+#include "LTexture.hpp"
 #include "Missile.hpp"
 #include "MissileManager.hpp"
 #include "Player.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
+#include "TextureManager.hpp"
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
@@ -41,24 +43,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
     mEffectiveHeight = mScreenHeight - 50;
 
-    for(const auto& entry : std::filesystem::directory_iterator("assets/hats/")){
-        if(entry.path().extension() == ".png"){
-            LTexture* tex = new LTexture();
-            tex->setRenderer(mRenderer);
-            tex->loadFromeFile(entry.path().string().c_str());
-            hats.push_back(tex);
-        }
-    }
-
-    for(const auto& entry : std::filesystem::directory_iterator("assets/skins/")){
-        if(entry.path().extension() == ".png"){
-            LTexture* tex = new LTexture();
-            tex->setRenderer(mRenderer);
-            tex->loadFromeFile(entry.path().string().c_str());
-            skins.push_back(tex);
-        }
-    }
-
     playerManager.players.reserve(joinedCount);
 
     for(int i = 0; i < joinedCount; i++){
@@ -72,7 +56,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
         missileCfg.particleConfig = mThrustParticleConfig;
         missileCfg.players = &playerManager.players;
-        missileCfg.texture = &mMissileTexture;
         missileCfg.explosionConfig = explosionConfig;
         missileCfg.explosionManager = &explosionManager;
         missileCfg.audioManager = &audioManager;
@@ -85,8 +68,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
 
         cfg.players = &playerManager.players;
-        cfg.skin = skins[playerSlot[i].skinIndex];
-        cfg.hat = hats[playerSlot[i].hatIndex];
+        cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
+        cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
         cfg.audioManager = &audioManager;
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
@@ -118,50 +101,27 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 }
 
 bool Game::loadMedia() {
-    int success = true;
+    TextureManager& tm = TextureManager::getInstance();
 
-    mSquirellTexture.setRenderer(mRenderer);
-    mProjectileTexture.setRenderer(mRenderer);
-    mDotTexture.setRenderer(mRenderer);
-    mBGTexture.setRenderer(mRenderer);
-    mScoreTexture.setRenderer(mRenderer);
-    mMissileTexture.setRenderer(mRenderer);
-    mCowboyTexture.setRenderer(mRenderer);
-    mPizzaTexture.setRenderer(mRenderer);
+    tm.loadTexture("pizza", "assets/collectables/pizza.png");
+    tm.loadTexture("missile", "assets/missile00.png");
+    tm.loadTexture("dot", "assets/dot.bmp");
+    tm.loadTexture("bg", "assets/abstract_seamless_bg_01.png");
+    
+    tm.loadDirectory("assets/hats/", "hat_");
+    tm.loadDirectory("assets/skins/", "skin_");
+
+    int success = true;
 
     mScoreFont = TTF_OpenFont("assets/Hypermonosaturation-zrMo0.ttf", 14);
     if (!mScoreFont) {
         printf("Font error: %s\n", TTF_GetError());
         success = false; 
     }
-    if(!mPizzaTexture.loadFromeFile("assets/collectables/pizza.png")){
-        printf("Error loading pizza texture\n");
-        success = false;
-    }
     if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
         printf("Error loading score texture\n");
         success = false;
     }
-    if (!mMissileTexture.loadFromeFile("assets/missile00.png")){
-        printf("Error loading missile texture\n");
-        return false;
-    }
-    if (!mDotTexture.loadFromeFile("assets/dot.bmp")){
-        printf("Error loading dot texture\n");
-        return false;
-    }
-    if (!mBGTexture.loadFromeFile("assets/abstract_seamless_bg_01.png")){
-        printf("Error loading background\n");
-        return false;
-    }
-    if (!mProjectileTexture.loadFromeFile("assets/cannonbob.png")){
-        printf("Error loading projectile texture\n");
-        return false;
-    }
-    if (!mSquirellTexture.loadFromeFile("assets/skins/squirell.png")){
-        printf("Error loading squirell texture");
-        return false;
-    }  
 
     audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");
     audioManager.loadSFX("missileLaunch", "assets/sounds/sfx/rocket_launch_1.wav");
@@ -186,7 +146,7 @@ void Game::start(){
 
     srand(time(0));
 
-    mPizzaTimeUntilNext = rand() % 10000;
+    mPizzaTimeUntilNext = rand() % 1000;
     printf("pizzaTimer delay : %i\n", mPizzaTimeUntilNext);
     mPizzaTimer.start();
 }
@@ -201,7 +161,7 @@ void Game::handleEvents(const SDL_Event& e) {
 void Game::update(float deltaTime){
     mDot.move();
     mScrollingOffset -= GLOBAL_SPEED * deltaTime;
-    if(mScrollingOffset < -mBGTexture.getWidth()){
+    if(mScrollingOffset < -TextureManager::getInstance().getTexture("bg")->getWidth()){
         mScrollingOffset = 0;
     }
 
@@ -222,12 +182,12 @@ void Game::update(float deltaTime){
     }
 
     if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){
-        mPizzaTimeUntilNext = rand() % 10000;
+        mPizzaTimeUntilNext = rand() % 1000;
         mPizzaTimer.start();
         mPizza.emplace_back();
-        mPizza.back().init(100, &mPizzaTexture);
+        mPizza.back().init(100, "pizza");
         mPizza.back().setPos(mScreenWidth, rand() % (mEffectiveHeight - 16));
-        mPizza.back().vx = -GLOBAL_SPEED;
+        mPizza.back().vx = -GLOBAL_SPEED * 10;
         mPizza.back().collider.w = 16;
         mPizza.back().collider.h = 16;
     }
@@ -244,8 +204,10 @@ void Game::render(){
     SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
     SDL_RenderClear(mRenderer);
 
-    mBGTexture.render(mScrollingOffset, 0);
-    mBGTexture.render(mScrollingOffset + mBGTexture.getWidth(), 0);
+    LTexture* bg = TextureManager::getInstance().getTexture("bg");
+
+    bg->render(mScrollingOffset, 0);
+    bg->render(mScrollingOffset + bg->getWidth(), 0);
 
     explosionManager.render(mRenderer);
     playerManager.render(mRenderer);
@@ -299,16 +261,7 @@ void Game::render(){
 };
 
 void Game::close() {
-    mSquirellTexture.free();
-    mProjectileTexture.free();
-    mDotTexture.free();
-    mBGTexture.free();
-    mScoreTexture.free();
-    mMissileTexture.free();
-    mCowboyTexture.free();
-
-    Mix_FreeChunk(gFireLoop);
-    gFireLoop = NULL;
+    TextureManager::getInstance().clean();
 
     if (mScoreFont){
         TTF_CloseFont(mScoreFont); mScoreFont = nullptr;

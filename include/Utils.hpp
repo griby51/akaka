@@ -8,4 +8,6 @@ namespace util{
     SDL_Rect* theNearest(SDL_Rect& tested, std::vector<SDL_Rect*> targets);
     SDL_Point spawnOffScreen(int screenWidth, int screenHeight, int margin);
     float distSq(SDL_Rect& a, SDL_Rect& b);
+
+    void drawRoundedRect(SDL_Renderer* renderer, SDL_Rect rect, int radius, SDL_Color color);
 }

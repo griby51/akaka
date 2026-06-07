@@ -4,6 +4,8 @@
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
 #include "Utils.hpp"
+#include "TextureManager.hpp"
+
 #include <SDL2/SDL_mixer.h>
 #include <math.h>
 
@@ -37,7 +39,7 @@ namespace missile{
         for(int i = 0; i < missileConfig.particleNumber; i++){
             particles[i].render(renderer);
         }
-        missileConfig.texture->render(x, y, NULL, angle * (180 / M_PI) + 90);
+        TextureManager::getInstance().getTexture(missileConfig.textureId)->render(x, y, NULL, angle * (180 / M_PI) + 90);
 
         if(missileConfig.showCollider){
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);

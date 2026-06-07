@@ -49,13 +49,16 @@ void LTexture::free()
     }
 }
 
-void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip){
+void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip, int width, int height){
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
 
     if(clip != NULL){
         renderQuad.w = clip->w;
         renderQuad.h = clip->h;
     }
+
+    if(width != 0) renderQuad.w = width;
+    if(height != 0) renderQuad.h = height;
 
     SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
 }

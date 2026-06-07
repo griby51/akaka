@@ -1,4 +1,5 @@
 #include "Utils.hpp"
+#include <SDL2/SDL_render.h>
 
 namespace util{
     bool collide(SDL_Rect& a, SDL_Rect& b){
@@ -64,5 +65,10 @@ namespace util{
         }
 
         return p;
+    }
+
+    void drawRoundedRect(SDL_Renderer* renderer, SDL_Rect rect, int radius, SDL_Color color){
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_RenderFillRect(renderer, &rect);
     }
 }

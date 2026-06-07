@@ -27,14 +27,17 @@ private:
     bool mDone = false;
     SDL_Rect playBtnHitbox;
     int mScreenWidth, mScreenHeight;
-    LTexture mPlayBtnTexture;
 
     PlayerSlot mSlots[4];
     int mJoinedCount = 0;
 
-    std::vector<LTexture> skins;
-    std::vector<LTexture*> hats;
+    std::vector<std::string> mSkinIds;
+    std::vector<std::string> mHatIds;
     
     void startGame();
-};
 
+    void drawPanel(int x, int y, int w, int h, bool isReady);
+    void drawPlayer(int colX, int colWidth, std::string skinId, std::string hatId);
+    void renderText(std::string text, int x, int y, SDL_Color color);
+    void drawEmptySlot(int x, int colWidth);
+};

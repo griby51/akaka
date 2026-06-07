@@ -1,8 +1,7 @@
-#include "Game.hpp"
 #include "SceneManager.hpp"
 #include "MenuScene.hpp"
-#include "GameScene.hpp"
 #include "LTimer.hpp"
+#include "TextureManager.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
@@ -36,6 +35,8 @@ int main(int argc, char* args[]){
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     SDL_RenderSetLogicalSize(renderer, 1024, 576);
+
+    TextureManager::getInstance().init(renderer);
 
     SceneManager manager;
     manager.push(std::make_unique<MenuScene>(renderer, window, manager));

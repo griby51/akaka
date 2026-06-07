@@ -28,6 +28,8 @@ namespace player{
             thrustParticles[i].init(&this->config.thrustParticleConfig);
         }
 
+        missileTimer.start();
+
         life = config.maxHealth;
         score = 0;
     }
@@ -166,7 +168,10 @@ namespace player{
     }
 
     void Player::spawnMissile(){
+        if(missileTimer.getTicks() < 300) return;
         if(score < config.scoreToLaunchMissile) return;
+
+        missileTimer.start();
 
         int myIndex = -1;
         if(config.missileConfig.players){

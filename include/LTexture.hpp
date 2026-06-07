@@ -26,7 +26,7 @@ class LTexture
         
         void setAlpha(Uint8);
 
-        void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+        void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE, int width = 0, int height = 0);
 
         int getWidth();
         int getHeight();
