@@ -113,7 +113,7 @@ bool Game::loadMedia() {
 
     int success = true;
 
-    mScoreFont = TTF_OpenFont("assets/Hypermonosaturation-zrMo0.ttf", 14);
+    mScoreFont = TTF_OpenFont("assets/pixelfont.ttf", 14);
     if (!mScoreFont) {
         printf("Font error: %s\n", TTF_GetError());
         success = false; 
