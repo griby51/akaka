@@ -13,7 +13,7 @@ bool TextureManager::loadTexture(const std::string& id, const std::string& path)
     auto newTexture = std::make_unique<LTexture>();
     newTexture->setRenderer(mRenderer);
 
-    if(!newTexture->loadFromeFile(path)){
+    if(!newTexture->loadFromFile(path)){
         printf("Error TextureManager : can't load : %s\n", path.c_str());
         return false;
     }

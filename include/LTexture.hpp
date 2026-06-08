@@ -14,7 +14,7 @@ class LTexture
 
         void setRenderer(SDL_Renderer* renderer);
 
-        bool loadFromeFile(std::string path);
+        bool loadFromFile(std::string path);
 
         bool loadFromRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* gFont);
 

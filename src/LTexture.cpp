@@ -14,7 +14,7 @@ void LTexture::setRenderer(SDL_Renderer* renderer){
     gRenderer = renderer;
 }
 
-bool LTexture::loadFromeFile(std::string path){
+bool LTexture::loadFromFile(std::string path){
     free();
 
     SDL_Texture* newTexture = NULL;
