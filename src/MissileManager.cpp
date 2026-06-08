@@ -1,6 +1,6 @@
 #include "MissileManager.hpp"
 
-namespace missile{
+namespace projectile{
     void MissileManager::spawn(float x, float y, MissileConfig cfg){
         missiles.push_back(std::make_unique<Missile>(x, y, cfg));
     }

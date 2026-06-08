@@ -2,28 +2,19 @@
 
 #include <SDL2/SDL.h>
 
-class Projectile{
+namespace projectile{
+    class Projectile{
     public:
-        Projectile();
-        void update();
+        virtual void update(float deltaTime) = 0;
+        virtual void render(SDL_Renderer* renderer) = 0;
+        virtual ~Projectile() = default;
 
-        int getX(), getY(), getVelX(), getVelY();
-        bool isInScreen = false;
+        bool isDead() const {return !isAlive; }
 
-        void setPos(int posX, int posY);
-        void setVelocity(int vx, int vy);
-
-        void setCollider(int colX, int colY, int colW, int colH);
-
-        void drawCollider(SDL_Renderer* renderer, SDL_Color* color);
-
+    protected:
+        float x, y;
+        float vx, vy;
+        bool isAlive = false;
         SDL_Rect collider;
-
-    private:
-        int x, y;
-        int vx, vy;
-
-        float velocity = 10;
-        int distanceBetweenColliderXAnd0;
-        int distanceBetweenColliderYAnd0;
-};
+    };
+}

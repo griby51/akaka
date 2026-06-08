@@ -1,13 +1,15 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
+#include <vector>
+#include <memory>
 
 #include "LTimer.hpp"
 #include "LTexture.hpp"
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
-#include "MissileManager.hpp"
 #include "AudioManager.hpp"
+#include "Ability.hpp"
 
 namespace player{
     struct PlayerConfig{
@@ -37,13 +39,13 @@ namespace player{
         LTexture* skin;
         LTexture* hat;
 
-        missile::MissileManager* missileManager;
-        missile::MissileConfig missileConfig;
         AudioManager* audioManager;
 
         std::vector<Player>* players;
 
         ParticleConfig thrustParticleConfig;
+
+        std::unique_ptr<Ability> ability = nullptr;
     };
 
     class Player{
@@ -104,9 +106,6 @@ namespace player{
 
         Player* players;
         int playerTableSize;
-
-        LTimer missileTimer;
-        int scoreToLaunchMissile;
         
         int life;
         int jetpackChannel = -1;

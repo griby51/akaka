@@ -9,7 +9,6 @@ namespace player{
         isAlive = true;
         thrustParticlesTimer.start();
         currentThrustParticle = 0;
-        missileTimer.start();
 
         x = config.screenWidth / 2.0f;
         y = config.screenHeight / 4.0f;
@@ -27,8 +26,6 @@ namespace player{
         for (int i = 0; i < 500; i++){
             thrustParticles[i].init(&this->config.thrustParticleConfig);
         }
-
-        missileTimer.start();
 
         life = config.maxHealth;
         score = 0;
@@ -114,6 +111,10 @@ namespace player{
         collider.x = x;
         collider.y = y;
 
+        if(config.ability){
+            config.ability->update(deltaTime);
+        }
+
         if (life <= 0){
             isAlive = false;
             printf("Player dead\n");
@@ -162,38 +163,14 @@ namespace player{
                 }
             }
             if(keys[config.keyPreset.missile]){
-                spawnMissile();
+                if(config.ability){
+                    config.ability->use(this);
+                }
             }    
         }
     }
 
-    void Player::spawnMissile(){
-        if(missileTimer.getTicks() < 300) return;
-        if(score < config.scoreToLaunchMissile) return;
-
-        missileTimer.start();
-
-        int myIndex = -1;
-        if(config.missileConfig.players){
-            for(int i = 0; i < config.missileConfig.players->size(); i++){
-                if(&(*config.missileConfig.players)[i] == this){
-                    myIndex = i;
-                    break;
-                }
-            }
-        }
         
-        missile::MissileConfig cfg = config.missileConfig;
-        cfg.throwerIndex = myIndex;
-
-        score -= config.scoreToLaunchMissile;
-
-        SDL_Point p = util::spawnOffScreen(config.screenWidth, config.screenHeight, 200);
-
-        config.missileManager->spawn(p.x, p.y, cfg);
-
-        missileTimer.start();
-    }
 
     void Player::handleJoystickInput(SDL_Joystick* joystick){
         if(!joystick) return;
@@ -216,7 +193,11 @@ namespace player{
             }
         }
 
-        if(SDL_JoystickGetButton(joystick, 1)) spawnMissile();
+        if(SDL_JoystickGetButton(joystick, 1)){
+            if(config.ability){
+                config.ability->use(this);
+            }
+        };
     }
 
     int Player::getLife(){

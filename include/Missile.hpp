@@ -3,16 +3,17 @@
 #include "ExplosionManager.hpp"
 #include "AudioManager.hpp"
 #include "Explosion.hpp"
-#include "LTexture.hpp"
-#include <SDL2/SDL.h>
 #include "LTimer.hpp"
+#include "Projectile.hpp"
+
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <math.h>
 #include <vector>
 
 namespace player {class Player; }
 
-namespace missile{
+namespace projectile{
     struct MissileConfig{
         std::vector<player::Player>* players = nullptr;
 
@@ -33,19 +34,15 @@ namespace missile{
         AudioManager* audioManager;
     };
 
-    class Missile{
+    class Missile : public Projectile{
     public:
         Missile(float x, float y, MissileConfig missileConfig);
-        void update(float deltaTime);
-        void render(SDL_Renderer* renderer);
-        bool isAlive = false;
-        SDL_Rect collider;
+        void update(float deltaTime) override;
+        void render(SDL_Renderer* renderer) override;
         void explode(explode::ExplosionManager& mgr, explode::ExplosionConfig& cfg);
     private:
         MissileConfig missileConfig;
         float angle;
-        float x, y;
-        float vx, vy;
         SDL_Rect* target;
         float currentVelocity = 0.f;
         int particleSpawnTicks = 5;
@@ -56,6 +53,6 @@ namespace missile{
         std::vector<ThrustParticle> particles;
 
         int audioChannel;
-};
+    };
 }
 

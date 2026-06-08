@@ -9,16 +9,18 @@
 #include <SDL2/SDL_mixer.h>
 #include <math.h>
 
-namespace missile{
+namespace projectile{
     Missile::Missile(float x, float y, MissileConfig missileConfig)
-    : x(x), y(y), missileConfig(missileConfig){
+    : missileConfig(missileConfig){
         collider.x = x + missileConfig.collider.x;
         collider.y = y + missileConfig.collider.y;
         collider.w = missileConfig.collider.w;
         collider.h = missileConfig.collider.h;
 
-        vx=0.f;
-        vy=0.f;
+        this->x = x;
+        this->y = y;
+        this->vx=0.f;
+        this->vy=0.f;
 
         angle = 0.f;
 
