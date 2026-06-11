@@ -1,8 +1,8 @@
 #include "PlayerManager.hpp"
 
 namespace player{
-    void PlayerManager::addPlayer(PlayerConfig& config){
-        players.emplace_back(config);
+    void PlayerManager::addPlayer(PlayerConfig&& config){
+        players.emplace_back(std::move(config));
     }
 
     void PlayerManager::update(float deltaTime){

@@ -1,11 +1,10 @@
 #include "Player.hpp"
 #include "KeyPreset.hpp"
-#include "Missile.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_mixer.h>
 
 namespace player{
-    Player::Player(PlayerConfig config) : config(config){
+    Player::Player(PlayerConfig&& config) : config(std::move(config)){
         isAlive = true;
         thrustParticlesTimer.start();
         currentThrustParticle = 0;
@@ -222,5 +221,10 @@ namespace player{
     void Player::applyKnockBack(float forceX, float forceY){
         vx += forceX;
         vy += forceY;
+    }
+
+    void Player::setVelocity(float vx, float vy){
+        this->vx = vx;
+        this->vy = vy;
     }
 }

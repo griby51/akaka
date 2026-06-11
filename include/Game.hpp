@@ -14,8 +14,7 @@
 #include "Dot.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
-#include "Utils.hpp"
-#include "Missile.hpp"
+#include "ProjectileManager.hpp"
 #include "ScoreCollectable.hpp"
 #include "ExplosionManager.hpp"
 #include "PlayerManager.hpp"
@@ -61,7 +60,7 @@ private:
 
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
 
-    missile::MissileManager mMissileManager;
+    projectile::ProjectileManager projectileManager;
     explode::ExplosionManager explosionManager;
     player::PlayerManager playerManager;
     AudioManager audioManager;
@@ -96,5 +95,5 @@ private:
     void playerThrust(int playerIndex);
     void spawnMissile(int playerWhoSpawn);
 
-    missile::MissileConfig missileConfig;
+    projectile::MissileConfig missileConfig;
  };

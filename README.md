@@ -155,6 +155,7 @@ akaka/
 - [  ] Soldat peut faire un call strategique (mais quoi ?)
 - [  ] Cowboy ralentit le temps sauf pr lui (dead eye)
 - [  ] Le diplomé ramene un powerpoint qui vient t'arracher
+- [  ] Pere noel de la mort qui largue des cadeaux bombes (met le lancer hors screen pr le proteger)
 
 ---
 

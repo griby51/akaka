@@ -1,8 +1,8 @@
 #include "Game.hpp"
+#include "Ability.hpp"
 #include "Explosion.hpp"
 #include "LTexture.hpp"
 #include "Missile.hpp"
-#include "MissileManager.hpp"
 #include "Player.hpp"
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
@@ -15,6 +15,7 @@
 #include <ctime>
 #include <filesystem>
 #include <algorithm>
+#include <memory>
 
 Game::Game()
     : mConfig("assets/config.ini"),
@@ -45,32 +46,43 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
     playerManager.players.reserve(joinedCount);
 
+    projectile::MissileConfig missileCfg;
+    
+    explode::ExplosionConfig explosionConfig;
+    explosionConfig.embers = true;
+    explosionConfig.power = 2.f;
+
+    missileCfg.particleConfig = mThrustParticleConfig;
+    missileCfg.players = &playerManager.players;
+    missileCfg.explosionConfig = explosionConfig;
+    missileCfg.explosionManager = &explosionManager;
+    missileCfg.audioManager = &audioManager;
+
+    missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
+    missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
+    missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
+    missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
+    missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
+    missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
+
     for(int i = 0; i < joinedCount; i++){
         player::PlayerConfig cfg;
-
-        missile::MissileConfig missileCfg;
-        
-        explode::ExplosionConfig explosionConfig;
-        explosionConfig.embers = true;
-        explosionConfig.power = 2.f;
-
-        missileCfg.particleConfig = mThrustParticleConfig;
-        missileCfg.players = &playerManager.players;
-        missileCfg.explosionConfig = explosionConfig;
-        missileCfg.explosionManager = &explosionManager;
-        missileCfg.audioManager = &audioManager;
-
-        missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
-        missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
-        missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
-        missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
-        missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
-        missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
 
         cfg.players = &playerManager.players;
         cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
         cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
         cfg.audioManager = &audioManager;
+
+        if(playerSlot[i].hatId == "hat_witch"){
+            cfg.ability = std::make_unique<FreezeAbility>(0, 300, &playerManager.players);
+        }else if(playerSlot[i].hatId == "hat_kamikaze"){
+            printf("Kamikaze hat\n");
+            explode::ExplosionConfig eCfg;
+            eCfg.power = 3.f;
+            cfg.ability = std::make_unique<KamikazeAbility>(&playerManager.players, explosionManager, eCfg, &audioManager, 50);
+        }else{
+            cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
+        }
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
         cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
@@ -82,6 +94,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
         cfg.showCollider = mConfig.getBool("show_player_collider", false);
         cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
+
         
 
         if(playerSlot[i].presetIndex >= 0){
@@ -91,10 +104,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.thrustParticleConfig = mThrustParticleConfig;
         cfg.screenWidth = mScreenWidth;
         cfg.screenHeight = mEffectiveHeight;
-        cfg.missileManager = &mMissileManager;
-        cfg.missileConfig = missileCfg;
 
-        playerManager.addPlayer(cfg);
+        playerManager.addPlayer(std::move(cfg));
     }
 
     return true;
@@ -165,7 +176,7 @@ void Game::update(float deltaTime){
         mScrollingOffset = 0;
     }
 
-    mMissileManager.update(deltaTime);
+    projectileManager.update(deltaTime);
     explosionManager.update(deltaTime);
     playerManager.update(deltaTime);
 
@@ -222,7 +233,7 @@ void Game::render(){
     indicatorRect.h = 50;
     indicatorRect.y = mScreenHeight - indicatorRect.h;
 
-    mMissileManager.render(mRenderer);
+    projectileManager.render(mRenderer);
 
     SDL_RenderSetViewport(mRenderer, NULL);
 

@@ -50,7 +50,9 @@ namespace player{
 
     class Player{
     public:
-        Player(PlayerConfig config);
+        Player(PlayerConfig&& config);
+        Player(Player&&) noexcept = default;
+        Player& operator=(Player&&) noexcept = default;
         ~Player();
 
         void render(SDL_Renderer* renderer);
@@ -75,6 +77,8 @@ namespace player{
 
         void updateLife(int toAdd);
         int getLife();
+
+        void setVelocity(float vx, float vy);
 
         bool isAlive;
 
