@@ -39,6 +39,10 @@ namespace player{
         LTexture* skin;
         LTexture* hat;
 
+        std::string hatId;
+        std::string skinId;
+        
+
         AudioManager* audioManager;
 
         std::vector<Player>* players;
@@ -79,6 +83,8 @@ namespace player{
         int getLife();
 
         void setVelocity(float vx, float vy);
+
+        std::string getSkinId();
 
         bool isAlive;
 

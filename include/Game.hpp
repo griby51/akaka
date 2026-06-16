@@ -56,7 +56,7 @@ private:
     static constexpr int JOYSTICK_DEAD_ZONE = 8000;
     static constexpr int THRUST_PARTICLE_NUMBER = 500;
     static constexpr int MISSILE_NUMBER = 500;
-    static constexpr float GLOBAL_SPEED = 50.0f;
+    float GLOBAL_SPEED = 50.0f;
 
     ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
 

@@ -1,11 +1,16 @@
 #include "ProjectileManager.hpp"
 #include "Missile.hpp"
 #include "Projectile.hpp"
+#include "TrafficCone.hpp"
 #include <memory>
 
 namespace projectile{
     void ProjectileManager::spawn(float x, float y, MissileConfig cfg){
         projectiles.push_back(std::make_unique<Missile>(x, y, cfg));
+    }
+
+    void ProjectileManager::spawn(float x, float y, TrafficConeConfig cfg){
+        projectiles.push_back(std::make_unique<TrafficCone>(x, y, cfg));
     }
 
     void ProjectileManager::update(float deltaTime){

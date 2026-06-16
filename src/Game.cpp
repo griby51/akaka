@@ -7,6 +7,7 @@
 #include "ScoreCollectable.hpp"
 #include "GameScene.hpp"
 #include "TextureManager.hpp"
+#include "TrafficCone.hpp"
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
@@ -71,6 +72,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.players = &playerManager.players;
         cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
         cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
+        cfg.skinId = playerSlot[i].skinId;
+        cfg.hatId = playerSlot[i].hatId;
         cfg.audioManager = &audioManager;
 
         if(playerSlot[i].hatId == "hat_witch"){
@@ -80,6 +83,20 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
             explode::ExplosionConfig eCfg;
             eCfg.power = 3.f;
             cfg.ability = std::make_unique<KamikazeAbility>(&playerManager.players, explosionManager, eCfg, &audioManager, 50);
+        }else if(playerSlot[i].hatId == "hat_trafficCone"){
+            projectile::TrafficConeConfig trafficConeCfg;
+            explode::ExplosionConfig eCfg;
+            eCfg.power = 4.f;
+            trafficConeCfg.explosionConfig = eCfg;
+            trafficConeCfg.explosionManager = &explosionManager;
+            trafficConeCfg.globalSpeed = &GLOBAL_SPEED;
+            trafficConeCfg.triggerRange = 20.f;
+            trafficConeCfg.speed = 1500.f;
+            trafficConeCfg.explosionTriggerRange = 100.f;
+            trafficConeCfg.audioManager = &audioManager;
+            trafficConeCfg.particleConfig = mThrustParticleConfig;
+            trafficConeCfg.players = &playerManager.players;
+            cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
         }else{
             cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
         }
@@ -118,6 +135,7 @@ bool Game::loadMedia() {
     tm.loadTexture("missile", "assets/missile00.png");
     tm.loadTexture("dot", "assets/dot.bmp");
     tm.loadTexture("bg", "assets/abstract_seamless_bg_01.png");
+    tm.loadTexture("trafficCone", "assets/trafficCone.png");
     
     tm.loadDirectory("assets/hats/", "hat_");
     tm.loadDirectory("assets/skins/", "skin_");
@@ -128,10 +146,6 @@ bool Game::loadMedia() {
     if (!mScoreFont) {
         printf("Font error: %s\n", TTF_GetError());
         success = false; 
-    }
-    if (!mScoreTexture.loadFromRenderedText("Score : 0", mWhite, mScoreFont)){
-        printf("Error loading score texture\n");
-        success = false;
     }
 
     audioManager.loadSFX("jetpackThrust", "assets/sounds/sfx/jetpackThrust.wav");

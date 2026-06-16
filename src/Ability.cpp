@@ -5,6 +5,7 @@
 #include "Missile.hpp"
 #include "Player.hpp"
 #include "ProjectileManager.hpp"
+#include "TrafficCone.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_render.h>
 
@@ -33,6 +34,32 @@ void MissileAbility::use(player::Player* player){
     SDL_Point p = util::spawnOffScreen(screenWidth, screenHeight, 200);
 
     projectileManager->spawn(p.x, p.y, missileConfig);
+    player->updateScore(-cost);
+    timeSinceLast.start();
+}
+
+TrafficConeAbility::TrafficConeAbility(projectile::ProjectileManager* projectileManager, projectile::TrafficConeConfig trafficConeConfig, int screenWidth, int screenHeight) :
+    projectileManager(projectileManager), trafficConeConfig(trafficConeConfig), screenWidth(screenWidth), screenHeight(screenHeight){
+        cooldown = 2000;
+        cost = 200;
+        timeSinceLast.start();
+}
+
+void TrafficConeAbility::use(player::Player* player){
+    if(timeSinceLast.getTicks() <= cooldown) return;
+    if(player->getScore() < cost) return;
+    int myIndex = -1;
+    if(trafficConeConfig.players){
+        for(int i = 0; i < trafficConeConfig.players->size(); i++){
+            if(&(*trafficConeConfig.players)[i] == player){
+                myIndex = i;
+                break;
+            }
+        }
+    }
+
+    trafficConeConfig.throwerIndex = myIndex;
+    projectileManager->spawn(screenWidth + 10, screenHeight - trafficConeConfig.collider.h, trafficConeConfig);
     player->updateScore(-cost);
     timeSinceLast.start();
 }

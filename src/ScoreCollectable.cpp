@@ -23,7 +23,7 @@ void ScoreCollectable::update(float deltaTime, std::vector<player::Player>* play
 }
 
 void ScoreCollectable::onHit(player::Player& player){
-    player.updateScore(cScore);
+    player.updateScore(player.getSkinId() == "skin_squirell" ? 2 * cScore : cScore);
     isAlive = false;
 }
 

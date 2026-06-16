@@ -148,6 +148,7 @@ namespace projectile{
 
                 player.updateLife(-maxDamage * factor);
 
+
                 float dx = (player.collider.x + player.collider.w / 2.0f) - (this->collider.x + this->collider.w / 2.0f);
                 float dy = (player.collider.y + player.collider.h / 2.0f) - (this->collider.y + this->collider.h / 2.0f);
 
@@ -155,7 +156,6 @@ namespace projectile{
                 float forceY = (dy > 0.f ? maxForce : -maxForce) * factor;
 
                 player.applyKnockBack(forceX, forceY);
-
             }
         }
 
@@ -163,7 +163,5 @@ namespace projectile{
         missileConfig.audioManager->playSFX("explosion");
 
         mgr.triggerShake(8.f, 0.3f);
-
-        isAlive = false;
     }
 }

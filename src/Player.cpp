@@ -204,6 +204,9 @@ namespace player{
     }
 
     void Player::updateLife(int toAdd){
+        if(config.skinId == "skin_turtle"){
+            toAdd*=0.75;
+        };
         life+=toAdd;
     }
 
@@ -226,5 +229,9 @@ namespace player{
     void Player::setVelocity(float vx, float vy){
         this->vx = vx;
         this->vy = vy;
+    }
+
+    std::string Player::getSkinId(){
+        return config.skinId;
     }
 }
