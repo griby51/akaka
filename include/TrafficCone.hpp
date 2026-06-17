@@ -21,7 +21,7 @@ namespace projectile{
         float* globalSpeed = nullptr;
         float triggerRange;
         std::string textureId = "trafficCone";
-        SDL_Rect collider = {0, 0, 32, 32};
+        SDL_Rect collider = {0, 0, 16, 16};
         bool showCollider = false;
         ParticleConfig particleConfig;
         explode::ExplosionManager* explosionManager;

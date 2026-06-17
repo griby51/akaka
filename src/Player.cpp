@@ -234,4 +234,59 @@ namespace player{
     std::string Player::getSkinId(){
         return config.skinId;
     }
+
+    void Player::resolveCollisionWith(Player& other){
+        float cx1 = collider.x + collider.w / 2.f;
+        float cy1 = collider.y + collider.h / 2.f;
+        float cx2 = other.collider.x + other.collider.w / 2.f;
+        float cy2 = other.collider.y + other.collider.h / 2.f;
+
+        float dx = cx1 - cx2;
+        float dy = cy1 - cy2;
+
+        float overlapX = (collider.w / 2.f + other.collider.w / 2.f) - std::abs(dx);
+        float overlapY = (collider.h / 2.f+ other.collider.h / 2.f) - std::abs(dy);
+
+        if(overlapX > 0 && overlapY > 0){
+            float e = config.bounceRestitution;
+
+            if(overlapX < overlapY){
+                float push = overlapX / 2.f;
+                if(dx > 0){
+                    x+=push;
+                    other.x -=push;
+                }else{
+                    x-=push;
+                    other.x+=push;
+                }
+
+                float v1 = vx;
+                float v2 = vy;
+                vx = (v1 + v2 - e * (v1 - v2)) / 2.f;
+                other.vx = (v1 + v2 + e*(v1 - v2)) / 2.f;
+            }else{
+                float push = overlapY / 2.f;
+                if(dy > 0){
+                    y+=push;
+                    other.y -=push;
+                }else{
+                    y-=push;
+                    other.y += push;
+                }
+
+                float v1 = vy;
+                float v2 = other.vy;
+
+                vy = (v1 + v2 - e * (v1 - v2)) / 2.f;
+                other.vy = (v1 + v2 + e * (v1 - v2)) / 2.f;
+            }
+
+            collider.x = x;
+            collider.y = y;
+            other.collider.x = other.x;
+            other.collider.y = other.y;
+        }
+    }
+
+    int Player::getMaxLife(){ return config.maxHealth; }
 }

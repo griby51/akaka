@@ -81,8 +81,11 @@ namespace player{
 
         void updateLife(int toAdd);
         int getLife();
+        int getMaxLife();
 
         void setVelocity(float vx, float vy);
+
+        void resolveCollisionWith(Player& other);
 
         std::string getSkinId();
 

@@ -79,8 +79,7 @@ namespace projectile{
 
             if(playersCollider.size() != 0){
             SDL_Rect* nearest = util::theNearest(collider, playersCollider);
-            int distSq = util::distSq(collider, *nearest);
-                if(distSq < trafficConeConfig.explosionTriggerRange* trafficConeConfig.explosionTriggerRange){
+                if(nearest->y > y){
                     explode(*trafficConeConfig.explosionManager, trafficConeConfig.explosionConfig);
                     isAlive = false;
                 }

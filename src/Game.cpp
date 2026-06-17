@@ -256,30 +256,44 @@ void Game::render(){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
         std::string score = std::to_string(playerManager.players[i].getScore());
-        std::string life = std::to_string(playerManager.players[i].getLife());
+
 
         LTexture scoreTexture;
-        LTexture lifeTexture;
         LTexture playerNumberTexture;
 
         scoreTexture.setRenderer(mRenderer);
-        lifeTexture.setRenderer(mRenderer);
         playerNumberTexture.setRenderer(mRenderer);
 
         playerNumberTexture.loadFromRenderedText(playerNumber, mWhite, mScoreFont);
-        lifeTexture.loadFromRenderedText(life, mRed, mScoreFont);
         scoreTexture.loadFromRenderedText(score, mGreen, mScoreFont);
 
-        indicatorRect.x = i * indicatorRect.w;
-        SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
 
+        indicatorRect.x = i * indicatorRect.w;
+        SDL_Rect backLifeRect;
+        SDL_Rect lifeRect;
+        backLifeRect.x = indicatorRect.x + indicatorRect.w * 0.15f;
+        backLifeRect.y = indicatorRect.y + indicatorRect.h * 0.50f;
+        backLifeRect.h = indicatorRect.h * 0.25f;
+        backLifeRect.w = indicatorRect.w * 0.5f;
+        lifeRect = backLifeRect;
+        if(playerManager.players[i].getLife() > 0){
+            lifeRect.w = (float)playerManager.players[i].getLife() / (float)playerManager.players[i].getMaxLife() * (float)backLifeRect.w;
+        }else{
+            lifeRect.w = 0;
+        }
+
+        SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
         SDL_RenderFillRect(mRenderer, &indicatorRect);
+        SDL_SetRenderDrawColor(mRenderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(mRenderer, &backLifeRect);
+        SDL_SetRenderDrawColor(mRenderer, 0, 255, 0, 255);
+        SDL_RenderFillRect(mRenderer, &lifeRect);
+
         playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
         playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
         playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
-        lifeTexture.render(indicatorRect.x, indicatorRect.y + playerNumberTexture.getHeight() + 10);
-        scoreTexture.render(indicatorRect.x + lifeTexture.getWidth() + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
+        scoreTexture.render(indicatorRect.x + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
     }
 
     SDL_RenderPresent(mRenderer);

@@ -1,4 +1,5 @@
 #include "PlayerManager.hpp"
+#include "Utils.hpp"
 
 namespace player{
     void PlayerManager::addPlayer(PlayerConfig&& config){
@@ -10,6 +11,16 @@ namespace player{
         for (auto& player : players) {
             player.update(deltaTime);
             player.handleInput(keys);
+        }
+
+        for(int i = 0; i < players.size(); i++){
+            for(int j = i + 1; j < players.size(); j++){
+                if(!players[i].isAlive || !players[j].isAlive) continue;
+
+                if(util::collide(players[i].collider, players[j].collider)){
+                    players[i].resolveCollisionWith(players[j]);
+                }
+            }
         }
     }
 
