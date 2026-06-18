@@ -15,6 +15,7 @@ public:
     virtual ~Ability() = default;
     virtual void use(player::Player* player) = 0;
     virtual void update(float deltaTime) {}
+    float getCooldownProgress();
 protected:
     int cooldown;
     int cost;

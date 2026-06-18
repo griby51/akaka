@@ -261,7 +261,7 @@ namespace player{
                 }
 
                 float v1 = vx;
-                float v2 = vy;
+                float v2 = other.vx;
                 vx = (v1 + v2 - e * (v1 - v2)) / 2.f;
                 other.vx = (v1 + v2 + e*(v1 - v2)) / 2.f;
             }else{
@@ -289,4 +289,8 @@ namespace player{
     }
 
     int Player::getMaxLife(){ return config.maxHealth; }
+
+    float Player::getAbilityProgress(){
+        return config.ability->getCooldownProgress();
+    }
 }

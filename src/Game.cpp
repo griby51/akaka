@@ -8,6 +8,7 @@
 #include "GameScene.hpp"
 #include "TextureManager.hpp"
 #include "TrafficCone.hpp"
+#include "Utils.hpp"
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
@@ -282,17 +283,24 @@ void Game::render(){
             lifeRect.w = 0;
         }
 
+        int timerX = backLifeRect.x + backLifeRect.w + indicatorRect.w * 0.15f;
+        int timerY = indicatorRect.y + indicatorRect.h * 0.5f;
+        int radius = 16;
+        float progress = playerManager.players[i].getAbilityProgress();
+
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
         SDL_RenderFillRect(mRenderer, &indicatorRect);
         SDL_SetRenderDrawColor(mRenderer, 255, 0, 0, 255);
         SDL_RenderFillRect(mRenderer, &backLifeRect);
         SDL_SetRenderDrawColor(mRenderer, 0, 255, 0, 255);
         SDL_RenderFillRect(mRenderer, &lifeRect);
+        SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
+        util::drawProgressPie(mRenderer, timerX, timerY, radius, progress);
 
         playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
         playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
-        playerNumberTexture.render(indicatorRect.x, indicatorRect.y);
+        playerNumberTexture.render(indicatorRect.x + 3, indicatorRect.y + 3);
         scoreTexture.render(indicatorRect.x + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
     }
 

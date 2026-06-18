@@ -1,5 +1,4 @@
 #include "Ability.hpp"
-#include "Config.hpp"
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
 #include "Missile.hpp"
@@ -8,6 +7,12 @@
 #include "TrafficCone.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_render.h>
+
+float Ability::getCooldownProgress(){
+    float progress = (float)timeSinceLast.getTicks() / (float)cooldown;
+    if(progress > 1.f) progress = 1.f;
+    return progress;
+}
 
 MissileAbility::MissileAbility(projectile::ProjectileManager* projectileManager, projectile::MissileConfig missileConfig, int screenWidth, int screenHeight) :
     projectileManager(projectileManager), missileConfig(missileConfig), screenWidth(screenWidth), screenHeight(screenHeight){

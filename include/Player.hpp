@@ -87,6 +87,8 @@ namespace player{
 
         void resolveCollisionWith(Player& other);
 
+        float getAbilityProgress();
+
         std::string getSkinId();
 
         bool isAlive;
