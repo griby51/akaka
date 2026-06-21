@@ -163,7 +163,7 @@ void Game::start(){
 
     SDL_SetRenderDrawBlendMode(mRenderer, SDL_BLENDMODE_BLEND);
 
-    audioManager.playMusic("miniloop14");
+    if(mConfig.getBool("music", true)) audioManager.playMusic("miniloop14");
     audioManager.setMusicVolume(32);
 
     for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
