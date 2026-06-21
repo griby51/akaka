@@ -21,20 +21,11 @@ namespace projectile{
 
             isAlive = true;
 
-            particles.resize(trafficConeConfig.particleNumber);
-            for(int i = 0; i < trafficConeConfig.particleNumber; i++){
-                particles[i].init(&this->trafficConeConfig.particleConfig);
-                particles[i].reset();
-                particles[i].setPos(10000, 10000);
-            }
             particleTimer.start();
     }
 
     void TrafficCone::render(SDL_Renderer* renderer){
         if(!isAlive) return;
-        for(int i = 0; i < trafficConeConfig.particleNumber; i++){
-            particles[i].render(renderer);
-        }
 
         TextureManager::getInstance().getTexture(trafficConeConfig.textureId)->render(x,y);
 
@@ -46,9 +37,6 @@ namespace projectile{
 
     void TrafficCone::update(float deltaTime){
         if(!isAlive) return;
-        for(int i = 0; i < trafficConeConfig.particleNumber; i++){
-            particles[i].update(deltaTime);
-        }
 
         std::vector<SDL_Rect*> playersCollider;
 
@@ -72,9 +60,7 @@ namespace projectile{
                 int spawnX = collider.x + collider.w / 2;
                 int spawnY = collider.y + collider.h;
                 particleTimer.start();
-                particles[currentParticle].setPos(spawnX, spawnY);
-                particles[currentParticle].reset();
-                currentParticle = (currentParticle + 1) % trafficConeConfig.particleNumber;
+                trafficConeConfig.particleManager->spawnThrustParticle(spawnX, spawnY, trafficConeConfig.particleConfig);
             }
 
             if(playersCollider.size() != 0){

@@ -52,7 +52,7 @@ void ParticleConfig::setColorFrameList(){
     printf("Table size: %i\n", tableSize);
 }
 
-const int ParticleConfig::getMaxTime(){
+int ParticleConfig::getMaxTime() const{
     return keyframes.back().time - 1;
 }
 
@@ -76,39 +76,43 @@ int Particle::getY(){
     return particleRect.y;
 }
 
-void ThrustParticle::init(ParticleConfig* particleConfig){
+void ThrustParticle::init(const ParticleConfig& particleConfig){
     particleRect.x = 10000;
     particleRect.y = 10000;
     particleRect.w = 10;
     particleRect.h = 10;
-    config = particleConfig;
 
-    maxLifeTime = static_cast<float>(config->getMaxTime());
-    isAlive = false;
-}
+    this->friction = particleConfig.friction;
+    this->growRate = particleConfig.growRate;
+    this->riseForce = particleConfig.riseForce;
+    this->vyMin = particleConfig.vyMin;
+    this->vyMax = particleConfig.vyMax;
 
-void ThrustParticle::reset(){
-    lifeTime = 0.0f;
-    intCurrentTime = 0;
-    isAlive = true;
-    if(!(config->vxSpread == 0)){
-        vx = ((rand() % (config->vxSpread * 2)) - config->vxSpread) / 100.0f;
+    this->maxLifeTime = static_cast<float>(particleConfig.getMaxTime());
+    this->isAlive = true;
+    this->lifeTime = 0;
+    this->intCurrentTime = 0;
+
+    if(!(particleConfig.vxSpread == 0)){
+        this->vx = ((rand() % (particleConfig.vxSpread * 2)) - particleConfig.vxSpread) / 100.f;
     }
 
-    if(!(config->vyMax == config->vyMin)){
-        vy = (rand() % (config->vyMax - config->vyMin) + config->vyMin) / 100.0f;
+    if(!(particleConfig.vyMax == particleConfig.vyMin)){
+        this->vy = (rand() % (particleConfig.vyMax - particleConfig.vyMin) + particleConfig.vyMin) / 100.f;
     }else{
-        vy = config->vyMax;
+        this->vy = particleConfig.vyMax;
     }
 
-    if(!(config->sizeMax == config->sizeMin)){
-        size = rand() % (config->sizeMax - config->sizeMin) + config->sizeMin;
+    if(!(particleConfig.sizeMax == particleConfig.sizeMin)){
+        size = rand() % (particleConfig.sizeMax - particleConfig.sizeMin) + particleConfig.sizeMin;
     }else{
-        size = config->sizeMax;
+        size = particleConfig.sizeMax;
     }
 
     particleRect.w = size;
     particleRect.h = size;
+
+    this->config = particleConfig;
 }
 
 void ThrustParticle::update(float deltaTime){
@@ -125,10 +129,10 @@ void ThrustParticle::update(float deltaTime){
 
     particleRect.x = fx;
     particleRect.y = fy;
-    vy -= config->riseForce;
-    vx *= config->friction;
+    vy -= riseForce;
+    vx *= friction;
 
-    size += config->growRate;
+    size += growRate;
     particleRect.w = (int)size;
     particleRect.h = (int)size;
 }
@@ -137,15 +141,7 @@ void ThrustParticle::render(SDL_Renderer* renderer){
     if(!isAlive){
         return;
     };
-    SDL_Color color = config->getCurrentColor(intCurrentTime);
+    SDL_Color color = config.getCurrentColor(intCurrentTime);
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderer, &particleRect);
-}
-
-void ExplosionParticle::init(ParticleConfig* _colorsConfig){
-    colorsConfig = _colorsConfig;
-}
-
-void ExplosionParticle::update(float deltaTime){
-    
 }

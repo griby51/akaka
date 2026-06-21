@@ -10,6 +10,7 @@
 #include "Config.hpp"
 #include "LTexture.hpp"
 #include "LTimer.hpp"
+#include "ParticleManager.hpp"
 #include "Projectile.hpp"
 #include "Dot.hpp"
 #include "Particle.hpp"
@@ -58,12 +59,11 @@ private:
     static constexpr int MISSILE_NUMBER = 500;
     float GLOBAL_SPEED = 50.0f;
 
-    ThrustParticle mThrustParticles[THRUST_PARTICLE_NUMBER];
-
     projectile::ProjectileManager projectileManager;
     explode::ExplosionManager explosionManager;
     player::PlayerManager playerManager;
     AudioManager audioManager;
+    ParticleManager particleManager;
 
     Dot mDot;
 

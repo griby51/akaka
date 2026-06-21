@@ -26,21 +26,12 @@ namespace projectile{
 
         isAlive = true;
 
-        particles.resize(missileConfig.particleNumber);
-        for(int i = 0; i < missileConfig.particleNumber; i++){
-            particles[i].init(&this->missileConfig.particleConfig);
-            particles[i].reset();
-            particles[i].setPos(10000, 10000);
-        }
         particleTimer.start();
         audioChannel = missileConfig.audioManager->playSFX("missileLaunch");
     }
 
     void Missile::render(SDL_Renderer* renderer){
         if (!isAlive) return;
-        for(int i = 0; i < missileConfig.particleNumber; i++){
-            particles[i].render(renderer);
-        }
         TextureManager::getInstance().getTexture(missileConfig.textureId)->render(x, y, NULL, angle * (180 / M_PI) + 90);
 
         if(missileConfig.showCollider){
@@ -51,9 +42,6 @@ namespace projectile{
 
     void Missile::update(float deltaTime){
         if (!isAlive) return;
-        for(int i = 0; i < missileConfig.particleNumber; i++){
-            particles[i].update(deltaTime);
-        }
 
         std::vector<SDL_Rect*> playersColliders;
         for(int i = 0; i < missileConfig.players->size(); i++){
@@ -112,9 +100,7 @@ namespace projectile{
 
         if(particleTimer.getTicks() >= particleSpawnTicks){
             particleTimer.start();
-            particles[currentParticle].setPos(backX, backY);
-            particles[currentParticle].reset();
-            currentParticle = (currentParticle + 1) % missileConfig.particleNumber;
+            missileConfig.particleManager->spawnThrustParticle(backX, backY, missileConfig.particleConfig);
         }
 
         if(dist < missileConfig.explosionTriggerRange){

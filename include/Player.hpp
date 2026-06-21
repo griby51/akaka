@@ -10,6 +10,7 @@
 #include "KeyPreset.hpp"
 #include "AudioManager.hpp"
 #include "Ability.hpp"
+#include "ParticleManager.hpp"
 
 namespace player{
     struct PlayerConfig{
@@ -48,6 +49,7 @@ namespace player{
         std::vector<Player>* players;
 
         ParticleConfig thrustParticleConfig;
+        ParticleManager* particleManager;
 
         std::unique_ptr<Ability> ability = nullptr;
     };
@@ -112,10 +114,6 @@ namespace player{
         float jetpackThrust = 0.0f;
 
         LTimer thrustParticlesTimer;
-        ThrustParticle thrustParticles[500];
-        ParticleConfig thrustParticleConfig;
-
-        int currentThrustParticle;
 
         int missileTableSize;
 

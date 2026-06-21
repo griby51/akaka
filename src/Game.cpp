@@ -34,7 +34,6 @@ Game::~Game() {
 
 bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSlot, int joinedCount){
     srand(time(NULL));
-    mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     mRenderer = renderer;
     mPlayerNumber = joinedCount;
@@ -47,6 +46,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mEffectiveHeight = mScreenHeight - 50;
 
     playerManager.players.reserve(joinedCount);
+
+    mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     projectile::MissileConfig missileCfg;
     
@@ -66,6 +67,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
     missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
     missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
+    missileCfg.particleManager = &particleManager;
 
     for(int i = 0; i < joinedCount; i++){
         player::PlayerConfig cfg;
@@ -76,6 +78,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.skinId = playerSlot[i].skinId;
         cfg.hatId = playerSlot[i].hatId;
         cfg.audioManager = &audioManager;
+        cfg.particleManager = &particleManager;
 
         if(playerSlot[i].hatId == "hat_witch"){
             cfg.ability = std::make_unique<FreezeAbility>(0, 300, &playerManager.players);
@@ -97,6 +100,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
             trafficConeCfg.audioManager = &audioManager;
             trafficConeCfg.particleConfig = mThrustParticleConfig;
             trafficConeCfg.players = &playerManager.players;
+            trafficConeCfg.particleManager = &particleManager;
             cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
         }else{
             cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
@@ -166,10 +170,6 @@ void Game::start(){
     if(mConfig.getBool("music", true)) audioManager.playMusic("miniloop14");
     audioManager.setMusicVolume(32);
 
-    for (int i = 0; i < THRUST_PARTICLE_NUMBER; i++){
-        mThrustParticles[i].init(&mThrustParticleConfig);
-    }
-
     srand(time(0));
 
     mPizzaTimeUntilNext = rand() % 1000;
@@ -194,6 +194,7 @@ void Game::update(float deltaTime){
     projectileManager.update(deltaTime);
     explosionManager.update(deltaTime);
     playerManager.update(deltaTime);
+    particleManager.update(deltaTime);
 
     mPizza.erase(
             std::remove_if(mPizza.begin(), mPizza.end(),
@@ -237,6 +238,7 @@ void Game::render(){
 
     explosionManager.render(mRenderer);
     playerManager.render(mRenderer);
+    particleManager.render(mRenderer);
 
     for (int i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);

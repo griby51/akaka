@@ -13,7 +13,7 @@ class ParticleConfig{
 
         void load(GameConfig& config);
         SDL_Color getCurrentColor(int currentTime);
-        const int getMaxTime();
+        int getMaxTime() const;
         float growRate;
         float friction;
         float riseForce;
@@ -38,7 +38,6 @@ public:
     int getY();
     
     virtual void render(SDL_Renderer* renderer) = 0;
-    virtual void reset() = 0;
     virtual void update(float deltaTime) = 0;
 protected:
     SDL_Rect particleRect;
@@ -51,8 +50,7 @@ protected:
 
 class ThrustParticle : public Particle{
 public:
-    void init(ParticleConfig* config);
-    void reset() override;
+    void init(const ParticleConfig& config);
     void update(float deltaTime) override;
     void render(SDL_Renderer* renderer) override;
 private:
@@ -63,24 +61,7 @@ private:
     float friction;
     float riseForce;
     float vyMin, vyMax;
-    ParticleConfig* config;
+
+    ParticleConfig config;
 };
 
-
-class ExplosionParticle : public Particle{
-public:
-    void init(ParticleConfig* _colorsConfig);
-    void reset() override;
-    void update(float deltaTime) override;
-    void render(SDL_Renderer* renderer) override;
-
-private:
-    float vx, vy;
-    float power;
-    float friction;
-    float angle;
-    float gravity;
-    float lifeTime;
-
-    ParticleConfig* colorsConfig;
-};

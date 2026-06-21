@@ -4,6 +4,7 @@
 #include "ExplosionManager.hpp"
 #include "AudioManager.hpp"
 #include "LTimer.hpp"
+#include "ParticleManager.hpp"
 #include "Projectile.hpp"
 
 #include <SDL2/SDL.h>
@@ -24,10 +25,10 @@ namespace projectile{
         SDL_Rect collider = {0, 0, 16, 16};
         bool showCollider = false;
         ParticleConfig particleConfig;
+        ParticleManager* particleManager;
         explode::ExplosionManager* explosionManager;
         explode::ExplosionConfig explosionConfig;
         float maxDamage = 50.f;
-        int particleNumber = 500;
         AudioManager* audioManager;
     };
 
@@ -41,12 +42,10 @@ namespace projectile{
         TrafficConeConfig trafficConeConfig;
         
         int particleSpawnTicks = 5;
-        int currentParticle = 0;
 
         LTimer particleTimer;
         LTimer explosionTimer;
         bool triggered = false;
-        std::vector<ThrustParticle> particles;
 
         int audioChannel;
     };

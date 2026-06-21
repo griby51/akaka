@@ -7,7 +7,6 @@ namespace player{
     Player::Player(PlayerConfig&& config) : config(std::move(config)){
         isAlive = true;
         thrustParticlesTimer.start();
-        currentThrustParticle = 0;
 
         x = config.screenWidth / 2.0f;
         y = config.screenHeight / 4.0f;
@@ -21,11 +20,6 @@ namespace player{
         collider.w = config.collider.w;
         collider.h = config.collider.h;
 
-
-        for (int i = 0; i < 500; i++){
-            thrustParticles[i].init(&this->config.thrustParticleConfig);
-        }
-
         life = config.maxHealth;
         score = 0;
     }
@@ -35,10 +29,6 @@ namespace player{
     }
 
     void Player::render(SDL_Renderer* renderer){
-        for(int i = 0; i < 500; i++){
-            thrustParticles[i].render(renderer);
-        }
-
         if (!isAlive) return;
 
         config.skin->render(x, y);
@@ -53,11 +43,6 @@ namespace player{
     }
 
     void Player::update(float deltaTime){
-
-        for (int i = 0; i < 500; i++){
-            thrustParticles[i].update(deltaTime);
-        }
-
         if(!isAlive) return;
 
         vx = (vx + (config.acceleration * deltaTime * dir)) * (1  - ((1 - config.deceleration) * deltaTime));
@@ -125,9 +110,7 @@ namespace player{
 
         if(thrustParticlesTimer.getTicks() >= 20){
             thrustParticlesTimer.start();
-            thrustParticles[currentThrustParticle].reset();
-            thrustParticles[currentThrustParticle].setPos(x + 5, y + 25);
-            currentThrustParticle = (currentThrustParticle + 1) % 500;
+            config.particleManager->spawnThrustParticle(x + 5, y + 25, config.thrustParticleConfig);
         }
     }
 
