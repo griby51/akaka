@@ -63,3 +63,7 @@ private:
     AudioManager* audioManager;
     
 };
+
+class ChristmasAbility : public Ability{
+    ChristmasAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager)
+}
