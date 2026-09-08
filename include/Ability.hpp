@@ -53,7 +53,7 @@ private:
 
 class KamikazeAbility : public Ability{
 public:
-    KamikazeAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager,float maxDamage = 50.f, float maxRadius = -1.f, float maxForce = -1);
+    KamikazeAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager, float maxDamage = 50.f, float maxRadius = -1.f, float maxForce = -1);
     void use(player::Player* player) override;
 private:
     std::vector<player::Player>* players;
@@ -65,5 +65,5 @@ private:
 };
 
 class ChristmasAbility : public Ability{
-    ChristmasAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager)
-}
+    ChristmasAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager )
+};

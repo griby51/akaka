@@ -45,10 +45,6 @@ build/libs/%.o: libs/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # [MODIFIÉ] Copie de toutes les DLLs depuis ton dossier local 'dll' vers 'Debug'
-deploy_dlls:
-	@echo "Copie des DLLs locales depuis le dossier dll/ vers $(DEPLOY_DIR)..."
-	@mkdir -p $(DEPLOY_DIR)
-	@cp -ru dll/* $(DEPLOY_DIR)/ 2>/dev/null || true
 
 # Copie du dossier assets dans le dossier Debug
 deploy_assets:

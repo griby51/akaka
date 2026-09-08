@@ -141,6 +141,7 @@ bool Game::loadMedia() {
     tm.loadTexture("dot", "assets/dot.bmp");
     tm.loadTexture("bg", "assets/abstract_seamless_bg_01.png");
     tm.loadTexture("trafficCone", "assets/trafficCone.png");
+    tm.loadTexture("christmasSleigh", "assets/christmasSleigh.png");
     
     tm.loadDirectory("assets/hats/", "hat_");
     tm.loadDirectory("assets/skins/", "skin_");
@@ -185,7 +186,6 @@ void Game::handleEvents(const SDL_Event& e) {
 }
 
 void Game::update(float deltaTime){
-    mDot.move();
     mScrollingOffset -= GLOBAL_SPEED * deltaTime;
     if(mScrollingOffset < -TextureManager::getInstance().getTexture("bg")->getWidth()){
         mScrollingOffset = 0;

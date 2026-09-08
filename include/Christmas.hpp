@@ -1,40 +1,33 @@
+#pragma once
 #include "Explosion.hpp"
-#include "LTexture.hpp"
-#include "LTimer.hpp"
-#include "Player.hpp"
+#include "Particle.hpp"
 #include "ExplosionManager.hpp"
+#include "AudioManager.hpp"
+#include "LTimer.hpp"
+#include "ParticleManager.hpp"
+#include "Projectile.hpp"
+
+#include <SDL2/SDL.h>
 #include <vector>
 
-struct ChristmasSleighConfig{
-    float maxDamage = 50.f;
-    float maxRadius = 10.f;
-    float sleighSpeed = 100.f;
-    float dropPercent = 0.1f;
-    int giftMinDetonation = 500;
-    int giftMaxDetonation = 10000;
-    float giftMinSpeed = 3.f;
-    float giftMaxSpeed = 10.f;
-    int screenWidth = 666;
-    int screenHeight = 666; //come later...
-};
+namespace player{class Player;}
 
-class ChristmasSleigh{
-    public:
-        ChristmasSleigh(std::vector<player::Player>* players, ChristmasSleighConfig config, explode::ExplosionManager* explosionManager, explode::ExplosionConfig cfg);
-        bool KidnapMe(player::Player*);
-        void update(float deltaTime);
-        void render(SDL_Renderer* renderer);
+namespace projectile{
 
-    private:
-        float maxDamage;
-        float maxRadius;
-        float sleighSpeed;
-        float dropPercent;
-        int giftMinDetonation;
-        int giftMaxDetonation;
-        float giftMinSpeed;
-        float giftMaxSpeed;
-        int screenWidth;
-        int screenHeight;
+    struct GiftConfig{
+        std::vector<player::Player>* players = nullptr;
+    }
+    struct ChristmasSleighConfig{
+        std::vector<player::Player>* players = nullptr;
 
+        int throwerIndex = -1;
+        float speed = 2000.f;
+        
+        std::string textureId = "christmasSleigh";
+        
+        explode::ExplosionManager* explosionManager;
+        explode::ExplosionConfig explosionConfig;
+        
+        AudioManager* audioManager;
+    };
 };

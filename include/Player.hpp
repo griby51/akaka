@@ -108,17 +108,9 @@ namespace player{
 
         static constexpr int DEAD_ZONE = 8000;
 
-        LTexture* skin;
-        LTexture* hat;
-
         float jetpackThrust = 0.0f;
 
         LTimer thrustParticlesTimer;
-
-        int missileTableSize;
-
-        Player* players;
-        int playerTableSize;
         
         int life;
         int jetpackChannel = -1;

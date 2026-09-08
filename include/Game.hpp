@@ -12,7 +12,6 @@
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
 #include "Projectile.hpp"
-#include "Dot.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
 #include "ProjectileManager.hpp"
@@ -64,8 +63,6 @@ private:
     player::PlayerManager playerManager;
     AudioManager audioManager;
     ParticleManager particleManager;
-
-    Dot mDot;
 
     LTexture mScoreTexture;
 

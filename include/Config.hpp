@@ -19,5 +19,3 @@ class GameConfig{
 
         bool save();
 };
-
-extern GameConfig g_config;
