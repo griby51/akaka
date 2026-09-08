@@ -52,6 +52,7 @@ namespace player{
         ParticleManager* particleManager;
 
         std::unique_ptr<Ability> ability = nullptr;
+
     };
 
     class Player{
@@ -64,6 +65,7 @@ namespace player{
         void render(SDL_Renderer* renderer);
         void move(int direction);
         void jetpack();
+        void teleportTo(float x, float y);
 
         void updateScore(int toAdd);
 
@@ -99,6 +101,7 @@ namespace player{
         LTexture* getHat();
 
         SDL_Rect collider;
+        bool isControlled = false;
 
     private:
         float x, y; 

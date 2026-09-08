@@ -45,6 +45,12 @@ namespace player{
     void Player::update(float deltaTime){
         if(!isAlive) return;
 
+        if(config.ability){
+            config.ability->update(deltaTime);
+        }
+
+        if(isControlled) return;
+
         vx = (vx + (config.acceleration * deltaTime * dir)) * (1  - ((1 - config.deceleration) * deltaTime));
 
         if(vx > config.maxVx) vx = config.maxVx;
@@ -95,9 +101,6 @@ namespace player{
         collider.x = x;
         collider.y = y;
 
-        if(config.ability){
-            config.ability->update(deltaTime);
-        }
 
         if (life <= 0){
             isAlive = false;
@@ -187,6 +190,7 @@ namespace player{
     }
 
     void Player::updateLife(int toAdd){
+        if(isControlled) return;
         if(config.skinId == "skin_turtle"){
             toAdd*=0.75;
         };
@@ -219,6 +223,7 @@ namespace player{
     }
 
     void Player::resolveCollisionWith(Player& other){
+        if(isControlled || other.isControlled) return;
         float cx1 = collider.x + collider.w / 2.f;
         float cy1 = collider.y + collider.h / 2.f;
         float cx2 = other.collider.x + other.collider.w / 2.f;
@@ -275,5 +280,10 @@ namespace player{
 
     float Player::getAbilityProgress(){
         return config.ability->getCooldownProgress();
+    }
+
+    void Player::teleportTo(float x, float y){
+        this->x = x;
+        this->y = y;
     }
 }

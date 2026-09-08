@@ -6,6 +6,18 @@ This document describes the codebase **as currently written**, including parts t
 
 ---
 
+## Quick Summary
+
+- **What it is:** a local 2-4 player party game — jetpack movement, collect pizza for score, spend score on hat abilities to knock the others off screen.
+- **Build status: currently broken.** `ChristmasAbility` (`include/Ability.hpp`) is an incomplete class declaration — nothing compiles until it's fixed or removed. See [§14.1](#141-christmasability--broken-does-not-compile) and [§20.1](#20-known-issues--technical-debt).
+- **To build (once fixed):** `make && ./main` on Linux; see [§3](#3-build-instructions) for Windows/MSYS2 and cross-compile.
+- **4 of 5 abilities work:** Missile (default/unmatched hat), Traffic Cone, Freeze (witch), Kamikaze. The 5th, Christmas sleigh, is stubbed and unfinished — see [§14](#14-ability-system).
+- **Player-vs-player collision and the squirrel 2x-score passive are already implemented**, even though the README's TODO list still lists them as pending — see [§21](#21-feature-status-vs-readme-todo) for the full README-vs-reality comparison.
+- **Known rough edges worth knowing before you dig in:** `AudioManager::stopChannel` halts all sounds instead of one; `GameScene` leaks its `Game*`; several config keys (missile cost, ability costs/cooldowns) are dead and have no effect. Full list in [§20](#20-known-issues--technical-debt).
+- **Start here depending on what you need:** [§5](#5-high-level-architecture) for how the game loop and scenes fit together, [§18](#18-configuration-reference-configini) for tunable values, [§22](#22-roadmap) for what to tackle next.
+
+---
+
 ## Table of Contents
 
 1. [Overview](#1-overview)

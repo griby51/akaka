@@ -1,4 +1,5 @@
 #include "ProjectileManager.hpp"
+#include "Christmas.hpp"
 #include "Missile.hpp"
 #include "Projectile.hpp"
 #include "TrafficCone.hpp"
@@ -6,11 +7,19 @@
 
 namespace projectile{
     void ProjectileManager::spawn(float x, float y, MissileConfig cfg){
-        projectiles.push_back(std::make_unique<Missile>(x, y, cfg));
+        pending.push_back(std::make_unique<Missile>(x, y, cfg));
     }
 
     void ProjectileManager::spawn(float x, float y, TrafficConeConfig cfg){
-        projectiles.push_back(std::make_unique<TrafficCone>(x, y, cfg));
+        pending.push_back(std::make_unique<TrafficCone>(x, y, cfg));
+    }
+
+    void ProjectileManager::spawn(float x, float y, ChristmasSleighConfig cfg){
+        pending.push_back(std::make_unique<ChristmasSleigh>(x, y, cfg));
+    }
+
+    void ProjectileManager::spawn(float x, float y, GiftConfig cfg, int yMax){
+        pending.push_back(std::make_unique<Gift>(x, y, cfg, yMax));
     }
 
     void ProjectileManager::update(float deltaTime){
@@ -25,6 +34,11 @@ namespace projectile{
                     }),
                 projectiles.end()
                 );
+
+        for(auto& p : pending){
+            projectiles.push_back(std::move(p));
+        }
+        pending.clear();
     }
 
     void ProjectileManager::render(SDL_Renderer* renderer){
