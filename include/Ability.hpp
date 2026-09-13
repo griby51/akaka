@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AudioManager.hpp"
+#include "Christmas.hpp"
 #include "Explosion.hpp"
 #include "ExplosionManager.hpp"
 #include "ProjectileManager.hpp"
@@ -61,6 +62,13 @@ private:
     explode::ExplosionConfig cfg;
     explode::ExplosionManager& mgr;
     AudioManager* audioManager;
-    
 };
 
+class ChristmasSleighAbility : public Ability{
+public:
+    ChristmasSleighAbility(projectile::ProjectileManager* projectileManager, projectile::ChristmasSleighConfig christmasSleighConfig);
+    void use(player::Player* player) override;
+private:
+    projectile::ProjectileManager* projectileManager;
+    projectile::ChristmasSleighConfig christmasSleighConfig;
+};

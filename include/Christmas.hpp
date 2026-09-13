@@ -9,13 +9,13 @@
 #include <vector>
 
 namespace player{class Player;}
-namespace projectile{class ProjectileManager}
+namespace projectile{class ProjectileManager;}
 
 namespace projectile{
 
     struct GiftConfig{
         std::vector<player::Player>* players = nullptr;
-        float speed = 2000.f;
+        float speed = 200.f;
         std::string textureId = "gift";
         explode::ExplosionManager* explosionManager;
         explode::ExplosionConfig explosionConfig;
@@ -27,7 +27,7 @@ namespace projectile{
         std::vector<player::Player>* players = nullptr;
 
         int throwerIndex = -1;
-        float speed = 2000.f;
+        float speed = 200.f;
         
         std::string textureId = "christmasSleigh";
         projectile::ProjectileManager* projectileManager;

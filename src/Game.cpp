@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include "Ability.hpp"
+#include "Christmas.hpp"
 #include "Explosion.hpp"
 #include "LTexture.hpp"
 #include "Missile.hpp"
@@ -102,6 +103,23 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
             trafficConeCfg.players = &playerManager.players;
             trafficConeCfg.particleManager = &particleManager;
             cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
+        }else if(playerSlot[i].hatId == "hat_christmas"){
+            projectile::ChristmasSleighConfig sleighCfg;
+            sleighCfg.players = &playerManager.players;
+            sleighCfg.projectileManager = &projectileManager;
+            sleighCfg.audioManager = &audioManager;
+            sleighCfg.screenWidth = mScreenWidth;
+            sleighCfg.screenHeight = mEffectiveHeight;
+
+            explode::ExplosionConfig eCfg;
+            eCfg.power = 2.f;
+
+            sleighCfg.giftConfig.players = &playerManager.players;
+            sleighCfg.giftConfig.explosionManager = &explosionManager;
+            sleighCfg.giftConfig.explosionConfig = eCfg;
+            sleighCfg.giftConfig.audioManager = &audioManager;
+
+            cfg.ability = std::make_unique<ChristmasSleighAbility>(&projectileManager, sleighCfg);
         }else{
             cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
         }
@@ -142,6 +160,7 @@ bool Game::loadMedia() {
     tm.loadTexture("bg", "assets/abstract_seamless_bg_01.png");
     tm.loadTexture("trafficCone", "assets/trafficCone.png");
     tm.loadTexture("christmasSleigh", "assets/christmasSleigh.png");
+    tm.loadTexture("gift", "assets/gifts/blue.png");
     
     tm.loadDirectory("assets/hats/", "hat_");
     tm.loadDirectory("assets/skins/", "skin_");
