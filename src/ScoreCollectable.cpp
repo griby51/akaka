@@ -15,7 +15,7 @@ void ScoreCollectable::update(float deltaTime, std::vector<player::Player>* play
 
     for(int i = 0; i < players->size(); i++){
         if(util::collide((*players)[i].collider, collider)){
-            if(!(*players)[i].isAlive) return;
+            if(!(*players)[i].isAlive) continue;
 
             onHit((*players)[i]);
         }

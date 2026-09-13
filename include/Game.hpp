@@ -58,10 +58,10 @@ private:
     static constexpr int MISSILE_NUMBER = 500;
     float GLOBAL_SPEED = 50.0f;
 
+    AudioManager audioManager;
     projectile::ProjectileManager projectileManager;
     explode::ExplosionManager explosionManager;
     player::PlayerManager playerManager;
-    AudioManager audioManager;
     ParticleManager particleManager;
 
     LTexture mScoreTexture;

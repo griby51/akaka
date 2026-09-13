@@ -1,12 +1,28 @@
 #pragma once
 
-#include "TextureManager.hpp"
+#include <string>
 
 struct Animation{
     std::string textureId;
-    int frameW, frameH;
-    int columns;
-    int frameCount;
-    float frameDuration;
+    int frameW = 64, frameH = 64;
+    int columns = 5;
+    int frameCount = 5;
+    float frameDuration = 10;
     bool loop = false;
+};
+
+class AnimationPlayer{
+public:
+    AnimationPlayer(const Animation* animation);
+
+    void update(float deltaTime);
+    void render(float x, float y, float scale = 1.f, double angle = 0.0);
+
+    bool isFinished();
+    int getCurrentFrame();
+
+private:
+    const Animation* animation = nullptr;
+    float elapsed = 0.f;
+    bool finished = false;
 };

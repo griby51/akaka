@@ -38,7 +38,7 @@ namespace player{
 
         if(config.showCollider){
             SDL_SetRenderDrawColor(renderer, config.colliderColor.r, config.colliderColor.g, config.colliderColor.b, config.colliderColor.a);
-            SDL_RenderDrawRect(renderer, &config.collider);
+            SDL_RenderDrawRect(renderer, &collider);
         }
     }
 
@@ -201,7 +201,7 @@ namespace player{
     LTexture* Player::getHat() { return config.hat; }
 
     Player::~Player(){
-        Mix_HaltChannel(jetpackChannel);
+        config.audioManager->stopChannel(jetpackChannel);
     }
 
     void Player::move(int direction){

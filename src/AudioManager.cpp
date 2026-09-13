@@ -95,5 +95,10 @@ void AudioManager::clean(){
 }
 
 void AudioManager::stopChannel(int channel){
+    if (channel < 0) return;
+    Mix_HaltChannel(channel);
+}
+
+void AudioManager::stopAllChannel(){
     Mix_HaltChannel(-1);
 }
