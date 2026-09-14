@@ -6,17 +6,17 @@
 #include "Missile.hpp"
 #include "Player.hpp"
 #include "ScoreCollectable.hpp"
-#include "GameScene.hpp"
 #include "TextureManager.hpp"
+#include "AnimationManager.hpp"
 #include "TrafficCone.hpp"
 #include "Utils.hpp"
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_joystick.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <filesystem>
 #include <algorithm>
 #include <memory>
 
@@ -161,11 +161,17 @@ bool Game::loadMedia() {
     tm.loadTexture("trafficCone", "assets/trafficCone.png");
     tm.loadTexture("christmasSleigh", "assets/christmasSleigh.png");
     tm.loadTexture("gift", "assets/gifts/blue.png");
+    tm.loadTexture("explosion_missile_sheet", "assets/explosion/missile/explosion.png");
     
     tm.loadDirectory("assets/hats/", "hat_");
     tm.loadDirectory("assets/skins/", "skin_");
 
     int success = true;
+
+    AnimationManager& am = AnimationManager::getInstance();
+
+    Animation missileAnim{"explosion_missile_sheet", 64, 64, 6, 30, 0.03, false};
+    am.registerAnimation("explosion_missile", missileAnim);
 
     mScoreFont = TTF_OpenFont("assets/pixelfont.ttf", 14);
     if (!mScoreFont) {
@@ -180,7 +186,7 @@ bool Game::loadMedia() {
 
     audioManager.loadMusic("miniloop14", "assets/sounds/musics/22PurgatoryPackMiniLoop14.ogg");
 
-    return true;
+    return success;
 }
 
 void Game::start(){
@@ -202,6 +208,11 @@ void Game::handleEvents(const SDL_Event& e) {
         mQuit = true;
         return;
     }
+    if(e.type == SDL_KEYDOWN){
+        if(e.key.keysym.sym == SDLK_F1){
+            effectManager.spawn("explosion_missile", mScreenWidth / 2, mEffectiveHeight / 2);
+        }
+    }
 }
 
 void Game::update(float deltaTime){
@@ -214,6 +225,7 @@ void Game::update(float deltaTime){
     explosionManager.update(deltaTime);
     playerManager.update(deltaTime);
     particleManager.update(deltaTime);
+    effectManager.update(deltaTime);
 
     mPizza.erase(
             std::remove_if(mPizza.begin(), mPizza.end(),
@@ -258,6 +270,7 @@ void Game::render(){
     explosionManager.render(mRenderer);
     playerManager.render(mRenderer);
     particleManager.render(mRenderer);
+    effectManager.render();
 
     for (int i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);

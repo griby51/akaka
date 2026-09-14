@@ -3,20 +3,17 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
-#include <string>
-#include <sstream>
-#include <memory>
 
 #include "Config.hpp"
 #include "LTexture.hpp"
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
-#include "Projectile.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
 #include "ProjectileManager.hpp"
 #include "ScoreCollectable.hpp"
 #include "ExplosionManager.hpp"
+#include "EffectManager.hpp"
 #include "PlayerManager.hpp"
 #include "AudioManager.hpp"
 
@@ -61,6 +58,7 @@ private:
     AudioManager audioManager;
     projectile::ProjectileManager projectileManager;
     explode::ExplosionManager explosionManager;
+    EffectManager effectManager;
     player::PlayerManager playerManager;
     ParticleManager particleManager;
 

@@ -16,10 +16,10 @@ public:
     AnimationPlayer(const Animation* animation);
 
     void update(float deltaTime);
-    void render(float x, float y, float scale = 1.f, double angle = 0.0);
+    void render(float x, float y, float scale = 1.f, double angle = 0.0) const;
 
-    bool isFinished();
-    int getCurrentFrame();
+    bool isFinished() const;
+    int getCurrentFrame() const;
 
 private:
     const Animation* animation = nullptr;
