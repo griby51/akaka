@@ -5,6 +5,7 @@
 #include <SDL2/SDL_mixer.h>
 
 #include "Config.hpp"
+#include "GameContext.hpp"
 #include "LTexture.hpp"
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
@@ -54,6 +55,8 @@ private:
     static constexpr int THRUST_PARTICLE_NUMBER = 500;
     static constexpr int MISSILE_NUMBER = 500;
     float GLOBAL_SPEED = 50.0f;
+
+    GameContext mContext;
 
     AudioManager audioManager;
     projectile::ProjectileManager projectileManager;

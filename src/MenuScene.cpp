@@ -43,8 +43,6 @@ void MenuScene::update(float deltaTime){
 
 MenuScene::~MenuScene(){
     if(mFont) TTF_CloseFont(mFont);
-
-    TextureManager::getInstance().clean();
 }
 
 void MenuScene::render(){

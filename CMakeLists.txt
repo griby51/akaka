@@ -13,31 +13,15 @@ find_package(SDL2_image REQUIRED CONFIG)
 find_package(SDL2_ttf REQUIRED CONFIG)
 find_package(SDL2_mixer REQUIRED CONFIG)
 
-# Lua 5.4 + sol2, downloaded on first configure
-include(FetchContent)
-
-# Give extracted files the extraction time, so a version bump triggers a rebuild
-if(POLICY CMP0135)
-    cmake_policy(SET CMP0135 NEW)
-endif()
-
-FetchContent_Declare(lua
-    URL https://www.lua.org/ftp/lua-5.4.9.tar.gz
-    URL_HASH SHA256=2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
-)
-FetchContent_Declare(sol2
-    URL https://github.com/ThePhD/sol2/archive/refs/tags/v3.5.0.tar.gz
-    URL_HASH SHA256=86c0f6d2836b184a250fc2907091c076bf53c9603dd291eaebade36cc342e13c
-)
-FetchContent_MakeAvailable(lua sol2)
-
-# The Lua tarball has no CMakeLists: build it as a static library,
-# without the standalone interpreter/compiler (lua.c, luac.c)
-file(GLOB LUA_SRC_FILES ${lua_SOURCE_DIR}/src/*.c)
-list(REMOVE_ITEM LUA_SRC_FILES ${lua_SOURCE_DIR}/src/lua.c ${lua_SOURCE_DIR}/src/luac.c)
+# Lua 5.4.9 and sol2 3.5.0 are vendored in libs/ (shared with the makefiles).
+# Lua is built as a static library, without the standalone
+# interpreter/compiler (lua.c, luac.c)
+set(LUA_DIR ${CMAKE_SOURCE_DIR}/libs/lua/src)
+file(GLOB LUA_SRC_FILES ${LUA_DIR}/*.c)
+list(REMOVE_ITEM LUA_SRC_FILES ${LUA_DIR}/lua.c ${LUA_DIR}/luac.c)
 
 add_library(lua STATIC ${LUA_SRC_FILES})
-target_include_directories(lua PUBLIC ${lua_SOURCE_DIR}/src)
+target_include_directories(lua PUBLIC ${LUA_DIR})
 target_compile_definitions(lua PRIVATE $<$<PLATFORM_ID:Linux>:LUA_USE_LINUX>)
 target_link_libraries(lua PUBLIC ${CMAKE_DL_LIBS} $<$<NOT:$<PLATFORM_ID:Windows>>:m>)
 
@@ -49,7 +33,10 @@ add_executable(main ${SRC_FILES} ${EXPLOSION_SRC_FILES})
 target_include_directories(main PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/libs/ExplosionEngine/include
+    ${CMAKE_SOURCE_DIR}/libs/sol2/include
 )
+
+target_compile_definitions(main PRIVATE SOL_ALL_SAFETIES_ON=1)
 
 target_link_libraries(main PRIVATE
     SDL2::SDL2
@@ -58,7 +45,6 @@ target_link_libraries(main PRIVATE
     SDL2_ttf::SDL2_ttf
     SDL2_mixer::SDL2_mixer
     lua
-    sol2::sol2
 )
 
 # Copy assets and (on Windows) required DLLs next to the built binary,

@@ -2,6 +2,7 @@
 #include "MenuScene.hpp"
 #include "LTimer.hpp"
 #include "TextureManager.hpp"
+#include "ScriptEngine.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
@@ -39,6 +40,9 @@ int main(int argc, char* args[]){
     SDL_RenderSetLogicalSize(renderer, 1024, 576);
 
     TextureManager::getInstance().init(renderer);
+
+    ScriptEngine::getInstance().init();
+    ScriptEngine::getInstance().runFile("assets/scripts/textures.lua");
 
     SceneManager manager;
     manager.push(std::make_unique<MenuScene>(renderer, window, manager));
@@ -92,6 +96,8 @@ int main(int argc, char* args[]){
     }
 
     for (auto& [id, joy] : openJoysticks) SDL_JoystickClose(joy);
+
+    TextureManager::getInstance().clean();
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

@@ -1,76 +1,17 @@
 [
   {
-    "file": "src/Collectable.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/Collectable.cpp",
-      "-o",
-      "build/Collectable.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Collectable.o"
-  },
-  {
-    "file": "src/CollisionSystem.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/CollisionSystem.cpp",
-      "-o",
-      "build/CollisionSystem.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/CollisionSystem.o"
-  },
-  {
-    "file": "src/Config.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/Config.cpp",
-      "-o",
-      "build/Config.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Config.o"
-  },
-  {
-    "file": "src/Dot.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/Dot.cpp",
-      "-o",
-      "build/Dot.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Dot.o"
-  },
-  {
     "file": "src/Game.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
       "-Iinclude",
       "-Ilibs/ExplosionEngine/include",
+      "-Ilibs/sol2/include",
+      "-Ilibs/lua/src",
+      "-DSOL_ALL_SAFETIES_ON=1",
       "-g",
+      "-MMD",
+      "-MP",
       "-c",
       "src/Game.cpp",
       "-o",
@@ -86,7 +27,12 @@
       "-std=c++17",
       "-Iinclude",
       "-Ilibs/ExplosionEngine/include",
+      "-Ilibs/sol2/include",
+      "-Ilibs/lua/src",
+      "-DSOL_ALL_SAFETIES_ON=1",
       "-g",
+      "-MMD",
+      "-MP",
       "-c",
       "src/GameScene.cpp",
       "-o",
@@ -96,61 +42,18 @@
     "output": "build/GameScene.o"
   },
   {
-    "file": "src/LTexture.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/LTexture.cpp",
-      "-o",
-      "build/LTexture.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/LTexture.o"
-  },
-  {
-    "file": "src/LTimer.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/LTimer.cpp",
-      "-o",
-      "build/LTimer.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/LTimer.o"
-  },
-  {
-    "file": "src/main.cpp",
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
-      "-c",
-      "src/main.cpp",
-      "-o",
-      "build/main.o"
-    ],
-    "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/main.o"
-  },
-  {
     "file": "src/MenuScene.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
       "-Iinclude",
       "-Ilibs/ExplosionEngine/include",
+      "-Ilibs/sol2/include",
+      "-Ilibs/lua/src",
+      "-DSOL_ALL_SAFETIES_ON=1",
       "-g",
+      "-MMD",
+      "-MP",
       "-c",
       "src/MenuScene.cpp",
       "-o",
@@ -160,163 +63,568 @@
     "output": "build/MenuScene.o"
   },
   {
-    "file": "src/Missile.cpp",
+    "file": "src/ScriptEngine.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
       "-Iinclude",
       "-Ilibs/ExplosionEngine/include",
+      "-Ilibs/sol2/include",
+      "-Ilibs/lua/src",
+      "-DSOL_ALL_SAFETIES_ON=1",
       "-g",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/Missile.cpp",
+      "src/ScriptEngine.cpp",
       "-o",
-      "build/Missile.o"
+      "build/ScriptEngine.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Missile.o"
+    "output": "build/ScriptEngine.o"
   },
   {
-    "file": "src/Particle.cpp",
+    "file": "libs/lua/src/lapi.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/Particle.cpp",
+      "libs/lua/src/lapi.c",
       "-o",
-      "build/Particle.o"
+      "build/libs/lua/src/lapi.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Particle.o"
+    "output": "build/libs/lua/src/lapi.o"
   },
   {
-    "file": "src/Player.cpp",
+    "file": "libs/lua/src/lauxlib.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/Player.cpp",
+      "libs/lua/src/lauxlib.c",
       "-o",
-      "build/Player.o"
+      "build/libs/lua/src/lauxlib.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Player.o"
+    "output": "build/libs/lua/src/lauxlib.o"
   },
   {
-    "file": "src/Projectile.cpp",
+    "file": "libs/lua/src/lbaselib.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/Projectile.cpp",
+      "libs/lua/src/lbaselib.c",
       "-o",
-      "build/Projectile.o"
+      "build/libs/lua/src/lbaselib.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/Projectile.o"
+    "output": "build/libs/lua/src/lbaselib.o"
   },
   {
-    "file": "src/SceneManager.cpp",
+    "file": "libs/lua/src/lcode.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/SceneManager.cpp",
+      "libs/lua/src/lcode.c",
       "-o",
-      "build/SceneManager.o"
+      "build/libs/lua/src/lcode.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/SceneManager.o"
+    "output": "build/libs/lua/src/lcode.o"
   },
   {
-    "file": "src/ScoreCollectable.cpp",
+    "file": "libs/lua/src/lcorolib.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "src/ScoreCollectable.cpp",
+      "libs/lua/src/lcorolib.c",
       "-o",
-      "build/ScoreCollectable.o"
+      "build/libs/lua/src/lcorolib.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/ScoreCollectable.o"
+    "output": "build/libs/lua/src/lcorolib.o"
   },
   {
-    "file": "libs/ExplosionEngine/src/EmberParticle.cpp",
+    "file": "libs/lua/src/lctype.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "libs/ExplosionEngine/src/EmberParticle.cpp",
+      "libs/lua/src/lctype.c",
       "-o",
-      "build/libs/ExplosionEngine/src/EmberParticle.o"
+      "build/libs/lua/src/lctype.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/libs/ExplosionEngine/src/EmberParticle.o"
+    "output": "build/libs/lua/src/lctype.o"
   },
   {
-    "file": "libs/ExplosionEngine/src/Explosion.cpp",
+    "file": "libs/lua/src/ldblib.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "libs/ExplosionEngine/src/Explosion.cpp",
+      "libs/lua/src/ldblib.c",
       "-o",
-      "build/libs/ExplosionEngine/src/Explosion.o"
+      "build/libs/lua/src/ldblib.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/libs/ExplosionEngine/src/Explosion.o"
+    "output": "build/libs/lua/src/ldblib.o"
   },
   {
-    "file": "libs/ExplosionEngine/src/ExplosionManager.cpp",
+    "file": "libs/lua/src/ldebug.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "libs/ExplosionEngine/src/ExplosionManager.cpp",
+      "libs/lua/src/ldebug.c",
       "-o",
-      "build/libs/ExplosionEngine/src/ExplosionManager.o"
+      "build/libs/lua/src/ldebug.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/libs/ExplosionEngine/src/ExplosionManager.o"
+    "output": "build/libs/lua/src/ldebug.o"
   },
   {
-    "file": "libs/ExplosionEngine/src/FireballParticle.cpp",
+    "file": "libs/lua/src/ldo.c",
     "arguments": [
-      "/usr/bin/g++",
-      "-std=c++17",
-      "-Iinclude",
-      "-Ilibs/ExplosionEngine/include",
-      "-g",
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
       "-c",
-      "libs/ExplosionEngine/src/FireballParticle.cpp",
+      "libs/lua/src/ldo.c",
       "-o",
-      "build/libs/ExplosionEngine/src/FireballParticle.o"
+      "build/libs/lua/src/ldo.o"
     ],
     "directory": "/home/giantgrib/Documents/randomgame/akaka",
-    "output": "build/libs/ExplosionEngine/src/FireballParticle.o"
+    "output": "build/libs/lua/src/ldo.o"
+  },
+  {
+    "file": "libs/lua/src/ldump.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/ldump.c",
+      "-o",
+      "build/libs/lua/src/ldump.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/ldump.o"
+  },
+  {
+    "file": "libs/lua/src/lfunc.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lfunc.c",
+      "-o",
+      "build/libs/lua/src/lfunc.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lfunc.o"
+  },
+  {
+    "file": "libs/lua/src/lgc.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lgc.c",
+      "-o",
+      "build/libs/lua/src/lgc.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lgc.o"
+  },
+  {
+    "file": "libs/lua/src/linit.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/linit.c",
+      "-o",
+      "build/libs/lua/src/linit.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/linit.o"
+  },
+  {
+    "file": "libs/lua/src/liolib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/liolib.c",
+      "-o",
+      "build/libs/lua/src/liolib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/liolib.o"
+  },
+  {
+    "file": "libs/lua/src/llex.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/llex.c",
+      "-o",
+      "build/libs/lua/src/llex.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/llex.o"
+  },
+  {
+    "file": "libs/lua/src/lmathlib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lmathlib.c",
+      "-o",
+      "build/libs/lua/src/lmathlib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lmathlib.o"
+  },
+  {
+    "file": "libs/lua/src/lmem.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lmem.c",
+      "-o",
+      "build/libs/lua/src/lmem.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lmem.o"
+  },
+  {
+    "file": "libs/lua/src/loadlib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/loadlib.c",
+      "-o",
+      "build/libs/lua/src/loadlib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/loadlib.o"
+  },
+  {
+    "file": "libs/lua/src/lobject.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lobject.c",
+      "-o",
+      "build/libs/lua/src/lobject.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lobject.o"
+  },
+  {
+    "file": "libs/lua/src/lopcodes.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lopcodes.c",
+      "-o",
+      "build/libs/lua/src/lopcodes.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lopcodes.o"
+  },
+  {
+    "file": "libs/lua/src/loslib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/loslib.c",
+      "-o",
+      "build/libs/lua/src/loslib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/loslib.o"
+  },
+  {
+    "file": "libs/lua/src/lparser.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lparser.c",
+      "-o",
+      "build/libs/lua/src/lparser.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lparser.o"
+  },
+  {
+    "file": "libs/lua/src/lstate.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lstate.c",
+      "-o",
+      "build/libs/lua/src/lstate.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lstate.o"
+  },
+  {
+    "file": "libs/lua/src/lstring.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lstring.c",
+      "-o",
+      "build/libs/lua/src/lstring.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lstring.o"
+  },
+  {
+    "file": "libs/lua/src/lstrlib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lstrlib.c",
+      "-o",
+      "build/libs/lua/src/lstrlib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lstrlib.o"
+  },
+  {
+    "file": "libs/lua/src/ltable.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/ltable.c",
+      "-o",
+      "build/libs/lua/src/ltable.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/ltable.o"
+  },
+  {
+    "file": "libs/lua/src/ltablib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/ltablib.c",
+      "-o",
+      "build/libs/lua/src/ltablib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/ltablib.o"
+  },
+  {
+    "file": "libs/lua/src/ltm.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/ltm.c",
+      "-o",
+      "build/libs/lua/src/ltm.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/ltm.o"
+  },
+  {
+    "file": "libs/lua/src/lundump.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lundump.c",
+      "-o",
+      "build/libs/lua/src/lundump.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lundump.o"
+  },
+  {
+    "file": "libs/lua/src/lutf8lib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lutf8lib.c",
+      "-o",
+      "build/libs/lua/src/lutf8lib.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lutf8lib.o"
+  },
+  {
+    "file": "libs/lua/src/lvm.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lvm.c",
+      "-o",
+      "build/libs/lua/src/lvm.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lvm.o"
+  },
+  {
+    "file": "libs/lua/src/lzio.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=gnu99",
+      "-O2",
+      "-DLUA_USE_LINUX",
+      "-MMD",
+      "-MP",
+      "-c",
+      "libs/lua/src/lzio.c",
+      "-o",
+      "build/libs/lua/src/lzio.o"
+    ],
+    "directory": "/home/giantgrib/Documents/randomgame/akaka",
+    "output": "build/libs/lua/src/lzio.o"
   }
 ]

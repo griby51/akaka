@@ -42,6 +42,15 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     
     audioManager.init();
 
+    mContext.effectManager = &effectManager;
+    mContext.audioManager = &audioManager;
+    mContext.effectiveHeight = &mEffectiveHeight; 
+    mContext.screenWidth = &mScreenWidth;
+    mContext.screenHeight = &mScreenHeight;
+    mContext.players = &playerManager.players;
+    mContext.particleManager = &particleManager;
+
+
     SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
 
     mEffectiveHeight = mScreenHeight - 50;
@@ -153,15 +162,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
 bool Game::loadMedia() {
     TextureManager& tm = TextureManager::getInstance();
-
-    tm.loadTexture("pizza", "assets/collectables/pizza.png");
-    tm.loadTexture("missile", "assets/missile00.png");
-    tm.loadTexture("dot", "assets/dot.bmp");
-    tm.loadTexture("bg", "assets/abstract_seamless_bg_01.png");
-    tm.loadTexture("trafficCone", "assets/trafficCone.png");
-    tm.loadTexture("christmasSleigh", "assets/christmasSleigh.png");
-    tm.loadTexture("gift", "assets/gifts/blue.png");
-    tm.loadTexture("explosion_missile_sheet", "assets/explosion/missile/explosion.png");
     
     tm.loadDirectory("assets/hats/", "hat_");
     tm.loadDirectory("assets/skins/", "skin_");
@@ -342,8 +342,6 @@ void Game::render(){
 };
 
 void Game::close() {
-    TextureManager::getInstance().clean();
-
     if (mScoreFont){
         TTF_CloseFont(mScoreFont); mScoreFont = nullptr;
     }
