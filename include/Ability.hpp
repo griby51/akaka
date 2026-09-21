@@ -2,8 +2,6 @@
 
 #include "AudioManager.hpp"
 #include "Christmas.hpp"
-#include "Explosion.hpp"
-#include "ExplosionManager.hpp"
 #include "ProjectileManager.hpp"
 #include "Missile.hpp"
 #include "LTimer.hpp"
@@ -41,27 +39,6 @@ private:
     projectile::ProjectileManager* projectileManager;
     projectile::TrafficConeConfig trafficConeConfig;
     int screenWidth, screenHeight;
-};
-
-class FreezeAbility : public Ability{
-public:
-    FreezeAbility(int duration, int radius, std::vector<player::Player>* players);
-    void use(player::Player* player) override;
-private:
-    int duration, radius;
-    std::vector<player::Player>* players;
-};
-
-class KamikazeAbility : public Ability{
-public:
-    KamikazeAbility(std::vector<player::Player>* players, explode::ExplosionManager& mgr, explode::ExplosionConfig cfg, AudioManager* audioManager, float maxDamage = 50.f, float maxRadius = -1.f, float maxForce = -1);
-    void use(player::Player* player) override;
-private:
-    std::vector<player::Player>* players;
-    float maxDamage, maxRadius, maxForce;
-    explode::ExplosionConfig cfg;
-    explode::ExplosionManager& mgr;
-    AudioManager* audioManager;
 };
 
 class ChristmasSleighAbility : public Ability{

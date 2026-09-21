@@ -44,6 +44,7 @@ int main(int argc, char* args[]){
     ScriptEngine::getInstance().init();
     ScriptEngine::getInstance().runFile("assets/scripts/textures.lua");
     ScriptEngine::getInstance().runFile("assets/scripts/abilities/freeze.lua");
+    ScriptEngine::getInstance().runFile("assets/scripts/abilities/kamikaze.lua");
     ScriptEngine::getInstance().runFile("assets/scripts/hats.lua");
 
     SceneManager manager;

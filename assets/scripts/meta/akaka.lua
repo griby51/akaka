@@ -83,7 +83,7 @@ function registerAbility(def) end
 ---@field ability? string Identifiant d'une ability declaree avec registerAbility
 ---@field title? string [TODO] Nom affiche dans le menu (defaut : l'id)
 
----[TODO] Declare un chapeau selectionnable dans le menu.
+---Declare un chapeau selectionnable dans le menu.
 ---Les chapeaux apparaissent dans le menu dans l'ordre de declaration.
 ---@param def HatDef
 function registerHat(def) end
@@ -205,21 +205,22 @@ function GameContext:screenWidth() end
 ---@return integer
 function GameContext:screenHeight() end
 
----[TODO] Joue une animation declaree avec registerAnimation.
+---Joue une animation, centree sur (x, y).
 ---@param animId string
 ---@param x number
 ---@param y number
 ---@param scale? number (defaut 1)
 function GameContext:spawnEffect(animId, x, y, scale) end
 
----[TODO] Joue un son deja charge.
+---Joue un son deja charge.
 ---@param id string
 function GameContext:playSFX(id) end
 
----[TODO] Fait trembler l'ecran.
----@param intensity number
+---Fait trembler l'ecran. Si une secousse est deja en cours, garde la plus forte
+---intensite et la plus longue duree (deux explosions ne s'additionnent pas).
+---@param intensity number Amplitude en pixels (ex: 16 pour une grosse explosion)
 ---@param duration number secondes
-function GameContext:shake(intensity, duration) end
+function GameContext:shakeScreen(intensity, duration) end
 
 ---@class ExplodeParams
 ---@field x number
@@ -231,7 +232,7 @@ function GameContext:shake(intensity, duration) end
 ---@field hitOwner? boolean Si true, l'explosion touche aussi le lanceur (defaut false)
 ---@field effect? string Animation jouee au centre
 ---@field sound? string Son joue
----@field shake? number Intensite du tremblement d'ecran
+---@field shake? number Intensite du tremblement d'ecran (voir shakeScreen)
 
 ---[TODO] Explosion complete : degats, knockback, effet, son, tremblement.
 ---@param params ExplodeParams

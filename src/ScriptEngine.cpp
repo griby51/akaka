@@ -1,9 +1,12 @@
 #include "ScriptEngine.hpp"
 #include "Ability.hpp"
+#include "Game.hpp"
 #include "GameContext.hpp"
 #include "LuaAbility.hpp"
 #include "Player.hpp"
 #include "TextureManager.hpp"
+#include "AudioManager.hpp"
+#include "EffectManager.hpp"
 
 #include <memory>
 #include <sol/forward.hpp>
@@ -109,6 +112,17 @@ void ScriptEngine::registerBindings(){
                 }
 
                 return sol::as_table(result);
+            },
+            "playSFX", [](GameContext& self, const std::string& id){
+                if(self.audioManager) self.audioManager->playSFX(id);
+            },
+            "shakeScreen", [](GameContext& self, float intensity, float duration){
+                if(self.effectManager) self.effectManager->triggerShake(intensity, duration);
+            },
+            "spawnEffect", [](GameContext& self, const std::string& animId, float x, float y, sol::optional<float> scale){
+                if(self.effectManager){
+                    self.effectManager->spawn(animId, x, y, scale.value_or(1.f));
+                }
             });
     lua->set_function("registerAbility", [this](sol::table def){
             sol::optional<std::string> id = def["id"];

@@ -94,12 +94,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mContext);
 
         if(!cfg.ability){
-            if(playerSlot[i].hatId == "hat_kamikaze"){
-                printf("Kamikaze hat\n");
-                explode::ExplosionConfig eCfg;
-                eCfg.power = 3.f;
-                cfg.ability = std::make_unique<KamikazeAbility>(&playerManager.players, explosionManager, eCfg, &audioManager, 50);
-            }else if(playerSlot[i].hatId == "hat_trafficCone"){
+            if(playerSlot[i].hatId == "hat_trafficCone"){
                 projectile::TrafficConeConfig trafficConeCfg;
                 explode::ExplosionConfig eCfg;
                 eCfg.power = 4.f;
@@ -254,8 +249,8 @@ void Game::update(float deltaTime){
 }
 
 void Game::render(){
-    int offsetX = explosionManager.getShakeX();
-    int offsetY = explosionManager.getShakeY();
+    int offsetX = effectManager.getShakeX();
+    int offsetY = effectManager.getShakeY();
 
     SDL_Rect viewport = {offsetX, offsetY, mScreenWidth, mScreenHeight};
 
