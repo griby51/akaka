@@ -40,10 +40,10 @@ namespace projectile{
 
         std::vector<SDL_Rect*> playersCollider;
 
-        for(int i = 0; i < trafficConeConfig.players->size(); i++){
+        for(size_t i = 0; i < trafficConeConfig.players->size(); i++){
             player::Player& player = (*trafficConeConfig.players)[i];
             if(!player.isAlive) continue;
-            if(i == trafficConeConfig.throwerIndex) continue;
+            if((int)i == trafficConeConfig.throwerIndex) continue;
 
             if(collider.x - trafficConeConfig.triggerRange < player.collider.x && player.collider.x < collider.x + trafficConeConfig.triggerRange){
                 if(!triggered){

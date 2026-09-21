@@ -43,6 +43,8 @@ int main(int argc, char* args[]){
 
     ScriptEngine::getInstance().init();
     ScriptEngine::getInstance().runFile("assets/scripts/textures.lua");
+    ScriptEngine::getInstance().runFile("assets/scripts/abilities/freeze.lua");
+    ScriptEngine::getInstance().runFile("assets/scripts/hats.lua");
 
     SceneManager manager;
     manager.push(std::make_unique<MenuScene>(renderer, window, manager));

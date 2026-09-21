@@ -9,6 +9,7 @@
 #include "TextureManager.hpp"
 #include "AnimationManager.hpp"
 #include "TrafficCone.hpp"
+#include "ScriptEngine.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_joystick.h>
@@ -90,47 +91,49 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.audioManager = &audioManager;
         cfg.particleManager = &particleManager;
 
-        if(playerSlot[i].hatId == "hat_witch"){
-            cfg.ability = std::make_unique<FreezeAbility>(0, 300, &playerManager.players);
-        }else if(playerSlot[i].hatId == "hat_kamikaze"){
-            printf("Kamikaze hat\n");
-            explode::ExplosionConfig eCfg;
-            eCfg.power = 3.f;
-            cfg.ability = std::make_unique<KamikazeAbility>(&playerManager.players, explosionManager, eCfg, &audioManager, 50);
-        }else if(playerSlot[i].hatId == "hat_trafficCone"){
-            projectile::TrafficConeConfig trafficConeCfg;
-            explode::ExplosionConfig eCfg;
-            eCfg.power = 4.f;
-            trafficConeCfg.explosionConfig = eCfg;
-            trafficConeCfg.explosionManager = &explosionManager;
-            trafficConeCfg.globalSpeed = &GLOBAL_SPEED;
-            trafficConeCfg.triggerRange = 20.f;
-            trafficConeCfg.speed = 1500.f;
-            trafficConeCfg.explosionTriggerRange = 100.f;
-            trafficConeCfg.audioManager = &audioManager;
-            trafficConeCfg.particleConfig = mThrustParticleConfig;
-            trafficConeCfg.players = &playerManager.players;
-            trafficConeCfg.particleManager = &particleManager;
-            cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
-        }else if(playerSlot[i].hatId == "hat_christmas"){
-            projectile::ChristmasSleighConfig sleighCfg;
-            sleighCfg.players = &playerManager.players;
-            sleighCfg.projectileManager = &projectileManager;
-            sleighCfg.audioManager = &audioManager;
-            sleighCfg.screenWidth = mScreenWidth;
-            sleighCfg.screenHeight = mEffectiveHeight;
+        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mContext);
 
-            explode::ExplosionConfig eCfg;
-            eCfg.power = 2.f;
+        if(!cfg.ability){
+            if(playerSlot[i].hatId == "hat_kamikaze"){
+                printf("Kamikaze hat\n");
+                explode::ExplosionConfig eCfg;
+                eCfg.power = 3.f;
+                cfg.ability = std::make_unique<KamikazeAbility>(&playerManager.players, explosionManager, eCfg, &audioManager, 50);
+            }else if(playerSlot[i].hatId == "hat_trafficCone"){
+                projectile::TrafficConeConfig trafficConeCfg;
+                explode::ExplosionConfig eCfg;
+                eCfg.power = 4.f;
+                trafficConeCfg.explosionConfig = eCfg;
+                trafficConeCfg.explosionManager = &explosionManager;
+                trafficConeCfg.globalSpeed = &GLOBAL_SPEED;
+                trafficConeCfg.triggerRange = 20.f;
+                trafficConeCfg.speed = 1500.f;
+                trafficConeCfg.explosionTriggerRange = 100.f;
+                trafficConeCfg.audioManager = &audioManager;
+                trafficConeCfg.particleConfig = mThrustParticleConfig;
+                trafficConeCfg.players = &playerManager.players;
+                trafficConeCfg.particleManager = &particleManager;
+                cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
+            }else if(playerSlot[i].hatId == "hat_christmas"){
+                projectile::ChristmasSleighConfig sleighCfg;
+                sleighCfg.players = &playerManager.players;
+                sleighCfg.projectileManager = &projectileManager;
+                sleighCfg.audioManager = &audioManager;
+                sleighCfg.screenWidth = mScreenWidth;
+                sleighCfg.screenHeight = mEffectiveHeight;
 
-            sleighCfg.giftConfig.players = &playerManager.players;
-            sleighCfg.giftConfig.explosionManager = &explosionManager;
-            sleighCfg.giftConfig.explosionConfig = eCfg;
-            sleighCfg.giftConfig.audioManager = &audioManager;
+                explode::ExplosionConfig eCfg;
+                eCfg.power = 2.f;
 
-            cfg.ability = std::make_unique<ChristmasSleighAbility>(&projectileManager, sleighCfg);
-        }else{
-            cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
+                sleighCfg.giftConfig.players = &playerManager.players;
+                sleighCfg.giftConfig.explosionManager = &explosionManager;
+                sleighCfg.giftConfig.explosionConfig = eCfg;
+                sleighCfg.giftConfig.audioManager = &audioManager;
+
+                cfg.ability = std::make_unique<ChristmasSleighAbility>(&projectileManager, sleighCfg);
+            }else{
+                cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
+            }
         }
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
@@ -143,7 +146,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
         cfg.showCollider = mConfig.getBool("show_player_collider", false);
         cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
-
         
 
         if(playerSlot[i].presetIndex >= 0){
@@ -235,7 +237,7 @@ void Game::update(float deltaTime){
             mPizza.end()
             );
 
-    for(int i = 0; i < mPizza.size(); i++){
+    for(size_t i = 0; i < mPizza.size(); i++){
         mPizza[i].update(deltaTime, &playerManager.players);
     }
 
@@ -272,7 +274,7 @@ void Game::render(){
     particleManager.render(mRenderer);
     effectManager.render();
 
-    for (int i = 0; i < mPizza.size(); i++){
+    for(size_t i = 0; i < mPizza.size(); i++){
         mPizza[i].render(mRenderer);
     }
 
@@ -287,7 +289,7 @@ void Game::render(){
     SDL_RenderSetViewport(mRenderer, NULL);
 
 
-    for(int i = 0; i < playerManager.players.size(); i++){
+    for(size_t i = 0; i < playerManager.players.size(); i++){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
         std::string score = std::to_string(playerManager.players[i].getScore());

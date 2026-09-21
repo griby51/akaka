@@ -13,8 +13,8 @@ namespace player{
             player.handleInput(keys);
         }
 
-        for(int i = 0; i < players.size(); i++){
-            for(int j = i + 1; j < players.size(); j++){
+        for(size_t i = 0; i < players.size(); i++){
+            for(size_t j = i + 1; j < players.size(); j++){
                 if(!players[i].isAlive || !players[j].isAlive) continue;
 
                 if(util::collide(players[i].collider, players[j].collider)){

@@ -44,10 +44,10 @@ namespace projectile{
         if (!isAlive) return;
 
         std::vector<SDL_Rect*> playersColliders;
-        for(int i = 0; i < missileConfig.players->size(); i++){
+        for(size_t i = 0; i < missileConfig.players->size(); i++){
             player::Player& player = (*missileConfig.players)[i];
             if(!player.isAlive) continue;
-            if(i == missileConfig.throwerIndex) continue;
+            if((int)i == missileConfig.throwerIndex) continue;
             playersColliders.push_back(&player.collider);
         }
 

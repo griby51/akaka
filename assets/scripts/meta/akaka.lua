@@ -11,7 +11,10 @@
 --
 -- Conventions valables pour toute l'API :
 --   * Temps    : toujours en SECONDES (le C++ convertit en ms en interne).
---   * Position : toujours le CENTRE de l'objet, en pixels logiques (1024x576).
+--   * Position : `getPosition` = coin HAUT-GAUCHE (le x/y du moteur),
+--                `getCenter` = centre. Les fonctions de portee du moteur
+--                (playersInRadius, explode) mesurent de centre a centre.
+--                Pixels logiques (1024x576).
 --   * Methodes : appel avec deux-points -> player:setVelocity(0, 0)
 --   * Les objets C++ (Player, Projectile...) ne se creent jamais depuis Lua,
 --     le moteur les fournit.
@@ -70,7 +73,7 @@ function registerAnimation(id, def) end
 ---[TODO] Appele quand le joueur meurt.
 ---@field onDeath? fun(self: AbilityInstance, player: Player, ctx: GameContext, killer?: Player)
 
----[TODO] Declare une ability.
+---Declare une ability.
 ---@param def AbilityDef
 function registerAbility(def) end
 
@@ -78,6 +81,7 @@ function registerAbility(def) end
 ---@field id string Identifiant de la texture du chapeau (ex: "hat_witch")
 ---@field texture string Chemin de l'image, chargee automatiquement sous `id`
 ---@field ability? string Identifiant d'une ability declaree avec registerAbility
+---@field title? string [TODO] Nom affiche dans le menu (defaut : l'id)
 
 ---[TODO] Declare un chapeau selectionnable dans le menu.
 ---Les chapeaux apparaissent dans le menu dans l'ordre de declaration.
@@ -90,6 +94,7 @@ function registerHat(def) end
 -- =============================================================================
 
 ---@class Player
+---@field isAlive boolean Lecture seule
 local Player = {}
 
 ---Remplace la vitesse du joueur.
@@ -97,54 +102,57 @@ local Player = {}
 ---@param vy number pixels/seconde
 function Player:setVelocity(vx, vy) end
 
+---Coin haut-gauche du joueur (le x/y du moteur).
+---@return number x
+---@return number y
+function Player:getPosition() end
+
+---Centre du joueur.
+---@return number cx
+---@return number cy
+function Player:getCenter() end
+
+---Taille du collider.
+---@return integer w
+---@return integer h
+function Player:getSize() end
+
 ---[TODO]
 ---@return number vx
 ---@return number vy
 function Player:getVelocity() end
 
----[TODO] Position du centre du joueur.
----@return number x
----@return number y
-function Player:getPosition() end
-
----[TODO] Deplace instantanement le centre du joueur.
+---Deplace instantanement le joueur (coin haut-gauche).
 ---@param x number
 ---@param y number
 function Player:teleport(x, y) end
 
----[TODO] Ajoute une force ponctuelle (explosions, coups...).
+---Ajoute une force ponctuelle (explosions, coups...).
 ---@param fx number
 ---@param fy number
 function Player:applyKnockBack(fx, fy) end
 
----[TODO]
 ---@return integer
 function Player:getLife() end
 
----[TODO]
 ---@return integer
 function Player:getMaxLife() end
 
----[TODO] Inflige des degats. `source` sert a attribuer le kill / les points.
----@param amount number
+---Inflige des degats. `source` [TODO] servira a attribuer le kill / les points.
+---@param amount integer
 ---@param source? Player
 function Player:damage(amount, source) end
 
----[TODO] Soigne, sans depasser getMaxLife().
----@param amount number
+---Soigne le joueur.
+---@param amount integer
 function Player:heal(amount) end
 
----[TODO]
 ---@return integer
 function Player:getScore() end
 
----[TODO] Ajoute (ou retire si negatif) du score.
+---Ajoute (ou retire si negatif) du score.
 ---@param amount integer
 function Player:addScore(amount) end
-
----[TODO]
----@return boolean
-function Player:isAlive() end
 
 ---[TODO] Position du joueur dans la partie (1, 2, 3...), stable pendant le match.
 ---@return integer
@@ -176,7 +184,7 @@ local GameContext = {}
 ---@return Player[]
 function GameContext:players() end
 
----[TODO] Joueurs vivants dont le centre est a moins de `radius` de (x, y).
+---Joueurs vivants dont le centre est a moins de `radius` de (x, y).
 ---@param x number
 ---@param y number
 ---@param radius number

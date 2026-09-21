@@ -27,7 +27,7 @@ void MissileAbility::use(player::Player* player){
     if(player->getScore() < cost) return;
     int myIndex = -1;
     if(missileConfig.players){
-        for(int i = 0; i < missileConfig.players->size(); i++){
+        for(size_t i = 0; i < missileConfig.players->size(); i++){
             if(&(*missileConfig.players)[i] == player){
                 myIndex = i;
                 break;
@@ -56,7 +56,7 @@ void TrafficConeAbility::use(player::Player* player){
     if(player->getScore() < cost) return;
     int myIndex = -1;
     if(trafficConeConfig.players){
-        for(int i = 0; i < trafficConeConfig.players->size(); i++){
+        for(size_t i = 0; i < trafficConeConfig.players->size(); i++){
             if(&(*trafficConeConfig.players)[i] == player){
                 myIndex = i;
                 break;
@@ -80,7 +80,7 @@ void FreezeAbility::use(player::Player* player){
     if(timeSinceLast.getTicks() <= cooldown) return;
     if(player->getScore() < cost) return;
     int playerTouched = 0;
-    for(int i = 0; i < players->size(); i++){
+    for(size_t i = 0; i < players->size(); i++){
         if(&(*players)[i] != player){
             if(util::isWithinDistance(player->collider, (*players)[i].collider, (float)radius)){
                 (*players)[i].setVelocity(0, 0);
@@ -164,7 +164,7 @@ void ChristmasSleighAbility::use(player::Player* player){
 
     int myIndex = -1;
     if(christmasSleighConfig.players){
-        for(int i = 0; i < christmasSleighConfig.players->size(); i++){
+        for(size_t i = 0; i < christmasSleighConfig.players->size(); i++){
             if(&(*christmasSleighConfig.players)[i] == player){
                 myIndex = i;
                 break;
