@@ -188,9 +188,10 @@ function GameContext:players() end
 ---@param x number
 ---@param y number
 ---@param radius number
----@param exclude? Player Joueur a ignorer (en general le lanceur)
+---@param ignore? Player[] Joueurs a ignorer, ex: `{ player }` pour exclure le lanceur.
+---Attention : `player` seul (sans accolades) est silencieusement ignore.
 ---@return Player[]
-function GameContext:playersInRadius(x, y, radius, exclude) end
+function GameContext:playersInRadius(x, y, radius, ignore) end
 
 ---[TODO] Joueur vivant le plus proche de `from` (lui-meme exclu).
 ---@param from Player
@@ -223,18 +224,23 @@ function GameContext:playSFX(id) end
 function GameContext:shakeScreen(intensity, duration) end
 
 ---@class ExplodeParams
----@field x number
+---@field x number Centre de l'explosion
 ---@field y number
----@field radius number Portee ; les degats et la force diminuent avec la distance
+---@field radius number Portee ; degats et force diminuent avec la distance (1 au centre, 0 au bord)
 ---@field damage? number Degats au centre (defaut 0)
 ---@field force? number Knockback au centre (defaut 0)
----@field owner? Player Lanceur : ignore par l'explosion et credite des degats
----@field hitOwner? boolean Si true, l'explosion touche aussi le lanceur (defaut false)
----@field effect? string Animation jouee au centre
----@field sound? string Son joue
----@field shake? number Intensite du tremblement d'ecran (voir shakeScreen)
+---@field owner? Player Lanceur. Ne change PAS qui est touche ; [TODO] servira a crediter degats et kills
+---@field ignore? Player[] Joueurs epargnes par l'explosion (defaut : personne, lanceur compris)
 
----[TODO] Explosion complete : degats, knockback, effet, son, tremblement.
+---Explosion de GAMEPLAY uniquement : degats + knockback, de centre a centre.
+---Aucun rendu : l'effet, le son et la secousse se font a part, pour que chaque
+---explosion ait les siens :
+---```lua
+---ctx:explode{ x = cx, y = cy, radius = 150, damage = 50, force = 1500, ignore = { player } }
+---ctx:spawnEffect("explosion_missile", cx, cy)
+---ctx:playSFX("explosion")
+---ctx:shakeScreen(16, 0.3)
+---```
 ---@param params ExplodeParams
 ---@return Player[] hit Joueurs touches
 function GameContext:explode(params) end

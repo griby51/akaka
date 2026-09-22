@@ -1,6 +1,5 @@
 #include "ScriptEngine.hpp"
 #include "Ability.hpp"
-#include "Game.hpp"
 #include "GameContext.hpp"
 #include "LuaAbility.hpp"
 #include "Player.hpp"
@@ -15,6 +14,35 @@
 #include <sol/sol.hpp>
 #include <cstdio>
 #include <sol/types.hpp>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+static std::vector<player::Player*> findPlayersInRadius(GameContext& ctx, float x, float y, float radius, const std::vector<player::Player*>& ignore){
+    std::vector<player::Player*> result;
+    if(!ctx.players) return result;
+
+    float squareRadius = radius*radius;
+
+    for(auto& p : *ctx.players){
+        if(std::find(ignore.begin(), ignore.end(), &p) != ignore.end()) continue;
+        if(!p.isAlive) continue;
+
+        float cx = p.collider.x + p.collider.w / 2.f;
+        float cy = p.collider.y + p.collider.h / 2.f;
+        
+        float dx = cx - x;
+        float dy = cy - y;
+
+        float dSquare = (dx * dx + dy * dy);
+
+        if(dSquare <= squareRadius){
+            result.push_back(&p);
+        }
+    }
+
+    return result;
+}
 
 void ScriptEngine::init(){
     lua = std::make_unique<sol::state>();
@@ -87,31 +115,58 @@ void ScriptEngine::registerBindings(){
 
     lua->new_usertype<GameContext>("GameContext",
             sol::no_constructor,
-            "playersInRadius",[](GameContext& self, float x, float y, float radius, sol::optional<player::Player&> exclude){
-                std::vector<player::Player*> result;
-                if(!self.players) return sol::as_table(result);
-                player::Player* excluded = exclude ? &exclude.value() : nullptr;
+            "playersInRadius",[](GameContext& self, float x, float y, float radius, sol::optional<std::vector<player::Player*>> ignore){
+                return sol::as_table(findPlayersInRadius(self, x, y, radius, ignore.value_or(std::vector<player::Player*>{})));
+            },
+            "explode", [](GameContext& self, sol::table params){
+                std::vector<player::Player*> hits;
 
-                float squareRadius = radius*radius;
+                sol::optional<float> x = params["x"];
+                sol::optional<float> y = params["y"];
+                sol::optional<float> radius = params["radius"];
 
-                for(auto& p : *self.players){
-                    if(&p == excluded) continue; 
-                    if(!p.isAlive) continue;
-
-                    float cx = p.collider.x + p.collider.w / 2.f;
-                    float cy = p.collider.y + p.collider.h / 2.f;
-                    
-                    float dx = cx - x;
-                    float dy = cy - y;
-
-                    float dSquare = (dx * dx + dy * dy);
-
-                    if(dSquare <= squareRadius){
-                        result.push_back(&p);
-                    }
+                if(!x || !y || !radius){
+                    printf("[lua] explode : x, y and radius are required\n");
+                    return sol::as_table(hits);
                 }
 
-                return sol::as_table(result);
+                float damage = params.get_or("damage", 0.f);
+                float force = params.get_or("force", 0.f);
+                auto ignore = params.get<sol::optional<std::vector<player::Player*>>>("ignore");
+
+                hits = findPlayersInRadius(self, *x, *y, *radius, ignore.value_or(std::vector<player::Player*>{}));
+
+                float squareRadius = *radius * *radius;
+
+                for(player::Player* p : hits){
+                    float cibleCx = p->collider.x + p->collider.w / 2.f;
+                    float cibleCy = p->collider.y + p->collider.h / 2.f;
+
+                    float dx = cibleCx - *x;
+                    float dy = cibleCy - *y;
+
+                    float distSq = dx*dx + dy*dy;
+
+                    float factor = 1.f - (distSq) / squareRadius;
+
+                    float dist = std::sqrt(distSq);
+                    float dirX = 0.f;
+                    float dirY = -1.f;
+
+                    if(dist > 0.f){
+                        dirX = dx / dist;
+                        dirY = dy / dist;
+                    }
+
+                    p->updateLife(-static_cast<int>(damage*factor));
+
+                    float forceX = dirX * force * factor;
+                    float forceY = dirY * force * factor;
+
+                    p->applyKnockBack(forceX, forceY);
+                }
+
+                return sol::as_table(hits);
             },
             "playSFX", [](GameContext& self, const std::string& id){
                 if(self.audioManager) self.audioManager->playSFX(id);
