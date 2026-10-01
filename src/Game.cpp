@@ -8,7 +8,6 @@
 #include "ScoreCollectable.hpp"
 #include "TextureManager.hpp"
 #include "AnimationManager.hpp"
-#include "TrafficCone.hpp"
 #include "ScriptEngine.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_events.h>
@@ -96,22 +95,7 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mContext);
 
         if(!cfg.ability){
-            if(playerSlot[i].hatId == "hat_trafficCone"){
-                projectile::TrafficConeConfig trafficConeCfg;
-                explode::ExplosionConfig eCfg;
-                eCfg.power = 4.f;
-                trafficConeCfg.explosionConfig = eCfg;
-                trafficConeCfg.explosionManager = &explosionManager;
-                trafficConeCfg.globalSpeed = &GLOBAL_SPEED;
-                trafficConeCfg.triggerRange = 20.f;
-                trafficConeCfg.speed = 1500.f;
-                trafficConeCfg.explosionTriggerRange = 100.f;
-                trafficConeCfg.audioManager = &audioManager;
-                trafficConeCfg.particleConfig = mThrustParticleConfig;
-                trafficConeCfg.players = &playerManager.players;
-                trafficConeCfg.particleManager = &particleManager;
-                cfg.ability = std::make_unique<TrafficConeAbility>(&projectileManager, trafficConeCfg, mScreenWidth, mEffectiveHeight);
-            }else if(playerSlot[i].hatId == "hat_christmas"){
+            if(playerSlot[i].hatId == "hat_christmas"){
                 projectile::ChristmasSleighConfig sleighCfg;
                 sleighCfg.players = &playerManager.players;
                 sleighCfg.projectileManager = &projectileManager;

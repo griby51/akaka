@@ -5,7 +5,6 @@
 #include "ProjectileManager.hpp"
 #include "Missile.hpp"
 #include "LTimer.hpp"
-#include "TrafficCone.hpp"
 
 namespace player {class Player; }
 
@@ -28,16 +27,6 @@ public:
 private:
     projectile::ProjectileManager* projectileManager;
     projectile::MissileConfig missileConfig;
-    int screenWidth, screenHeight;
-};
-
-class TrafficConeAbility : public Ability{
-public:
-    TrafficConeAbility(projectile::ProjectileManager* projectileManager, projectile::TrafficConeConfig trafficConeConfig, int screenWidth, int screenHeight);
-    void use(player::Player* player) override;
-private:
-    projectile::ProjectileManager* projectileManager;
-    projectile::TrafficConeConfig trafficConeConfig;
     int screenWidth, screenHeight;
 };
 
