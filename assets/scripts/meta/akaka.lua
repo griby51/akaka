@@ -180,7 +180,7 @@ function Player:hasStatus(name) end
 ---@class GameContext
 local GameContext = {}
 
----[TODO] Tous les joueurs de la partie, morts compris.
+---Tous les joueurs de la partie, morts compris.
 ---@return Player[]
 function GameContext:players() end
 
@@ -198,13 +198,23 @@ function GameContext:playersInRadius(x, y, radius, ignore) end
 ---@return Player|nil
 function GameContext:nearestPlayer(from) end
 
----[TODO]
+---Vitesse de defilement du decor, en pixels/seconde. Un projectile pose dans
+---le monde (un cone, un obstacle) doit reculer a cette vitesse pour rester
+---colle au sol.
+---@return number
+function GameContext:worldSpeed() end
+
+---Largeur logique de l'ecran (1024).
 ---@return integer
 function GameContext:screenWidth() end
 
----[TODO] Hauteur jouable (sans la barre du bas).
+---Hauteur logique de l'ecran (576), barre du bas comprise.
 ---@return integer
 function GameContext:screenHeight() end
+
+---Hauteur jouable, sans la barre du bas : c'est le "sol".
+---@return integer
+function GameContext:effectiveHeight() end
 
 ---Joue une animation, centree sur (x, y).
 ---@param animId string
@@ -213,9 +223,17 @@ function GameContext:screenHeight() end
 ---@param scale? number (defaut 1)
 function GameContext:spawnEffect(animId, x, y, scale) end
 
----Joue un son deja charge.
+---Joue un son deja charge. Rend le canal SDL_mixer utilise, a garder si on
+---veut pouvoir couper le son avant sa fin (`stopSFX`), ou -1 en cas d'echec.
 ---@param id string
+---@return integer channel
 function GameContext:playSFX(id) end
+
+---Coupe le son qui joue sur ce canal.
+---ATTENTION : si le son s'est deja termine, le canal a pu etre reattribue a un
+---autre son, qui sera coupe a sa place.
+---@param channel integer Valeur rendue par `playSFX`
+function GameContext:stopSFX(channel) end
 
 ---Fait trembler l'ecran. Si une secousse est deja en cours, garde la plus forte
 ---intensite et la plus longue duree (deux explosions ne s'additionnent pas).
@@ -271,58 +289,89 @@ function GameContext:every(interval, fn) end
 
 ---Handle vers un projectile. Peut survivre au projectile : verifier isValid()
 ---avant de s'en servir si on l'a garde dans une table.
+---
+---Le moteur ne fait que le strict minimum : il applique vx/vy, dessine la
+---texture et teste les collisions. Gravite, duree de vie et destruction hors
+---ecran sont du CONTENU : c'est au script de les faire dans `onUpdate`.
 ---@class Projectile
----@field [string] any Champs libres pour l'etat du script
 local Projectile = {}
 
----[TODO] `false` si le projectile a ete detruit.
+---Etat libre du script, propre a ce projectile (compteurs, cibles, flags).
+---C'est ici que ca se range : `self` est un objet C++, on ne peut pas lui
+---ajouter de champs.
+---  self.data.timer = (self.data.timer or 0) + dt
+---@type table
+Projectile.data = {}
+
+---`false` si le projectile a ete detruit.
 ---@return boolean
 function Projectile:isValid() end
 
----[TODO]
+---Coin haut-gauche.
 ---@return number x
 ---@return number y
 function Projectile:getPosition() end
 
----[TODO]
+---
 ---@return number vx
 ---@return number vy
 function Projectile:getVelocity() end
 
----[TODO]
+---Le moteur applique cette vitesse chaque frame. Pour une gravite :
+---  local vx, vy = self:getVelocity()
+---  self:setVelocity(vx, vy + 900 * dt)
 ---@param vx number
 ---@param vy number
 function Projectile:setVelocity(vx, vy) end
 
----[TODO] Rotation de l'image, en degres.
+---Taille du collider.
+---@return integer w
+---@return integer h
+function Projectile:getSize() end
+
+---Teleporte le projectile (coin haut-gauche).
+---@param x number
+---@param y number
+function Projectile:setPosition(x, y) end
+
+---Rotation de l'image, en degres. Elle tourne autour de son centre.
 ---@param degrees number
 function Projectile:setAngle(degrees) end
+
+---`true` quand le projectile est ENTIEREMENT sorti de l'ecran.
+---Le moteur ne detruit rien tout seul : a toi d'appeler `kill()` si c'est ce
+---que tu veux (un projectile peut vouloir entrer depuis l'exterieur).
+---@param margin? number Tolerance en pixels au-dela du bord (defaut 0)
+---@return boolean
+function Projectile:isOffScreen(margin) end
 
 ---[TODO]
 ---@return Player|nil
 function Projectile:getOwner() end
 
----[TODO] Detruit le projectile (declenche onDeath).
+---Detruit le projectile ([TODO] declenche onDeath).
 function Projectile:kill() end
 
 ---@class ProjectileParams
----@field texture string Identifiant de texture
----@field x number
----@field y number
----@field vx? number
+---@field texture string Identifiant de texture (obligatoire)
+---@field x number Coin haut-gauche (obligatoire)
+---@field y number (obligatoire)
+---@field vx? number Pixels/seconde (defaut 0)
 ---@field vy? number
+---L'image est TOUJOURS dessinee a la taille native de la texture ; width et
+---height ne changent que la hitbox.
 ---@field width? integer Taille du collider (defaut: taille de la texture)
 ---@field height? integer
----@field gravity? number pixels/seconde^2 (defaut 0)
----@field lifetime? number Detruit apres ce temps en secondes (defaut: jamais)
 ---@field owner? Player Ignore par onHit
----@field killOffscreen? boolean Detruit en sortant de l'ecran (defaut true)
 ---@field onUpdate? fun(self: Projectile, ctx: GameContext, dt: number)
----Appele quand le projectile touche un joueur (autre que owner).
+---Appele UNE SEULE FOIS PAR CIBLE quand le projectile touche un joueur
+---(le owner est ignore). Pour mourir au premier contact : `self:kill()`.
 ---@field onHit? fun(self: Projectile, ctx: GameContext, target: Player)
 ---@field onDeath? fun(self: Projectile, ctx: GameContext)
 
----[TODO] Cree un projectile gere par le moteur.
+---Cree un projectile gere par le moteur.
+---Le plus simple ne demande aucun code : il part tout droit.
+---  ctx:spawnProjectile{ texture = "bullet", x = cx, y = cy, vx = 800 }
 ---@param params ProjectileParams
 ---@return Projectile
 function GameContext:spawnProjectile(params) end

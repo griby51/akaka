@@ -16,5 +16,6 @@ struct GameContext{
     int* screenWidth = nullptr;
     int* effectiveHeight = nullptr;
     int* screenHeight = nullptr;
+    float* globalSpeed = nullptr;
 };
 

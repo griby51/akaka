@@ -29,7 +29,7 @@ namespace projectile{
 
         projectiles.erase(
                 std::remove_if(projectiles.begin(), projectiles.end(),
-                    [](const std::unique_ptr<Projectile>& p){
+                    [](const std::shared_ptr<Projectile>& p){
                     return p->isDead();
                     }),
                 projectiles.end()
@@ -45,5 +45,9 @@ namespace projectile{
         for(auto& p : projectiles){
             p->render(renderer);
         }
+    }
+
+    void ProjectileManager::spawn(std::shared_ptr<Projectile> projectile){
+        pending.push_back(std::move(projectile));
     }
 }

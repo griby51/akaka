@@ -10,11 +10,12 @@ namespace projectile{
         virtual ~Projectile() = default;
 
         bool isDead() const {return !isAlive; }
+        void kill(){ isAlive = false; }
 
     protected:
-        float x, y;
-        float vx, vy;
-        bool isAlive = false;
-        SDL_Rect collider;
+        float x = 0.f, y = 0.f;
+        float vx = 0.f, vy = 0.f;
+        bool isAlive = true;
+        SDL_Rect collider = {0, 0, 0, 0};
     };
 }

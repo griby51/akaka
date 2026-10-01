@@ -49,7 +49,9 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mContext.screenWidth = &mScreenWidth;
     mContext.screenHeight = &mScreenHeight;
     mContext.players = &playerManager.players;
+    mContext.projectiles = &projectileManager;
     mContext.particleManager = &particleManager;
+    mContext.globalSpeed = &GLOBAL_SPEED;
 
 
     SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);

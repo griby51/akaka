@@ -2,7 +2,9 @@
 #include "Ability.hpp"
 #include "GameContext.hpp"
 #include "LuaAbility.hpp"
+#include "LuaProjectile.hpp"
 #include "Player.hpp"
+#include "Projectile.hpp"
 #include "TextureManager.hpp"
 #include "AudioManager.hpp"
 #include "EffectManager.hpp"
@@ -11,6 +13,7 @@
 #include <sol/forward.hpp>
 #include <sol/optional_implementation.hpp>
 #include <sol/property.hpp>
+#include <sol/raii.hpp>
 #include <sol/sol.hpp>
 #include <cstdio>
 #include <sol/types.hpp>
@@ -51,11 +54,16 @@ void ScriptEngine::init(){
             sol::lib::base,
             sol::lib::math,
             sol::lib::string,
-            sol::lib::table
+            sol::lib::table,
+            sol::lib::package
     );
 
     lua->create_named_table("_abilities");
     lua->create_named_table("_hats");
+
+    (*lua)["package"]["path"] = "assets/scripts/?.lua";
+    (*lua)["package"]["cpath"] = "";
+    (*lua)["package"]["loadlib"] = sol::nil;
 
     registerBindings();
 }
@@ -115,6 +123,16 @@ void ScriptEngine::registerBindings(){
 
     lua->new_usertype<GameContext>("GameContext",
             sol::no_constructor,
+            "players", [](GameContext& self){
+                std::vector<player::Player*> result;
+                if(!self.players) return sol::as_table(result);
+
+                for(auto& p : *self.players){
+                    result.push_back(&p);
+                }
+
+                return sol::as_table(result);
+            },
             "playersInRadius",[](GameContext& self, float x, float y, float radius, sol::optional<std::vector<player::Player*>> ignore){
                 return sol::as_table(findPlayersInRadius(self, x, y, radius, ignore.value_or(std::vector<player::Player*>{})));
             },
@@ -169,7 +187,11 @@ void ScriptEngine::registerBindings(){
                 return sol::as_table(hits);
             },
             "playSFX", [](GameContext& self, const std::string& id){
-                if(self.audioManager) self.audioManager->playSFX(id);
+                if(self.audioManager) return self.audioManager->playSFX(id);
+                else return -1;
+            },
+            "stopSFX", [](GameContext& self, int channel){
+                if(self.audioManager) self.audioManager->stopChannel(channel);
             },
             "shakeScreen", [](GameContext& self, float intensity, float duration){
                 if(self.effectManager) self.effectManager->triggerShake(intensity, duration);
@@ -178,6 +200,39 @@ void ScriptEngine::registerBindings(){
                 if(self.effectManager){
                     self.effectManager->spawn(animId, x, y, scale.value_or(1.f));
                 }
+            },
+            "spawnProjectile", [](GameContext& self, sol::table params) -> std::shared_ptr<projectile::LuaProjectile>{
+                if(!self.projectiles) return nullptr;
+
+                sol::optional<std::string> texture = params["texture"];
+                sol::optional<float> x = params["x"];
+                sol::optional<float> y = params["y"];
+
+                if(!texture || !x || !y){
+                    printf("[lua] spawnProjectile : texture, x and y are required\n");
+                    return nullptr;
+                }
+
+                if(!TextureManager::getInstance().getTexture(*texture)){
+                    printf("[lua] spawnProjectile : unknown texture %s\n", texture->c_str());
+                }
+
+                auto p = std::make_shared<projectile::LuaProjectile>(params, &self);
+
+                self.projectiles->spawn(p);
+                return p;
+            },
+            "worldSpeed", [](GameContext& self){
+                return self.globalSpeed ? *self.globalSpeed : 0.f;
+            },
+            "screenWidth", [](GameContext& self){
+                return self.screenWidth ? *self.screenWidth : 0;
+            },
+            "screenHeight", [](GameContext& self){
+                return self.screenHeight ? *self.screenHeight : 0;
+            },
+            "effectiveHeight", [](GameContext& self){
+                return self.effectiveHeight ? *self.effectiveHeight : 0;
             });
     lua->set_function("registerAbility", [this](sol::table def){
             sol::optional<std::string> id = def["id"];
@@ -201,6 +256,23 @@ void ScriptEngine::registerBindings(){
             printf("[lua] ability saved : %s\n", id->c_str());
 
             });
+    lua->new_usertype<projectile::LuaProjectile>("Projectile",
+            sol::no_constructor,
+            "isValid", &projectile::LuaProjectile::isValid,
+            "setVelocity", &projectile::LuaProjectile::setVelocity,
+            "setAngle", &projectile::LuaProjectile::setAngle,
+            "setPosition", &projectile::LuaProjectile::setPosition,
+            "getPosition", &projectile::LuaProjectile::getPosition,
+            "getVelocity", &projectile::LuaProjectile::getVelocity,
+            "getSize", &projectile::LuaProjectile::getSize,
+            "kill", &projectile::Projectile::kill,
+
+            "data", sol::property(&projectile::LuaProjectile::getData),
+            "isOffScreen", [](projectile::LuaProjectile& self, sol::optional<float> margin){
+                return self.isOffScreen(margin.value_or(0.f));
+                }
+            );
+
 }
 
 bool ScriptEngine::runFile(const std::string& path){

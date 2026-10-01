@@ -13,10 +13,11 @@ namespace projectile{
         void spawn(float x, float y, TrafficConeConfig cfg);
         void spawn(float x, float y, GiftConfig cfg, int pastYExplosion);
         void spawn(float x, float y, ChristmasSleighConfig);
+        void spawn(std::shared_ptr<Projectile> projectile);
         void update(float deltaTime);
         void render(SDL_Renderer* renderer);
     private:
-        std::vector<std::unique_ptr<Projectile>> projectiles;
-        std::vector<std::unique_ptr<Projectile>> pending;
+        std::vector<std::shared_ptr<Projectile>> projectiles;
+        std::vector<std::shared_ptr<Projectile>> pending;
     };
 }
