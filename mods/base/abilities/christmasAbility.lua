@@ -1,4 +1,4 @@
-local christmas = require("projectiles.christmas")
+local christmas = require("base.projectiles.christmas")
 
 registerAbility{
     id = "christmas",

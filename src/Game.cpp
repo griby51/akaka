@@ -5,6 +5,7 @@
 #include "ScoreCollectable.hpp"
 #include "TextureManager.hpp"
 #include "AnimationManager.hpp"
+#include "InputSampler.hpp"
 #include "ScriptEngine.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_events.h>
@@ -158,7 +159,15 @@ void Game::update(float deltaTime){
     }
 
     projectileManager.update(deltaTime);
-    playerManager.update(deltaTime);
+
+    const Uint8* keys = SDL_GetKeyboardState(NULL);
+    std::vector<PlayerInput> inputs;
+    inputs.reserve(playerManager.players.size());
+    for(auto& player : playerManager.players){
+        inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
+    }
+
+    playerManager.update(deltaTime, inputs);
     particleManager.update(deltaTime);
     effectManager.update(deltaTime);
 

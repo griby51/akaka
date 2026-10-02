@@ -1,5 +1,6 @@
 #include "Player.hpp"
 #include "KeyPreset.hpp"
+#include "PlayerInput.hpp"
 #include "Utils.hpp"
 #include <SDL2/SDL_mixer.h>
 
@@ -121,70 +122,6 @@ namespace player{
         return score;
     }
 
-    void Player::handleInput(const Uint8* keys){
-        if(!isAlive) return;
-
-        if(config.joystickId != -1){
-            SDL_Joystick* joystick = SDL_JoystickFromInstanceID(config.joystickId);
-            handleJoystickInput(joystick);
-        }else{
-            if(keys[config.keyPreset.left]){
-                move(-1);
-            }
-            if(keys[config.keyPreset.right]){
-                move(1);
-            }
-            if(keys[config.keyPreset.thrust]){
-                jetpack();
-                if(!mJetpackActive){
-                    jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
-                    mJetpackActive = true;
-                }
-            }else{
-                if(mJetpackActive){
-                    config.audioManager->stopChannel(jetpackChannel);
-                    jetpackChannel = -1;
-                    mJetpackActive = false;
-                }
-            }
-            if(keys[config.keyPreset.missile]){
-                if(config.ability){
-                    config.ability->use(this);
-                }
-            }    
-        }
-    }
-
-        
-
-    void Player::handleJoystickInput(SDL_Joystick* joystick){
-        if(!joystick) return;
-
-        Sint16 axisX = SDL_JoystickGetAxis(joystick, 0);
-        if(axisX < -DEAD_ZONE) move(-1);
-        else if(axisX > DEAD_ZONE) move(1);
-
-        if(SDL_JoystickGetButton(joystick, 0)){
-            jetpack();
-            if(!mJetpackActive){
-                jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
-                mJetpackActive = true;
-            }
-        }else{
-            if(mJetpackActive){
-                config.audioManager->stopChannel(jetpackChannel);
-                jetpackChannel = -1;
-                mJetpackActive = false;
-            }
-        }
-
-        if(SDL_JoystickGetButton(joystick, 1)){
-            if(config.ability){
-                config.ability->use(this);
-            }
-        };
-    }
-
     int Player::getLife(){
         return life;
     }
@@ -285,5 +222,29 @@ namespace player{
     void Player::teleportTo(float x, float y){
         this->x = x;
         this->y = y;
+    }
+
+    void Player::applyInput(const PlayerInput& in){
+        if(!isAlive) return;
+
+        if(in.left) move(-1);
+        else if(in.right) move(1);
+
+        if(in.thrust){
+            jetpack();
+            if(!mJetpackActive){
+                jetpackChannel = config.audioManager->playSFX("jetpackThrust", -1);
+                mJetpackActive = true;
+            }
+        }else{
+            if(mJetpackActive){
+                config.audioManager->stopChannel(jetpackChannel);
+                jetpackChannel = -1;
+                mJetpackActive = false;
+            }
+        }
+        if(in.ability){
+            if(config.ability) config.ability->use(this);
+        }
     }
 }

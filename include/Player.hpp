@@ -11,6 +11,7 @@
 #include "AudioManager.hpp"
 #include "Ability.hpp"
 #include "ParticleManager.hpp"
+#include "PlayerInput.hpp"
 
 namespace player{
     struct PlayerConfig{
@@ -70,11 +71,9 @@ namespace player{
 
         int getScore();
         
-        void handleInput(const Uint8* keys);
-        void handleJoystickInput(SDL_Joystick* joystick);
+        void applyInput(const PlayerInput& in);
 
-        void setJoystickId(int id);
-        int getJoystickId();
+        int getJoystickId() const { return config.joystickId; }
 
         void update(float deltaTime);
         
@@ -100,13 +99,13 @@ namespace player{
         SDL_Rect collider;
         bool isControlled = false;
 
+        const KeyPreset& getKeyPreset() const { return config.keyPreset; }
+
     private:
         float x, y; 
         float vx, vy;
         int score;
         int dir;
-
-        static constexpr int DEAD_ZONE = 8000;
 
         float jetpackThrust = 0.0f;
 

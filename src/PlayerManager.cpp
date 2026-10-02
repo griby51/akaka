@@ -6,11 +6,10 @@ namespace player{
         players.emplace_back(std::move(config));
     }
 
-    void PlayerManager::update(float deltaTime){
-        const Uint8* keys = SDL_GetKeyboardState(NULL);
-        for (auto& player : players) {
-            player.update(deltaTime);
-            player.handleInput(keys);
+    void PlayerManager::update(float deltaTime, const std::vector<PlayerInput>& inputs){
+        for(size_t i = 0; i < players.size(); i++){
+            if(i < inputs.size()) players[i].applyInput(inputs[i]);
+            players[i].update(deltaTime);
         }
 
         for(size_t i = 0; i < players.size(); i++){

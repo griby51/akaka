@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 
 static std::vector<player::Player*> findPlayersInRadius(GameContext& ctx, float x, float y, float radius, const std::vector<player::Player*>& ignore){
     std::vector<player::Player*> result;
@@ -62,7 +63,6 @@ void ScriptEngine::init(){
     lua->create_named_table("_abilities");
     lua->create_named_table("_hats");
 
-    (*lua)["package"]["path"] = "assets/scripts/?.lua";
     (*lua)["package"]["cpath"] = "";
     (*lua)["package"]["loadlib"] = sol::nil;
 
@@ -292,6 +292,46 @@ bool ScriptEngine::runFile(const std::string& path){
     }
 
     return true;
+}
+
+void ScriptEngine::loadMods(const std::string& modsDir){
+    (*lua)["package"]["path"] = modsDir + "/?.lua;" + modsDir + "/?/init.lua";
+    if(!std::filesystem::exists(modsDir)){
+        printf("Mods dir doesn't exist\n");
+        return;
+    }
+
+    std::vector<std::string> names;
+
+    for(const auto& entry : std::filesystem::directory_iterator(modsDir)){
+        if(entry.is_directory()){
+            names.push_back(entry.path().filename().string());
+        }
+    }
+
+    std::sort(names.begin(), names.end(), [](const std::string& a, const std::string& b){
+            if(a == b) return false;
+            if(a == "base") return true;
+            if(b == "base") return false;
+            return a < b;
+            });
+
+    for(const std::string& name : names){
+        std::string dir = modsDir + "/" + name;
+        std::string init = dir + "/init.lua";
+
+        if(!std::filesystem::exists(init)){
+            printf("[lua] mod %s : no init.lua, ignored\n", name.c_str());
+            continue;
+        }
+
+        (*lua)["MOD_DIR"] = dir + "/";
+        (*lua)["MOD_NAME"] = name;
+
+        if(runFile(init)){
+            printf("[lua] mod loaded : %s\n", name.c_str());
+        }
+    }
 }
 
 std::unique_ptr<Ability> ScriptEngine::createAbility(const std::string& id, GameContext* ctx){

@@ -19,6 +19,7 @@ public:
 
     void init();
     bool runFile(const std::string& path);
+    void loadMods(const std::string& modsDir);
 
     std::unique_ptr<Ability> createAbility(const std::string& id, GameContext* ctx);
     std::unique_ptr<Ability> createAbilityForHat(const std::string& hatId, GameContext* ctx);

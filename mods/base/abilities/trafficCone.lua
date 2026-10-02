@@ -1,4 +1,4 @@
-local cone = require("projectiles.cone")
+local cone = require("base.projectiles.cone")
 
 registerAbility{
     id = "cone",

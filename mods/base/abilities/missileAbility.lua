@@ -1,4 +1,4 @@
-local missile = require("projectiles.missile")
+local missile = require("base.projectiles.missile")
 
 registerAbility{
     id = "missile",
