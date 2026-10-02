@@ -17,6 +17,7 @@ find_package(SDL2_mixer REQUIRED CONFIG)
 # Must be lua54, NOT lua: the default `lua` package is 5.5, which sol2 3.5 does not support.
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LUA54 REQUIRED IMPORTED_TARGET lua54)
+pkg_check_modules(ENET REQUIRED IMPORTED_TARGET libenet)
 find_package(sol2 REQUIRED CONFIG)
 
 file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp)
@@ -36,6 +37,7 @@ target_link_libraries(main PRIVATE
     SDL2_ttf::SDL2_ttf
     SDL2_mixer::SDL2_mixer
     PkgConfig::LUA54
+    PkgConfig::ENET
     sol2::sol2
 )
 

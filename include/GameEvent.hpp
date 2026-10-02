@@ -7,7 +7,7 @@ enum class EventType { Sfx, StopSfx, Effect, Shake };
 
 struct GameEvent{
     EventType type;
-    std::string id;
+    uint16_t id = 0;
     float x = 0.f,y = 0.f;
     float a = 0.f, b = 0.f;
     uint32_t handle = 0;

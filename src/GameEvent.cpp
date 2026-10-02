@@ -1,9 +1,10 @@
 #include "GameEvent.hpp"
+#include "AssetIds.hpp"
 
 uint32_t EventQueue::sfx(const std::string& id){
     GameEvent e;
     e.type = EventType::Sfx;
-    e.id = id;
+    e.id = AssetIds::getInstance().id(id);
     e.handle = mNextHandle++;
 
     mEvents.push_back(e);
@@ -21,7 +22,7 @@ void EventQueue::stopSfx(uint32_t handle){
 void EventQueue::effect(const std::string& id, float x, float y, float scale){
     GameEvent e;
     e.type = EventType::Effect;
-    e.id = id;
+    e.id = AssetIds::getInstance().id(id);
     e.x = x;
     e.y = y;
     e.a = scale;

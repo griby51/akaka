@@ -29,20 +29,6 @@ namespace player{
         score += toAdd;
     }
 
-    void Player::render(SDL_Renderer* renderer){
-        if (!isAlive) return;
-
-        config.skin->render(x, y);
-        if(config.hat != nullptr){
-            config.hat->render(x, y);
-        }
-
-        if(config.showCollider){
-            SDL_SetRenderDrawColor(renderer, config.colliderColor.r, config.colliderColor.g, config.colliderColor.b, config.colliderColor.a);
-            SDL_RenderDrawRect(renderer, &collider);
-        }
-    }
-
     void Player::update(float deltaTime){
         if(!isAlive) return;
 
@@ -50,7 +36,11 @@ namespace player{
             config.ability->update(deltaTime);
         }
 
-        if(isControlled) return;
+        if(isControlled){
+            mThrusting = false;
+            jetpackThrust = 0.f;
+            return;
+        }
 
         vx = (vx + (config.acceleration * deltaTime * dir)) * (1  - ((1 - config.deceleration) * deltaTime));
 
@@ -95,6 +85,7 @@ namespace player{
             }
         }
 
+        mThrusting = jetpackThrust > 0.f;
         jetpackThrust = 0.0f;
 
         dir = 0;
@@ -118,11 +109,11 @@ namespace player{
         }
     }
 
-    int Player::getScore(){
+    int Player::getScore() const{
         return score;
     }
 
-    int Player::getLife(){
+    int Player::getLife() const{
         return life;
     }
 
@@ -155,7 +146,7 @@ namespace player{
         this->vy = vy;
     }
 
-    std::string Player::getSkinId(){
+    std::string Player::getSkinId() const{
         return config.skinId;
     }
 
@@ -213,9 +204,9 @@ namespace player{
         }
     }
 
-    int Player::getMaxLife(){ return config.maxHealth; }
+    int Player::getMaxLife() const{ return config.maxHealth; }
 
-    float Player::getAbilityProgress(){
+    float Player::getAbilityProgress() const{
         return config.ability->getCooldownProgress();
     }
 

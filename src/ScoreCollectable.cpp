@@ -1,9 +1,11 @@
 #include "ScoreCollectable.hpp"
 #include "Utils.hpp"
 #include "TextureManager.hpp"
+#include "AssetIds.hpp"
 
 void ScoreCollectable::init(int scoreOnHit, std::string textureId){
     cTexture = TextureManager::getInstance().getTexture(textureId);
+    textureAssetId = AssetIds::getInstance().id(textureId);
     cScore = scoreOnHit;
 }
 

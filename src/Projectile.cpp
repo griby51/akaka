@@ -1,4 +1,5 @@
-#include "LuaProjectile.hpp"
+#include "Projectile.hpp"
+#include "AssetIds.hpp"
 #include "GameContext.hpp"
 #include "TextureManager.hpp"
 #include <sol/error.hpp>
@@ -6,8 +7,9 @@
 #include <sol/protected_function_result.hpp>
 
 namespace projectile{
-    LuaProjectile::LuaProjectile(sol::table params, GameContext* ctx) : ctx(ctx){
+    Projectile::Projectile(sol::table params, GameContext* ctx) : ctx(ctx){
         textureId = params.get_or("texture", std::string(""));
+        textureAssetId = AssetIds::getInstance().id(textureId);
         LTexture* tex = TextureManager::getInstance().getTexture(textureId);
         x = params.get_or("x", 0.f);
         y = params.get_or("y", 0.f);
@@ -21,7 +23,7 @@ namespace projectile{
         onUpdate = params["onUpdate"];
     }
 
-    void LuaProjectile::update(float dt){
+    void Projectile::update(float dt){
         if(!isAlive) return;
         if(onUpdate.valid()){
             sol::protected_function_result result = onUpdate(shared_from_this(), ctx, dt);
@@ -42,30 +44,23 @@ namespace projectile{
         if(isOffScreen(5000)) kill();
     }
 
-    bool LuaProjectile::isOffScreen(float margin) const{
+    bool Projectile::isOffScreen(float margin) const{
         return (w + x < -margin
                 || x > *ctx->screenWidth + margin
                 || h + y < -margin
                 || y > *ctx->screenHeight + margin);
     }
 
-    void LuaProjectile::render(SDL_Renderer* renderer){
-        if(!isAlive) return;
-        LTexture* tex = TextureManager::getInstance().getTexture(textureId);
-        if(!tex) return;
-        tex->render(x, y, NULL, angle);
-    }
-
-    void LuaProjectile::setAngle(float degrees){
+    void Projectile::setAngle(float degrees){
         angle = degrees;
     }
 
-    void LuaProjectile::setVelocity(float nvx, float nvy){
+    void Projectile::setVelocity(float nvx, float nvy){
         vx = nvx;
         vy = nvy;
     }
 
-    void LuaProjectile::setPosition(float nx, float ny){
+    void Projectile::setPosition(float nx, float ny){
         x = nx;
         y = ny;
     }

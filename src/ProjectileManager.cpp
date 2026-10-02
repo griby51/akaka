@@ -23,13 +23,8 @@ namespace projectile{
         pending.clear();
     }
 
-    void ProjectileManager::render(SDL_Renderer* renderer){
-        for(auto& p : projectiles){
-            p->render(renderer);
-        }
-    }
-
     void ProjectileManager::spawn(std::shared_ptr<Projectile> projectile){
+        if(projectile) projectile->setNetId(mNextNetId++);
         pending.push_back(std::move(projectile));
     }
 }

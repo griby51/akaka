@@ -8,9 +8,10 @@ namespace projectile{
     public:
         void spawn(std::shared_ptr<Projectile> projectile);
         void update(float deltaTime);
-        void render(SDL_Renderer* renderer);
+        const std::vector<std::shared_ptr<Projectile>>& all() const {return projectiles; }
     private:
         std::vector<std::shared_ptr<Projectile>> projectiles;
         std::vector<std::shared_ptr<Projectile>> pending;
+        uint32_t mNextNetId = 1;
     };
 }

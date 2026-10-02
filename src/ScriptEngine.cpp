@@ -3,7 +3,7 @@
 #include "GameContext.hpp"
 #include "GameEvent.hpp"
 #include "LuaAbility.hpp"
-#include "LuaProjectile.hpp"
+#include "Projectile.hpp"
 #include "ProjectileManager.hpp"
 #include "Player.hpp"
 #include "Projectile.hpp"
@@ -202,7 +202,7 @@ void ScriptEngine::registerBindings(){
             "spawnEffect", [](GameContext& self, const std::string& animId, float x, float y, sol::optional<float> scale){
                 if(self.events) self.events->effect(animId, x, y, scale.value_or(1.f));
             },
-            "spawnProjectile", [](GameContext& self, sol::table params) -> std::shared_ptr<projectile::LuaProjectile>{
+            "spawnProjectile", [](GameContext& self, sol::table params) -> std::shared_ptr<projectile::Projectile>{
                 if(!self.projectiles) return nullptr;
 
                 sol::optional<std::string> texture = params["texture"];
@@ -218,7 +218,7 @@ void ScriptEngine::registerBindings(){
                     printf("[lua] spawnProjectile : unknown texture %s\n", texture->c_str());
                 }
 
-                auto p = std::make_shared<projectile::LuaProjectile>(params, &self);
+                auto p = std::make_shared<projectile::Projectile>(params, &self);
 
                 self.projectiles->spawn(p);
                 return p;
@@ -257,19 +257,19 @@ void ScriptEngine::registerBindings(){
             printf("[lua] ability saved : %s\n", id->c_str());
 
             });
-    lua->new_usertype<projectile::LuaProjectile>("Projectile",
+    lua->new_usertype<projectile::Projectile>("Projectile",
             sol::no_constructor,
-            "isValid", &projectile::LuaProjectile::isValid,
-            "setVelocity", &projectile::LuaProjectile::setVelocity,
-            "setAngle", &projectile::LuaProjectile::setAngle,
-            "setPosition", &projectile::LuaProjectile::setPosition,
-            "getPosition", &projectile::LuaProjectile::getPosition,
-            "getVelocity", &projectile::LuaProjectile::getVelocity,
-            "getSize", &projectile::LuaProjectile::getSize,
+            "isValid", &projectile::Projectile::isValid,
+            "setVelocity", &projectile::Projectile::setVelocity,
+            "setAngle", &projectile::Projectile::setAngle,
+            "setPosition", &projectile::Projectile::setPosition,
+            "getPosition", &projectile::Projectile::getPosition,
+            "getVelocity", &projectile::Projectile::getVelocity,
+            "getSize", &projectile::Projectile::getSize,
             "kill", &projectile::Projectile::kill,
 
-            "data", sol::property(&projectile::LuaProjectile::getData),
-            "isOffScreen", [](projectile::LuaProjectile& self, sol::optional<float> margin){
+            "data", sol::property(&projectile::Projectile::getData),
+            "isOffScreen", [](projectile::Projectile& self, sol::optional<float> margin){
                 return self.isOffScreen(margin.value_or(0.f));
                 }
             );

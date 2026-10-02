@@ -5,6 +5,7 @@
 #include "ScoreCollectable.hpp"
 #include "TextureManager.hpp"
 #include "AnimationManager.hpp"
+#include "AssetIds.hpp"
 #include "InputSampler.hpp"
 #include "ScriptEngine.hpp"
 #include "Utils.hpp"
@@ -84,6 +85,15 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.thrustParticleConfig = mThrustParticleConfig;
         cfg.screenWidth = mWorld.screenWidth;
         cfg.screenHeight = mWorld.effectiveHeight;
+
+        PlayerInfo info;
+        info.skinId = playerSlot[i].skinId;
+        info.hatId = playerSlot[i].hatId;
+        info.maxLife = cfg.maxHealth;
+        info.colliderW = cfg.collider.w;
+        info.colliderH = cfg.collider.h;
+        info.showCollider = cfg.showCollider;
+        mPlayerInfos.push_back(info);
 
         mWorld.playerManager.addPlayer(std::move(cfg));
     }
@@ -180,7 +190,7 @@ void Game::drainEvents(){
     for(const GameEvent& e : mWorld.events.events()){
         switch(e.type){
             case EventType::Sfx: {
-                int channel = audioManager.playSFX(e.id);
+                int channel = audioManager.playSFX(AssetIds::getInstance().name(e.id));
                 if(channel >= 0) mSfxChannels[e.handle] = channel;
                 break;
             }
@@ -193,7 +203,7 @@ void Game::drainEvents(){
                 break;
             }
             case EventType::Effect:
-                effectManager.spawn(e.id, e.x, e.y, e.a);
+                effectManager.spawn(AssetIds::getInstance().name(e.id), e.x, e.y, e.a);
                 break;
             case EventType::Shake:
                 effectManager.triggerShake(e.a, e.b);
@@ -213,6 +223,13 @@ void Game::drainEvents(){
 }
 
 void Game::render(){
+    renderSnapshot(captureSnapshot(mWorld));
+}
+
+void Game::renderSnapshot(const Snapshot& snap){
+    TextureManager& tm = TextureManager::getInstance();
+    AssetIds& assets = AssetIds::getInstance();
+
     int offsetX = effectManager.getShakeX();
     int offsetY = effectManager.getShakeY();
 
@@ -223,35 +240,59 @@ void Game::render(){
     SDL_SetRenderDrawColor(mRenderer, 135, 206, 235, 0xFF);
     SDL_RenderClear(mRenderer);
 
-    LTexture* bg = TextureManager::getInstance().getTexture("bg");
+    LTexture* bg = tm.getTexture("bg");
 
-    bg->render(mWorld.scrollingOffset, 0);
-    bg->render(mWorld.scrollingOffset + bg->getWidth(), 0);
+    bg->render(snap.scrollingOffset, 0);
+    bg->render(snap.scrollingOffset + bg->getWidth(), 0);
 
-    mWorld.playerManager.render(mRenderer);
+    for(const PlayerState& p : snap.players){
+        if(!p.isAlive) continue;
+        if(p.index >= mPlayerInfos.size()) continue;
+
+        const PlayerInfo& info = mPlayerInfos[p.index];
+
+        LTexture* skin = tm.getTexture(info.skinId);
+        LTexture* hat = tm.getTexture(info.hatId);
+
+        if(skin) skin->render((int)p.x, (int)p.y);
+        if(hat) hat->render((int)p.x, (int)p.y);
+
+        if(info.showCollider){
+            SDL_Rect collider = {(int)p.x, (int)p.y, info.colliderW, info.colliderH};
+            SDL_SetRenderDrawColor(mRenderer, 255, 0, 255, 255);
+            SDL_RenderDrawRect(mRenderer, &collider);
+        }
+    }
+
     particleManager.render(mRenderer);
     effectManager.render();
 
-    for(size_t i = 0; i < mWorld.pizzas.size(); i++){
-        mWorld.pizzas[i].render(mRenderer);
+    for(const EntityState& e : snap.collectables){
+        LTexture* texture = tm.getTexture(assets.name(e.texture));
+        if(texture) texture->render((int)e.x, (int)e.y);
     }
 
+    for(const EntityState& e : snap.projectiles){
+        LTexture* texture = tm.getTexture(assets.name(e.texture));
+        if(texture) texture->render((int)e.x, (int)e.y, NULL, e.angle);
+    }
+
+    SDL_RenderSetViewport(mRenderer, NULL);
 
     SDL_Rect indicatorRect;
     indicatorRect.w = mWorld.screenWidth / mPlayerNumber;
     indicatorRect.h = 50;
     indicatorRect.y = mWorld.screenHeight - indicatorRect.h;
 
-    mWorld.projectileManager.render(mRenderer);
+    for(size_t i = 0; i < snap.players.size(); i++){
+        const PlayerState& p = snap.players[i];
+        if(p.index >= mPlayerInfos.size()) continue;
 
-    SDL_RenderSetViewport(mRenderer, NULL);
+        const PlayerInfo& info = mPlayerInfos[p.index];
 
-
-    for(size_t i = 0; i < mWorld.playerManager.players.size(); i++){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
-        std::string score = std::to_string(mWorld.playerManager.players[i].getScore());
-
+        std::string score = std::to_string(p.score);
 
         LTexture scoreTexture;
         LTexture playerNumberTexture;
@@ -262,7 +303,6 @@ void Game::render(){
         playerNumberTexture.loadFromRenderedText(playerNumber, mWhite, mScoreFont);
         scoreTexture.loadFromRenderedText(score, mGreen, mScoreFont);
 
-
         indicatorRect.x = i * indicatorRect.w;
         SDL_Rect backLifeRect;
         SDL_Rect lifeRect;
@@ -271,8 +311,8 @@ void Game::render(){
         backLifeRect.h = indicatorRect.h * 0.25f;
         backLifeRect.w = indicatorRect.w * 0.5f;
         lifeRect = backLifeRect;
-        if(mWorld.playerManager.players[i].getLife() > 0){
-            lifeRect.w = (float)mWorld.playerManager.players[i].getLife() / (float)mWorld.playerManager.players[i].getMaxLife() * (float)backLifeRect.w;
+        if(p.life > 0 && info.maxLife > 0){
+            lifeRect.w = (float)p.life / (float)info.maxLife * (float)backLifeRect.w;
         }else{
             lifeRect.w = 0;
         }
@@ -280,7 +320,7 @@ void Game::render(){
         int timerX = backLifeRect.x + backLifeRect.w + indicatorRect.w * 0.15f;
         int timerY = indicatorRect.y + indicatorRect.h * 0.5f;
         int radius = 16;
-        float progress = mWorld.playerManager.players[i].getAbilityProgress();
+        float progress = (float)p.abilityProgress / 255.f;
 
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
         SDL_RenderFillRect(mRenderer, &indicatorRect);
@@ -291,15 +331,17 @@ void Game::render(){
         SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
         util::drawProgressPie(mRenderer, timerX, timerY, radius, progress);
 
-        mWorld.playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
-        mWorld.playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        LTexture* skin = tm.getTexture(info.skinId);
+        LTexture* hat = tm.getTexture(info.hatId);
+        if(skin) skin->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        if(hat) hat->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
         playerNumberTexture.render(indicatorRect.x + 3, indicatorRect.y + 3);
         scoreTexture.render(indicatorRect.x + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);
     }
 
     SDL_RenderPresent(mRenderer);
-};
+}
 
 void Game::close() {
     if (mScoreFont){

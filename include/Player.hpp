@@ -64,14 +64,13 @@ namespace player{
         Player& operator=(Player&&) noexcept = default;
         ~Player();
 
-        void render(SDL_Renderer* renderer);
         void move(int direction);
         void jetpack();
         void teleportTo(float x, float y);
 
         void updateScore(int toAdd);
 
-        int getScore();
+        int getScore() const;
         
         void applyInput(const PlayerInput& in);
 
@@ -82,16 +81,22 @@ namespace player{
         void applyKnockBack(float forceX, float forceY);
 
         void updateLife(int toAdd);
-        int getLife();
-        int getMaxLife();
+        int getLife() const;
+        int getMaxLife() const;
+
+        float getX() const {return x; }
+        float getY() const {return y; }
+        float getVx() const {return vx; }
+        float getVy() const {return vy; }
+        bool isThrusting() const {return mThrusting; }
 
         void setVelocity(float vx, float vy);
 
         void resolveCollisionWith(Player& other);
 
-        float getAbilityProgress();
+        float getAbilityProgress() const;
 
-        std::string getSkinId();
+        std::string getSkinId() const;
 
         bool isAlive;
 
@@ -116,6 +121,7 @@ namespace player{
         int life;
         int jetpackChannel = -1;
         bool mJetpackActive = false;
+        bool mThrusting = false;
 
         PlayerConfig config;
     };

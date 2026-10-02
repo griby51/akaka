@@ -23,9 +23,4 @@ namespace player{
         }
     }
 
-    void PlayerManager::render(SDL_Renderer* renderer){
-        for (auto& player : players) {
-            player.render(renderer);
-        }
-    }
 }

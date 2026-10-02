@@ -12,7 +12,9 @@
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
 #include "Particle.hpp"
+#include "PlayerInfo.hpp"
 #include "PlayerSlot.hpp"
+#include "Snapshot.hpp"
 #include "EffectManager.hpp"
 #include "World.hpp"
 #include "AudioManager.hpp"
@@ -49,6 +51,7 @@ private:
     AudioManager audioManager;
     EffectManager effectManager;
     World mWorld;
+    std::vector<PlayerInfo> mPlayerInfos;
     ParticleManager particleManager;
 
 
@@ -65,6 +68,7 @@ private:
 
 
     void drainEvents();
+    void renderSnapshot(const Snapshot& snap);
 
     std::unordered_map<uint32_t, int> mSfxChannels;
 
