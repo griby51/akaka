@@ -3,6 +3,7 @@
 #include "GameContext.hpp"
 #include "LuaAbility.hpp"
 #include "LuaProjectile.hpp"
+#include "ProjectileManager.hpp"
 #include "Player.hpp"
 #include "Projectile.hpp"
 #include "TextureManager.hpp"
@@ -106,6 +107,7 @@ void ScriptEngine::registerBindings(){
             "getScore", &player::Player::getScore,
             "addScore", &player::Player::updateScore,
             "isAlive", sol::readonly(&player::Player::isAlive),
+            "isControlled", &player::Player::isControlled,
             "damage", [](player::Player& self, int amount){self.updateLife(-amount); },
             "heal", [](player::Player& self, int amount){self.updateLife(amount); },
             "getPosition", [](player::Player& self){

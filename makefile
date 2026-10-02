@@ -17,7 +17,7 @@ all: build $(TARGET)
 
 build:
 	mkdir -p build
-	mkdir -p $(sort $(dir $(LIB_OBJS)))
+	$(if $(LIB_OBJS),mkdir -p $(sort $(dir $(LIB_OBJS))))
 
 $(TARGET): $(OBJS) $(LIB_OBJS)
 	$(CXX) $(OBJS) $(LIB_OBJS) -o $(TARGET) -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer $(LUA_LIBS) -lm -ldl

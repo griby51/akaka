@@ -1,9 +1,6 @@
 #pragma once
 
 #include "AudioManager.hpp"
-#include "Christmas.hpp"
-#include "ProjectileManager.hpp"
-#include "Missile.hpp"
 #include "LTimer.hpp"
 
 namespace player {class Player; }
@@ -18,23 +15,4 @@ protected:
     int cooldown;
     int cost;
     LTimer timeSinceLast;
-};
-
-class MissileAbility : public Ability{
-public:
-    MissileAbility(projectile::ProjectileManager* projectileManager, projectile::MissileConfig missileConfig, int screenWidth, int screenHeight);
-    void use(player::Player* player) override;
-private:
-    projectile::ProjectileManager* projectileManager;
-    projectile::MissileConfig missileConfig;
-    int screenWidth, screenHeight;
-};
-
-class ChristmasSleighAbility : public Ability{
-public:
-    ChristmasSleighAbility(projectile::ProjectileManager* projectileManager, projectile::ChristmasSleighConfig christmasSleighConfig);
-    void use(player::Player* player) override;
-private:
-    projectile::ProjectileManager* projectileManager;
-    projectile::ChristmasSleighConfig christmasSleighConfig;
 };

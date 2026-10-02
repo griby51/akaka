@@ -24,7 +24,6 @@ namespace player{
 
         int maxHealth = 100;
 
-        int scoreToLaunchMissile = 200;
         bool bounce = false;
 
         int screenWidth = 800;
@@ -79,8 +78,6 @@ namespace player{
 
         void update(float deltaTime);
         
-        void spawnMissile();
-
         void applyKnockBack(float forceX, float forceY);
 
         void updateLife(int toAdd);

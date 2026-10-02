@@ -20,13 +20,11 @@ pkg_check_modules(LUA54 REQUIRED IMPORTED_TARGET lua54)
 find_package(sol2 REQUIRED CONFIG)
 
 file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp)
-file(GLOB EXPLOSION_SRC_FILES ${CMAKE_SOURCE_DIR}/libs/ExplosionEngine/src/*.cpp)
 
-add_executable(main ${SRC_FILES} ${EXPLOSION_SRC_FILES})
+add_executable(main ${SRC_FILES})
 
 target_include_directories(main PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/libs/ExplosionEngine/include
 )
 
 target_compile_definitions(main PRIVATE SOL_ALL_SAFETIES_ON=1)

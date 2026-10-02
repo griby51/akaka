@@ -13,7 +13,6 @@
 #include "PlayerSlot.hpp"
 #include "ProjectileManager.hpp"
 #include "ScoreCollectable.hpp"
-#include "ExplosionManager.hpp"
 #include "EffectManager.hpp"
 #include "PlayerManager.hpp"
 #include "AudioManager.hpp"
@@ -43,8 +42,6 @@ private:
     int mScreenHeight;
     int mEffectiveHeight;
     int mPlayerNumber;
-    int mScoreToLaunchMissile;
-    int mMissileScorePenality;
     int mPizzaTimeUntilNext;
 
     bool mQuit = false;
@@ -53,14 +50,12 @@ private:
     static constexpr int TICKS_PER_FRAME = 1000 / 60;
     static constexpr int JOYSTICK_DEAD_ZONE = 8000;
     static constexpr int THRUST_PARTICLE_NUMBER = 500;
-    static constexpr int MISSILE_NUMBER = 500;
     float GLOBAL_SPEED = 50.0f;
 
     GameContext mContext;
 
     AudioManager audioManager;
     projectile::ProjectileManager projectileManager;
-    explode::ExplosionManager explosionManager;
     EffectManager effectManager;
     player::PlayerManager playerManager;
     ParticleManager particleManager;
@@ -73,12 +68,10 @@ private:
     LTimer mDeltaTimer;
     LTimer mPizzaTimer;
     std::vector<LTimer> mParticleTimers;
-    std::vector<LTimer> mMissileTimers;
     
 
     SDL_Rect mProjectileRect;
     float mScrollingOffset = 0;
-    int mCurrentMissile = 0;
     int mCurrentThrustParticle = 0;
     int mXJoystickDir = 0;
 
@@ -91,7 +84,4 @@ private:
     std::vector<ScoreCollectable> mPizza;
 
     void playerThrust(int playerIndex);
-    void spawnMissile(int playerWhoSpawn);
-
-    projectile::MissileConfig missileConfig;
  };

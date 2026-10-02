@@ -1,9 +1,6 @@
 #include "Game.hpp"
 #include "Ability.hpp"
-#include "Christmas.hpp"
-#include "Explosion.hpp"
 #include "LTexture.hpp"
-#include "Missile.hpp"
 #include "Player.hpp"
 #include "ScoreCollectable.hpp"
 #include "TextureManager.hpp"
@@ -61,26 +58,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
 
-    projectile::MissileConfig missileCfg;
-    
-    explode::ExplosionConfig explosionConfig;
-    explosionConfig.embers = true;
-    explosionConfig.power = 2.f;
-
-    missileCfg.particleConfig = mThrustParticleConfig;
-    missileCfg.players = &playerManager.players;
-    missileCfg.explosionConfig = explosionConfig;
-    missileCfg.explosionManager = &explosionManager;
-    missileCfg.audioManager = &audioManager;
-
-    missileCfg.precision = mConfig.getFloat("missile_precision", 3.f);
-    missileCfg.velocity = mConfig.getFloat("missile_velocity", 1000.0f);
-    missileCfg.explosionTriggerRange = mConfig.getFloat("missile_explosion_trigger_range", 70.f);
-    missileCfg.showCollider = mConfig.getBool("show_missile_collider", false);
-    missileCfg.explosionDelay = mConfig.getInt("missile_explosion_delay", 70);
-    missileCfg.maxDamage = mConfig.getFloat("missile_max_dmg", 40.f);
-    missileCfg.particleManager = &particleManager;
-
     for(int i = 0; i < joinedCount; i++){
         player::PlayerConfig cfg;
 
@@ -94,29 +71,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 
         cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mContext);
 
-        if(!cfg.ability){
-            if(playerSlot[i].hatId == "hat_christmas"){
-                projectile::ChristmasSleighConfig sleighCfg;
-                sleighCfg.players = &playerManager.players;
-                sleighCfg.projectileManager = &projectileManager;
-                sleighCfg.audioManager = &audioManager;
-                sleighCfg.screenWidth = mScreenWidth;
-                sleighCfg.screenHeight = mEffectiveHeight;
-
-                explode::ExplosionConfig eCfg;
-                eCfg.power = 2.f;
-
-                sleighCfg.giftConfig.players = &playerManager.players;
-                sleighCfg.giftConfig.explosionManager = &explosionManager;
-                sleighCfg.giftConfig.explosionConfig = eCfg;
-                sleighCfg.giftConfig.audioManager = &audioManager;
-
-                cfg.ability = std::make_unique<ChristmasSleighAbility>(&projectileManager, sleighCfg);
-            }else{
-                cfg.ability = std::make_unique<MissileAbility>(&projectileManager, missileCfg, mScreenWidth, mScreenHeight);
-            }
-        }
-
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
         cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
         cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
@@ -124,7 +78,6 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         cfg.maxHealth = mConfig.getInt("player_health", 100);
         cfg.bounce = mConfig.getBool("player_bounce", true);
         cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
-        cfg.scoreToLaunchMissile = mConfig.getInt("score_to_launch_missile", 200);
         cfg.showCollider = mConfig.getBool("show_player_collider", false);
         cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
         
@@ -205,7 +158,6 @@ void Game::update(float deltaTime){
     }
 
     projectileManager.update(deltaTime);
-    explosionManager.update(deltaTime);
     playerManager.update(deltaTime);
     particleManager.update(deltaTime);
     effectManager.update(deltaTime);
@@ -250,7 +202,6 @@ void Game::render(){
     bg->render(mScrollingOffset, 0);
     bg->render(mScrollingOffset + bg->getWidth(), 0);
 
-    explosionManager.render(mRenderer);
     playerManager.render(mRenderer);
     particleManager.render(mRenderer);
     effectManager.render();
