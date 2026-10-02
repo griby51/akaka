@@ -1,6 +1,7 @@
 #include "ScriptEngine.hpp"
 #include "Ability.hpp"
 #include "GameContext.hpp"
+#include "GameEvent.hpp"
 #include "LuaAbility.hpp"
 #include "LuaProjectile.hpp"
 #include "ProjectileManager.hpp"
@@ -188,20 +189,18 @@ void ScriptEngine::registerBindings(){
 
                 return sol::as_table(hits);
             },
-            "playSFX", [](GameContext& self, const std::string& id){
-                if(self.audioManager) return self.audioManager->playSFX(id);
-                else return -1;
+            "playSFX", [](GameContext& self, const std::string& id) -> uint32_t {
+                if(!self.events) return 0;
+                return self.events->sfx(id);
             },
-            "stopSFX", [](GameContext& self, int channel){
-                if(self.audioManager) self.audioManager->stopChannel(channel);
+            "stopSFX", [](GameContext& self, uint32_t handle){
+                if(self.events) self.events->stopSfx(handle);
             },
             "shakeScreen", [](GameContext& self, float intensity, float duration){
-                if(self.effectManager) self.effectManager->triggerShake(intensity, duration);
+                if(self.events) self.events->shake(intensity, duration);
             },
             "spawnEffect", [](GameContext& self, const std::string& animId, float x, float y, sol::optional<float> scale){
-                if(self.effectManager){
-                    self.effectManager->spawn(animId, x, y, scale.value_or(1.f));
-                }
+                if(self.events) self.events->effect(animId, x, y, scale.value_or(1.f));
             },
             "spawnProjectile", [](GameContext& self, sol::table params) -> std::shared_ptr<projectile::LuaProjectile>{
                 if(!self.projectiles) return nullptr;

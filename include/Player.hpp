@@ -9,6 +9,7 @@
 #include "Particle.hpp"
 #include "KeyPreset.hpp"
 #include "AudioManager.hpp"
+#include "GameEvent.hpp"
 #include "Ability.hpp"
 #include "ParticleManager.hpp"
 #include "PlayerInput.hpp"
@@ -45,6 +46,7 @@ namespace player{
         
 
         AudioManager* audioManager;
+        EventQueue* events = nullptr;
 
         std::vector<Player>* players;
 

@@ -94,6 +94,11 @@ void AudioManager::clean(){
     Mix_CloseAudio();
 }
 
+bool AudioManager::isPlaying(int channel) const{
+    if(channel < 0) return false;
+    return Mix_Playing(channel) != 0;
+}
+
 void AudioManager::stopChannel(int channel){
     if (channel < 0) return;
     Mix_HaltChannel(channel);

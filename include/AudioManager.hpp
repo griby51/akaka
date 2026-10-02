@@ -26,6 +26,7 @@ public:
     void setMusicVolume(int volume);
 
     void stopChannel(int channel);
+    bool isPlaying(int channel) const;
     void stopAllChannel();
 };
 

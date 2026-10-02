@@ -22,8 +22,8 @@ Game::Game()
     : mConfig("assets/config.ini"),
     mThrustParticleGameConfig("assets/playerThrustParticle.ini")
 {
-    mScreenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
-    mScreenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
+    mWorld.screenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
+    mWorld.screenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
     mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
 }
 
@@ -40,37 +40,31 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     
     audioManager.init();
 
-    mContext.effectManager = &effectManager;
-    mContext.audioManager = &audioManager;
-    mContext.effectiveHeight = &mEffectiveHeight; 
-    mContext.screenWidth = &mScreenWidth;
-    mContext.screenHeight = &mScreenHeight;
-    mContext.players = &playerManager.players;
-    mContext.projectiles = &projectileManager;
-    mContext.particleManager = &particleManager;
-    mContext.globalSpeed = &GLOBAL_SPEED;
+    mWorld.init();
+    mWorld.context.particleManager = &particleManager;
 
 
-    SDL_RenderGetLogicalSize(mRenderer, &mScreenWidth, &mScreenHeight);
+    SDL_RenderGetLogicalSize(mRenderer, &mWorld.screenWidth, &mWorld.screenHeight);
 
-    mEffectiveHeight = mScreenHeight - 50;
+    mWorld.effectiveHeight = mWorld.screenHeight - 50;
 
-    playerManager.players.reserve(joinedCount);
+    mWorld.playerManager.players.reserve(joinedCount);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     for(int i = 0; i < joinedCount; i++){
         player::PlayerConfig cfg;
 
-        cfg.players = &playerManager.players;
+        cfg.players = &mWorld.playerManager.players;
         cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
         cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
         cfg.skinId = playerSlot[i].skinId;
         cfg.hatId = playerSlot[i].hatId;
         cfg.audioManager = &audioManager;
+        cfg.events = &mWorld.events;
         cfg.particleManager = &particleManager;
 
-        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mContext);
+        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mWorld.context);
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
         cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
@@ -88,10 +82,10 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         }
         cfg.joystickId = playerSlot[i].joystickId;
         cfg.thrustParticleConfig = mThrustParticleConfig;
-        cfg.screenWidth = mScreenWidth;
-        cfg.screenHeight = mEffectiveHeight;
+        cfg.screenWidth = mWorld.screenWidth;
+        cfg.screenHeight = mWorld.effectiveHeight;
 
-        playerManager.addPlayer(std::move(cfg));
+        mWorld.playerManager.addPlayer(std::move(cfg));
     }
 
     return true;
@@ -135,9 +129,10 @@ void Game::start(){
 
     srand(time(0));
 
-    mPizzaTimeUntilNext = rand() % 1000;
-    printf("pizzaTimer delay : %i\n", mPizzaTimeUntilNext);
-    mPizzaTimer.start();
+    LTexture* bg = TextureManager::getInstance().getTexture("bg");
+    if(bg) mWorld.backgroundWidth = bg->getWidth();
+
+    mWorld.start();
 }
 
 void Game::handleEvents(const SDL_Event& e) {
@@ -147,59 +142,81 @@ void Game::handleEvents(const SDL_Event& e) {
     }
     if(e.type == SDL_KEYDOWN){
         if(e.key.keysym.sym == SDLK_F1){
-            effectManager.spawn("explosion_missile", mScreenWidth / 2, mEffectiveHeight / 2);
+            effectManager.spawn("explosion_missile", mWorld.screenWidth / 2, mWorld.effectiveHeight / 2);
         }
     }
 }
 
-void Game::update(float deltaTime){
-    mScrollingOffset -= GLOBAL_SPEED * deltaTime;
-    if(mScrollingOffset < -TextureManager::getInstance().getTexture("bg")->getWidth()){
-        mScrollingOffset = 0;
+void Game::update(float realDeltaTime){
+    mAccumulator += realDeltaTime;
+
+    int steps = 0;
+    while(mAccumulator >= FIXED_DT){
+        if(steps >= MAX_STEPS_PER_FRAME){
+            mAccumulator = 0.f;
+            break;
+        }
+
+        const Uint8* keys = SDL_GetKeyboardState(NULL);
+        std::vector<PlayerInput> inputs;
+        inputs.reserve(mWorld.playerManager.players.size());
+        for(auto& player : mWorld.playerManager.players){
+            inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
+        }
+
+        mWorld.step(FIXED_DT, inputs);
+
+        mAccumulator -= FIXED_DT;
+        steps++;
     }
 
-    projectileManager.update(deltaTime);
+    particleManager.update(realDeltaTime);
+    effectManager.update(realDeltaTime);
 
-    const Uint8* keys = SDL_GetKeyboardState(NULL);
-    std::vector<PlayerInput> inputs;
-    inputs.reserve(playerManager.players.size());
-    for(auto& player : playerManager.players){
-        inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
+    drainEvents();
+}
+
+void Game::drainEvents(){
+    for(const GameEvent& e : mWorld.events.events()){
+        switch(e.type){
+            case EventType::Sfx: {
+                int channel = audioManager.playSFX(e.id);
+                if(channel >= 0) mSfxChannels[e.handle] = channel;
+                break;
+            }
+            case EventType::StopSfx: {
+                auto it = mSfxChannels.find(e.handle);
+                if(it != mSfxChannels.end()){
+                    audioManager.stopChannel(it->second);
+                    mSfxChannels.erase(it);
+                }
+                break;
+            }
+            case EventType::Effect:
+                effectManager.spawn(e.id, e.x, e.y, e.a);
+                break;
+            case EventType::Shake:
+                effectManager.triggerShake(e.a, e.b);
+                break;
+        }
     }
 
-    playerManager.update(deltaTime, inputs);
-    particleManager.update(deltaTime);
-    effectManager.update(deltaTime);
-
-    mPizza.erase(
-            std::remove_if(mPizza.begin(), mPizza.end(),
-                [](const ScoreCollectable& col){
-                return !col.isAlive;
-                }),
-            mPizza.end()
-            );
-
-    for(size_t i = 0; i < mPizza.size(); i++){
-        mPizza[i].update(deltaTime, &playerManager.players);
+    for(auto it = mSfxChannels.begin(); it != mSfxChannels.end();){
+        if(audioManager.isPlaying(it->second)){
+            ++it;
+        }else{
+            it = mSfxChannels.erase(it);
+        }
     }
 
-    if (mPizzaTimer.getTicks() > mPizzaTimeUntilNext){
-        mPizzaTimeUntilNext = rand() % 1000;
-        mPizzaTimer.start();
-        mPizza.emplace_back();
-        mPizza.back().init(100, "pizza");
-        mPizza.back().setPos(mScreenWidth, rand() % (mEffectiveHeight - 16));
-        mPizza.back().vx = -GLOBAL_SPEED * 10;
-        mPizza.back().collider.w = 16;
-        mPizza.back().collider.h = 16;
-    }
+    mWorld.events.clear();
 }
 
 void Game::render(){
     int offsetX = effectManager.getShakeX();
     int offsetY = effectManager.getShakeY();
 
-    SDL_Rect viewport = {offsetX, offsetY, mScreenWidth, mScreenHeight};
+    SDL_Rect viewport = {offsetX, offsetY, mWorld.screenWidth, mWorld.screenHeight};
 
     SDL_RenderSetViewport(mRenderer, &viewport);
 
@@ -208,32 +225,32 @@ void Game::render(){
 
     LTexture* bg = TextureManager::getInstance().getTexture("bg");
 
-    bg->render(mScrollingOffset, 0);
-    bg->render(mScrollingOffset + bg->getWidth(), 0);
+    bg->render(mWorld.scrollingOffset, 0);
+    bg->render(mWorld.scrollingOffset + bg->getWidth(), 0);
 
-    playerManager.render(mRenderer);
+    mWorld.playerManager.render(mRenderer);
     particleManager.render(mRenderer);
     effectManager.render();
 
-    for(size_t i = 0; i < mPizza.size(); i++){
-        mPizza[i].render(mRenderer);
+    for(size_t i = 0; i < mWorld.pizzas.size(); i++){
+        mWorld.pizzas[i].render(mRenderer);
     }
 
 
     SDL_Rect indicatorRect;
-    indicatorRect.w = mScreenWidth / mPlayerNumber;
+    indicatorRect.w = mWorld.screenWidth / mPlayerNumber;
     indicatorRect.h = 50;
-    indicatorRect.y = mScreenHeight - indicatorRect.h;
+    indicatorRect.y = mWorld.screenHeight - indicatorRect.h;
 
-    projectileManager.render(mRenderer);
+    mWorld.projectileManager.render(mRenderer);
 
     SDL_RenderSetViewport(mRenderer, NULL);
 
 
-    for(size_t i = 0; i < playerManager.players.size(); i++){
+    for(size_t i = 0; i < mWorld.playerManager.players.size(); i++){
         Uint8 greyIntensity = i*20 + 150;
         std::string playerNumber = "Player " + std::to_string(i + 1);
-        std::string score = std::to_string(playerManager.players[i].getScore());
+        std::string score = std::to_string(mWorld.playerManager.players[i].getScore());
 
 
         LTexture scoreTexture;
@@ -254,8 +271,8 @@ void Game::render(){
         backLifeRect.h = indicatorRect.h * 0.25f;
         backLifeRect.w = indicatorRect.w * 0.5f;
         lifeRect = backLifeRect;
-        if(playerManager.players[i].getLife() > 0){
-            lifeRect.w = (float)playerManager.players[i].getLife() / (float)playerManager.players[i].getMaxLife() * (float)backLifeRect.w;
+        if(mWorld.playerManager.players[i].getLife() > 0){
+            lifeRect.w = (float)mWorld.playerManager.players[i].getLife() / (float)mWorld.playerManager.players[i].getMaxLife() * (float)backLifeRect.w;
         }else{
             lifeRect.w = 0;
         }
@@ -263,7 +280,7 @@ void Game::render(){
         int timerX = backLifeRect.x + backLifeRect.w + indicatorRect.w * 0.15f;
         int timerY = indicatorRect.y + indicatorRect.h * 0.5f;
         int radius = 16;
-        float progress = playerManager.players[i].getAbilityProgress();
+        float progress = mWorld.playerManager.players[i].getAbilityProgress();
 
         SDL_SetRenderDrawColor(mRenderer, greyIntensity, greyIntensity, greyIntensity, 255);
         SDL_RenderFillRect(mRenderer, &indicatorRect);
@@ -274,8 +291,8 @@ void Game::render(){
         SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
         util::drawProgressPie(mRenderer, timerX, timerY, radius, progress);
 
-        playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
-        playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        mWorld.playerManager.players[i].getSkin()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
+        mWorld.playerManager.players[i].getHat()->render((i + 1) * indicatorRect.w - 42, indicatorRect.y + 10);
 
         playerNumberTexture.render(indicatorRect.x + 3, indicatorRect.y + 3);
         scoreTexture.render(indicatorRect.x + 10, indicatorRect.y + playerNumberTexture.getHeight() + 10);

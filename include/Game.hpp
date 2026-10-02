@@ -4,17 +4,17 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
+#include <cstdint>
+#include <unordered_map>
+
 #include "Config.hpp"
-#include "GameContext.hpp"
 #include "LTexture.hpp"
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
 #include "Particle.hpp"
 #include "PlayerSlot.hpp"
-#include "ProjectileManager.hpp"
-#include "ScoreCollectable.hpp"
 #include "EffectManager.hpp"
-#include "PlayerManager.hpp"
+#include "World.hpp"
 #include "AudioManager.hpp"
 
 class Game {
@@ -27,7 +27,7 @@ public:
     void close();
     void start();
     void handleEvents(const SDL_Event& e);
-    void update(float deltaTime);
+    void update(float realDeltaTime);
     void render();
     bool isOver();
 private:
@@ -38,42 +38,24 @@ private:
     GameConfig mConfig;
     GameConfig mThrustParticleGameConfig;
 
-    int mScreenWidth;
-    int mScreenHeight;
-    int mEffectiveHeight;
     int mPlayerNumber;
-    int mPizzaTimeUntilNext;
 
     bool mQuit = false;
     
-    static constexpr int FPS = 60;
-    static constexpr int TICKS_PER_FRAME = 1000 / 60;
-    static constexpr int JOYSTICK_DEAD_ZONE = 8000;
-    static constexpr int THRUST_PARTICLE_NUMBER = 500;
-    float GLOBAL_SPEED = 50.0f;
+    static constexpr float FIXED_DT = 1.0f / 60.0f;
+    static constexpr int MAX_STEPS_PER_FRAME = 5;
 
-    GameContext mContext;
 
     AudioManager audioManager;
-    projectile::ProjectileManager projectileManager;
     EffectManager effectManager;
-    player::PlayerManager playerManager;
+    World mWorld;
     ParticleManager particleManager;
 
-    LTexture mScoreTexture;
 
     TTF_Font* mScoreFont = nullptr;
 
-    LTimer mCapTimer;
-    LTimer mDeltaTimer;
-    LTimer mPizzaTimer;
-    std::vector<LTimer> mParticleTimers;
     
 
-    SDL_Rect mProjectileRect;
-    float mScrollingOffset = 0;
-    int mCurrentThrustParticle = 0;
-    int mXJoystickDir = 0;
 
     ParticleConfig mThrustParticleConfig;
 
@@ -81,7 +63,10 @@ private:
     SDL_Color mRed = {255, 0, 0, 255};
     SDL_Color mGreen = {0, 255, 0, 255};
 
-    std::vector<ScoreCollectable> mPizza;
 
-    void playerThrust(int playerIndex);
+    void drainEvents();
+
+    std::unordered_map<uint32_t, int> mSfxChannels;
+
+    float mAccumulator = 0.f;
  };

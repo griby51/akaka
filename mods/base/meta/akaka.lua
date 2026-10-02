@@ -223,17 +223,20 @@ function GameContext:effectiveHeight() end
 ---@param scale? number (defaut 1)
 function GameContext:spawnEffect(animId, x, y, scale) end
 
----Joue un son deja charge. Rend le canal SDL_mixer utilise, a garder si on
----veut pouvoir couper le son avant sa fin (`stopSFX`), ou -1 en cas d'echec.
+---Joue un son deja charge. Rend un identifiant de son (un "handle"), a garder
+---si on veut pouvoir le couper avant sa fin (`stopSFX`). Rend 0 si le son n'a
+---pas pu partir.
+---
+---Ce n'est PAS un canal audio : le son ne part pas pendant le script, le
+---moteur empile l'ordre et le joue apres le tick. En reseau, ce handle est le
+---meme sur toutes les machines, alors que le canal audio est propre a chacune.
 ---@param id string
----@return integer channel
+---@return integer handle 0 si echec
 function GameContext:playSFX(id) end
 
----Coupe le son qui joue sur ce canal.
----ATTENTION : si le son s'est deja termine, le canal a pu etre reattribue a un
----autre son, qui sera coupe a sa place.
----@param channel integer Valeur rendue par `playSFX`
-function GameContext:stopSFX(channel) end
+---Coupe le son correspondant a ce handle. Sans effet si le son est deja fini.
+---@param handle integer Valeur rendue par `playSFX`
+function GameContext:stopSFX(handle) end
 
 ---Fait trembler l'ecran. Si une secousse est deja en cours, garde la plus forte
 ---intensite et la plus longue duree (deux explosions ne s'additionnent pas).
