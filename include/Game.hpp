@@ -16,7 +16,9 @@
 #include "PlayerSlot.hpp"
 #include "Snapshot.hpp"
 #include "EffectManager.hpp"
-#include "World.hpp"
+#include "Client.hpp"
+#include "LoopbackTransport.hpp"
+#include "Server.hpp"
 #include "AudioManager.hpp"
 
 class Game {
@@ -44,14 +46,17 @@ private:
 
     bool mQuit = false;
     
-    static constexpr float FIXED_DT = 1.0f / 60.0f;
-    static constexpr int MAX_STEPS_PER_FRAME = 5;
 
 
     AudioManager audioManager;
     EffectManager effectManager;
-    World mWorld;
+    LoopbackLink mLink;
+    LoopbackServer mLoopServer;
+    LoopbackClient mLoopClient;
+    Server mServer;
+    Client mClient;
     std::vector<PlayerInfo> mPlayerInfos;
+    std::vector<uint8_t> mOwnedPlayers;
     ParticleManager particleManager;
 
 
@@ -67,10 +72,9 @@ private:
     SDL_Color mGreen = {0, 255, 0, 255};
 
 
-    void drainEvents();
+    void drainEvents(const std::vector<GameEvent>& events);
     void renderSnapshot(const Snapshot& snap);
 
     std::unordered_map<uint32_t, int> mSfxChannels;
 
-    float mAccumulator = 0.f;
  };

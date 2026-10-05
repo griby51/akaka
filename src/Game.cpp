@@ -21,10 +21,12 @@
 
 Game::Game()
     : mConfig("assets/config.ini"),
-    mThrustParticleGameConfig("assets/playerThrustParticle.ini")
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini"),
+    mLoopServer(&mLink, 0),
+    mLoopClient(&mLink, 0)
 {
-    mWorld.screenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
-    mWorld.screenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
+    mServer.world().screenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
+    mServer.world().screenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
     mPlayerNumber = mConfig.getInt("PLAYER_NUMBER", 2);
 }
 
@@ -41,31 +43,34 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     
     audioManager.init();
 
-    mWorld.init();
-    mWorld.context.particleManager = &particleManager;
+    mServer.world().init();
+    mServer.world().context.particleManager = &particleManager;
+
+    mServer.setTransport(&mLoopServer);
+    mClient.setTransport(&mLoopClient);
 
 
-    SDL_RenderGetLogicalSize(mRenderer, &mWorld.screenWidth, &mWorld.screenHeight);
+    SDL_RenderGetLogicalSize(mRenderer, &mServer.world().screenWidth, &mServer.world().screenHeight);
 
-    mWorld.effectiveHeight = mWorld.screenHeight - 50;
+    mServer.world().effectiveHeight = mServer.world().screenHeight - 50;
 
-    mWorld.playerManager.players.reserve(joinedCount);
+    mServer.world().playerManager.players.reserve(joinedCount);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     for(int i = 0; i < joinedCount; i++){
         player::PlayerConfig cfg;
 
-        cfg.players = &mWorld.playerManager.players;
+        cfg.players = &mServer.world().playerManager.players;
         cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
         cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
         cfg.skinId = playerSlot[i].skinId;
         cfg.hatId = playerSlot[i].hatId;
         cfg.audioManager = &audioManager;
-        cfg.events = &mWorld.events;
+        cfg.events = &mServer.world().events;
         cfg.particleManager = &particleManager;
 
-        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mWorld.context);
+        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mServer.world().context);
 
         cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
         cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
@@ -83,8 +88,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         }
         cfg.joystickId = playerSlot[i].joystickId;
         cfg.thrustParticleConfig = mThrustParticleConfig;
-        cfg.screenWidth = mWorld.screenWidth;
-        cfg.screenHeight = mWorld.effectiveHeight;
+        cfg.screenWidth = mServer.world().screenWidth;
+        cfg.screenHeight = mServer.world().effectiveHeight;
 
         PlayerInfo info;
         info.skinId = playerSlot[i].skinId;
@@ -94,8 +99,9 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
         info.colliderH = cfg.collider.h;
         info.showCollider = cfg.showCollider;
         mPlayerInfos.push_back(info);
+        mOwnedPlayers.push_back((uint8_t)i);
 
-        mWorld.playerManager.addPlayer(std::move(cfg));
+        mServer.world().playerManager.addPlayer(std::move(cfg));
     }
 
     return true;
@@ -140,9 +146,10 @@ void Game::start(){
     srand(time(0));
 
     LTexture* bg = TextureManager::getInstance().getTexture("bg");
-    if(bg) mWorld.backgroundWidth = bg->getWidth();
+    if(bg) mServer.world().backgroundWidth = bg->getWidth();
 
-    mWorld.start();
+    mServer.world().start();
+    mClient.setOwnedPlayers(mOwnedPlayers);
 }
 
 void Game::handleEvents(const SDL_Event& e) {
@@ -152,42 +159,36 @@ void Game::handleEvents(const SDL_Event& e) {
     }
     if(e.type == SDL_KEYDOWN){
         if(e.key.keysym.sym == SDLK_F1){
-            effectManager.spawn("explosion_missile", mWorld.screenWidth / 2, mWorld.effectiveHeight / 2);
+            effectManager.spawn("explosion_missile", mServer.world().screenWidth / 2, mServer.world().effectiveHeight / 2);
         }
     }
 }
 
 void Game::update(float realDeltaTime){
-    mAccumulator += realDeltaTime;
+    const Uint8* keys = SDL_GetKeyboardState(NULL);
 
-    int steps = 0;
-    while(mAccumulator >= FIXED_DT){
-        if(steps >= MAX_STEPS_PER_FRAME){
-            mAccumulator = 0.f;
-            break;
-        }
-
-        const Uint8* keys = SDL_GetKeyboardState(NULL);
-        std::vector<PlayerInput> inputs;
-        inputs.reserve(mWorld.playerManager.players.size());
-        for(auto& player : mWorld.playerManager.players){
-            inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
-        }
-
-        mWorld.step(FIXED_DT, inputs);
-
-        mAccumulator -= FIXED_DT;
-        steps++;
+    std::vector<PlayerInput> inputs;
+    inputs.reserve(mServer.world().playerManager.players.size());
+    for(auto& player : mServer.world().playerManager.players){
+        inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
     }
+
+    mClient.sendInputs(inputs);
+
+    mServer.update(realDeltaTime);
+
+    mClient.poll();
 
     particleManager.update(realDeltaTime);
     effectManager.update(realDeltaTime);
 
-    drainEvents();
+    if(mClient.hasSnapshot()){
+        drainEvents(mClient.snapshot().events);
+    }
 }
 
-void Game::drainEvents(){
-    for(const GameEvent& e : mWorld.events.events()){
+void Game::drainEvents(const std::vector<GameEvent>& events){
+    for(const GameEvent& e : events){
         switch(e.type){
             case EventType::Sfx: {
                 int channel = audioManager.playSFX(AssetIds::getInstance().name(e.id));
@@ -219,11 +220,12 @@ void Game::drainEvents(){
         }
     }
 
-    mWorld.events.clear();
 }
 
 void Game::render(){
-    renderSnapshot(captureSnapshot(mWorld));
+    if(!mClient.hasSnapshot()) return;
+
+    renderSnapshot(mClient.snapshot());
 }
 
 void Game::renderSnapshot(const Snapshot& snap){
@@ -233,7 +235,7 @@ void Game::renderSnapshot(const Snapshot& snap){
     int offsetX = effectManager.getShakeX();
     int offsetY = effectManager.getShakeY();
 
-    SDL_Rect viewport = {offsetX, offsetY, mWorld.screenWidth, mWorld.screenHeight};
+    SDL_Rect viewport = {offsetX, offsetY, mServer.world().screenWidth, mServer.world().screenHeight};
 
     SDL_RenderSetViewport(mRenderer, &viewport);
 
@@ -280,9 +282,9 @@ void Game::renderSnapshot(const Snapshot& snap){
     SDL_RenderSetViewport(mRenderer, NULL);
 
     SDL_Rect indicatorRect;
-    indicatorRect.w = mWorld.screenWidth / mPlayerNumber;
+    indicatorRect.w = mServer.world().screenWidth / mPlayerNumber;
     indicatorRect.h = 50;
-    indicatorRect.y = mWorld.screenHeight - indicatorRect.h;
+    indicatorRect.y = mServer.world().screenHeight - indicatorRect.h;
 
     for(size_t i = 0; i < snap.players.size(); i++){
         const PlayerState& p = snap.players[i];
