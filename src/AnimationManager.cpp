@@ -1,4 +1,5 @@
 #include "AnimationManager.hpp"
+#include "AssetIds.hpp"
 #include <cstdio>
 
 bool AnimationManager::registerAnimation(const std::string& id, const Animation& animation){
@@ -10,6 +11,8 @@ bool AnimationManager::registerAnimation(const std::string& id, const Animation&
     if(animationMap.find(id) != animationMap.end()) return true;
 
     animationMap[id] = animation;
+    AssetIds::getInstance().id(id);
+
     return true;
 }
 

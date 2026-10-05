@@ -34,7 +34,11 @@ public:
     void sendTo(int clientId, const std::vector<uint8_t>& data, bool reliable) override;
     void broadcast(const std::vector<uint8_t>& data, bool reliable) override;
     std::vector<NetMessage> receive() override;
+
+    std::vector<int> takeConnected() override;
+    std::vector<int> takeDisconnected() override;
 private:
     LoopbackLink* mLink = nullptr;
     int mClientId = 0;
+    bool mReported = false;
 };

@@ -26,3 +26,18 @@ AssetIds& AssetIds::getInstance(){
     static AssetIds instance;
     return instance;
 }
+
+void AssetIds::loadTable(const std::vector<std::string>& names){
+    mNames = names;
+    if(mNames.empty()) mNames.push_back("");
+
+    mIds.clear();
+    for(size_t i = 1; i < mNames.size(); i++){
+        mIds[mNames[i]] = (uint16_t)i;
+    }
+}
+
+const std::vector<std::string>& AssetIds::names() const{
+    return mNames;
+}
+

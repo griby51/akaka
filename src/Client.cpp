@@ -1,6 +1,7 @@
 #include "Client.hpp"
 
 #include "ByteBuffer.hpp"
+#include "NetSession.hpp"
 #include "Protocol.hpp"
 
 void Client::setTransport(ClientTransport* transport){
@@ -23,7 +24,13 @@ void Client::sendInputs(const std::vector<PlayerInput>& inputs){
 void Client::poll(){
     if(!mTransport) return;
 
-    for(const std::vector<uint8_t>& message : mTransport->receive()){
+    std::vector<std::vector<uint8_t>> messages = netSession().takePendingClientMessages();
+
+    for(std::vector<uint8_t>& received : mTransport->receive()){
+        messages.push_back(std::move(received));
+    }
+
+    for(const std::vector<uint8_t>& message : messages){
         if(message.empty()) continue;
 
         ByteReader r(message.data(), message.size());
@@ -37,6 +44,15 @@ void Client::poll(){
                 mSnapshot = std::move(snap);
                 mHasSnapshot = true;
             }
+        }else if(type == MsgType::Ownership){
+            std::vector<uint8_t> owned;
+            if(readOwnership(r, owned)) mOwned = std::move(owned);
+        }else if(type == MsgType::Welcome){
+            WelcomeData data;
+            if(readWelcome(r, data)){
+                mWelcome = std::move(data);
+                mHasWelcome = true;
+            }
         }
     }
 }
@@ -48,3 +64,29 @@ const Snapshot& Client::snapshot() const{
 bool Client::hasSnapshot() const{
     return mHasSnapshot;
 }
+
+bool Client::hasWelcome() const{
+    return mHasWelcome;
+}
+
+const WelcomeData& Client::welcome() const{
+    return mWelcome;
+}
+
+void Client::clearWelcome(){
+    mHasWelcome = false;
+}
+
+size_t Client::ownedCount() const{
+    return mOwned.size();
+}
+
+void Client::requestJoin(){
+    if(!mTransport) return;
+
+    ByteWriter w;
+    writeJoinPlayerMessage(w);
+
+    mTransport->send(w.data(), true);
+}
+

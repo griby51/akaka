@@ -2,6 +2,7 @@
 #include <string>
 
 struct PlayerSlot{
+    int ownerClientId = 0;
     int presetIndex = -1;
     bool ready = false;
     

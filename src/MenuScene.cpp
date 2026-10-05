@@ -1,4 +1,9 @@
 #include "MenuScene.hpp"
+#include "Lobby.hpp"
+#include "Protocol.hpp"
+
+#include <algorithm>
+#include "NetConfig.hpp"
 #include "GameScene.hpp"
 #include "KeyPreset.hpp"
 #include "LTexture.hpp"
@@ -29,14 +34,69 @@ MenuScene::MenuScene(SDL_Renderer* renderer, SDL_Window* window ,SceneManager& m
     TextureManager::getInstance().loadTexture("playBtn", "assets/buttons/playBtn.png");
     mHatIds = TextureManager::getInstance().loadDirectory("assets/hats/", "hat_");
     mSkinIds = TextureManager::getInstance().loadDirectory("assets/skins/", "skin_");
+
+    mLobby.start();
 }
 
 void MenuScene::update(float deltaTime){
+    mLobby.poll();
+
+    for(uint8_t slotIndex : mLobby.takeAssignedSlots()){
+        if(mPendingJoins.empty()) continue;
+
+        mOwnedSlots[slotIndex] = mPendingJoins.front();
+        mPendingJoins.erase(mPendingJoins.begin());
+    }
+
+    syncFromLobby();
+
+    if(mLobby.isHosting()){
+        bool allReady = mJoinedCount > 0;
+        for(int i = 0; i < mJoinedCount; i++){
+            if(!mSlots[i].ready) allReady = false;
+        }
+
+        if(allReady && !starting){
+            starting = true;
+            ticksLeft = 5000;
+        }else if(!allReady){
+            starting = false;
+        }
+    }
 
     if(starting){
         ticksLeft-=deltaTime*1000;
-        if(ticksLeft <= 0){
-            startGame();
+        if(ticksLeft <= 0 && mLobby.isHosting()){
+            mLobby.requestStart();
+        }
+    }
+
+    if(mLobby.matchStarted()) startGame();
+}
+
+void MenuScene::syncFromLobby(){
+    const std::vector<LobbySlot>& slots = mLobby.slots();
+
+    mJoinedCount = (int)std::min(slots.size(), (size_t)4);
+
+    for(int i = 0; i < mJoinedCount; i++){
+        const LobbySlot& slot = slots[i];
+
+        mSlots[i].ownerClientId = slot.ownerClientId;
+        mSlots[i].skinIndex = slot.skinIndex;
+        mSlots[i].hatIndex = slot.hatIndex;
+        mSlots[i].ready = slot.ready;
+
+        if(!mSkinIds.empty()) mSlots[i].skinId = mSkinIds[slot.skinIndex % mSkinIds.size()];
+        if(!mHatIds.empty()) mSlots[i].hatId = mHatIds[slot.hatIndex % mHatIds.size()];
+
+        auto it = mOwnedSlots.find((uint8_t)i);
+        if(it != mOwnedSlots.end()){
+            mSlots[i].presetIndex = it->second.presetIndex;
+            mSlots[i].joystickId = it->second.joystickId;
+        }else{
+            mSlots[i].presetIndex = -1;
+            mSlots[i].joystickId = -1;
         }
     }
 }
@@ -162,18 +222,18 @@ void MenuScene::handleEvent(const SDL_Event &e){
     if(pIndex == -1 && mJoinedCount < 4){
         if(e.type == SDL_JOYAXISMOTION && abs(e.jaxis.value) < 8000) return;
 
-        starting = false;
+        for(const LocalSlotBinding& pending : mPendingJoins){
+            if(pending.presetIndex == inputPresetId && pending.joystickId == inputJoyId) return;
+        }
 
-        pIndex = mJoinedCount;
-        mSlots[pIndex].presetIndex = inputPresetId;
-        mSlots[pIndex].joystickId = inputJoyId;
-        mSlots[pIndex].menuCursorY = 0;
-        mSlots[pIndex].ready = false;
-        mSlots[pIndex].lastAxisX = 0;
-        mSlots[pIndex].lastAxisY = 0;
-        mSlots[pIndex].skinId = mSkinIds[mSlots[pIndex].skinIndex];
-        mSlots[pIndex].hatId = mHatIds[mSlots[pIndex].hatIndex];
-        mJoinedCount++;
+        LocalSlotBinding binding;
+        binding.presetIndex = inputPresetId;
+        binding.joystickId = inputJoyId;
+
+        mPendingJoins.push_back(binding);
+        mLobby.requestJoin();
+
+        return;
     }
 
     if(pIndex != -1){
@@ -197,8 +257,13 @@ void MenuScene::handleEvent(const SDL_Event &e){
             }
         }
 
+        bool changed = false;
+
         if(slot.ready){
-            if(actCancel) slot.ready = false;
+            if(actCancel){
+                slot.ready = false;
+                changed = true;
+            }
         }else{
             if(navUp) slot.menuCursorY = std::max(0, slot.menuCursorY - 1);
             if(navDown) slot.menuCursorY = std::min(3, slot.menuCursorY + 1);
@@ -209,39 +274,53 @@ void MenuScene::handleEvent(const SDL_Event &e){
                 if(slot.menuCursorY == 0 && mHatIds.size() > 0){
                     slot.hatIndex = (slot.hatIndex + dir + mHatIds.size()) % mHatIds.size();
                     slot.hatId = mHatIds[slot.hatIndex];
+                    changed = true;
                 }
 
                 if(slot.menuCursorY == 1 && mSkinIds.size() > 0){
                     slot.skinIndex = (slot.skinIndex + dir + mSkinIds.size()) % mSkinIds.size();
                     slot.skinId = mSkinIds[slot.skinIndex];
+                    changed = true;
                 }
 
             }
         }
         if((actReady || navLeft || navRight) && slot.menuCursorY == 3){
             slot.ready = !slot.ready;
-            bool allReady = true;
-            for(int i = 0; i < mJoinedCount; i++){
-                allReady = mSlots[i].ready;
-                if(!allReady) break;
-            }
+            changed = true;
+        }
 
-            if(allReady){
-                starting = true;
-                ticksLeft = 5000;
-            }else{
-                starting = false;
-            }
+        if(changed){
+            mLobby.requestUpdate((uint8_t)pIndex, (uint8_t)slot.skinIndex, (uint8_t)slot.hatIndex, slot.ready);
         }
     }
 }
 
 void MenuScene::startGame(){
-    if(mJoinedCount <= 0){
-        printf("No player");
-    }else{
-        mManager.push(std::make_unique<GameScene>(mRenderer, mWindow, mManager, mSlots, mJoinedCount));
+    mLobby.clearMatchStarted();
+    starting = false;
+
+    const std::vector<LobbySlot>& lobbySlots = mLobby.slots();
+
+    PlayerSlot slots[MAX_NET_PLAYERS];
+    int count = (int)std::min(lobbySlots.size(), (size_t)MAX_NET_PLAYERS);
+
+    for(int i = 0; i < count; i++){
+        slots[i].ownerClientId = lobbySlots[i].ownerClientId;
+        slots[i].skinIndex = lobbySlots[i].skinIndex;
+        slots[i].hatIndex = lobbySlots[i].hatIndex;
+
+        if(!mSkinIds.empty()) slots[i].skinId = mSkinIds[lobbySlots[i].skinIndex % mSkinIds.size()];
+        if(!mHatIds.empty()) slots[i].hatId = mHatIds[lobbySlots[i].hatIndex % mHatIds.size()];
+
+        auto it = mOwnedSlots.find((uint8_t)i);
+        if(it != mOwnedSlots.end()){
+            slots[i].presetIndex = it->second.presetIndex;
+            slots[i].joystickId = it->second.joystickId;
+        }
     }
+
+    mManager.push(std::make_unique<GameScene>(mRenderer, mWindow, mManager, slots, count));
 
     starting = false;
 

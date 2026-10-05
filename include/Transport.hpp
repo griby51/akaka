@@ -24,4 +24,7 @@ public:
     virtual void sendTo(int clientId, const std::vector<uint8_t>& data, bool reliable) = 0;
     virtual void broadcast(const std::vector<uint8_t>& data, bool reliable) = 0;
     virtual std::vector<NetMessage> receive() = 0;
+
+    virtual std::vector<int> takeConnected() = 0;
+    virtual std::vector<int> takeDisconnected() = 0;
 };

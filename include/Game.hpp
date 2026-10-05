@@ -12,12 +12,13 @@
 #include "LTimer.hpp"
 #include "ParticleManager.hpp"
 #include "Particle.hpp"
+#include "KeyPreset.hpp"
 #include "PlayerInfo.hpp"
 #include "PlayerSlot.hpp"
 #include "Snapshot.hpp"
 #include "EffectManager.hpp"
 #include "Client.hpp"
-#include "LoopbackTransport.hpp"
+#include "NetSession.hpp"
 #include "Server.hpp"
 #include "AudioManager.hpp"
 
@@ -45,18 +46,29 @@ private:
     int mPlayerNumber;
 
     bool mQuit = false;
+    bool mIsClientOnly = false;
+    bool mAssetsReady = false;
+    uint32_t mLastSeenTick = 0;
+    uint32_t mSnapshotsThisSecond = 0;
+    LTimer mStatTimer;
     
 
 
     AudioManager audioManager;
     EffectManager effectManager;
-    LoopbackLink mLink;
-    LoopbackServer mLoopServer;
-    LoopbackClient mLoopClient;
+    struct LocalBinding{
+        KeyPreset preset;
+        int joystickId = -1;
+    };
+
     Server mServer;
     Client mClient;
     std::vector<PlayerInfo> mPlayerInfos;
     std::vector<uint8_t> mOwnedPlayers;
+    std::vector<int> mClientIds;
+    std::vector<LocalBinding> mBindings;
+    std::vector<std::string> mSkinIds;
+    std::vector<std::string> mHatIds;
     ParticleManager particleManager;
 
 
@@ -74,6 +86,10 @@ private:
 
     void drainEvents(const std::vector<GameEvent>& events);
     void renderSnapshot(const Snapshot& snap);
+    int addPlayer(const PlayerSlot& slot);
+    void rebuildWelcome();
+    void sendOwnership(int clientId);
+    void handleJoinRequests();
 
     std::unordered_map<uint32_t, int> mSfxChannels;
 

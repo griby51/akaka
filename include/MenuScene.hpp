@@ -1,7 +1,10 @@
 #pragma once
 #include "Scene.hpp"
 #include "SceneManager.hpp"
+#include "Lobby.hpp"
 #include "PlayerSlot.hpp"
+
+#include <unordered_map>
 #include "LTimer.hpp"
 
 #include <SDL2/SDL.h>
@@ -28,6 +31,15 @@ private:
     SDL_Rect playBtnHitbox;
     int mScreenWidth, mScreenHeight;
 
+    struct LocalSlotBinding{
+        int presetIndex = -1;
+        int joystickId = -1;
+    };
+
+    Lobby mLobby;
+    std::vector<LocalSlotBinding> mPendingJoins;
+    std::unordered_map<uint8_t, LocalSlotBinding> mOwnedSlots;
+
     PlayerSlot mSlots[4];
     int mJoinedCount = 0;
 
@@ -38,6 +50,7 @@ private:
     bool starting = false;
     
     void startGame();
+    void syncFromLobby();
 
     void drawPanel(int x, int y, int w, int h, bool isReady);
     void drawPlayer(int colX, int colWidth, std::string skinId, std::string hatId);

@@ -6,6 +6,8 @@
 #include "TextureManager.hpp"
 #include "AnimationManager.hpp"
 #include "AssetIds.hpp"
+#include "NetConfig.hpp"
+#include "Protocol.hpp"
 #include "InputSampler.hpp"
 #include "ScriptEngine.hpp"
 #include "Utils.hpp"
@@ -17,13 +19,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <unordered_map>
 #include <memory>
 
 Game::Game()
     : mConfig("assets/config.ini"),
-    mThrustParticleGameConfig("assets/playerThrustParticle.ini"),
-    mLoopServer(&mLink, 0),
-    mLoopClient(&mLink, 0)
+    mThrustParticleGameConfig("assets/playerThrustParticle.ini")
 {
     mServer.world().screenWidth = mConfig.getInt("SCREEN_WIDTH", 800);
     mServer.world().screenHeight = mConfig.getInt("SCREEN_HEIGHT", 600);
@@ -46,63 +47,61 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
     mServer.world().init();
     mServer.world().context.particleManager = &particleManager;
 
-    mServer.setTransport(&mLoopServer);
-    mClient.setTransport(&mLoopClient);
+    NetSession& session = netSession();
+    if(!session.start()){
+        mQuit = true;
+        return false;
+    }
+
+    mIsClientOnly = session.isClientOnly();
+
+    if(mIsClientOnly){
+        mClient.setTransport(session.enetClient());
+    }else{
+        mServer.addTransport(session.loopServer());
+        mClient.setTransport(session.loopClient());
+
+        if(session.isHosting()) mServer.addTransport(session.enetServer());
+    }
 
 
     SDL_RenderGetLogicalSize(mRenderer, &mServer.world().screenWidth, &mServer.world().screenHeight);
 
     mServer.world().effectiveHeight = mServer.world().screenHeight - 50;
 
-    mServer.world().playerManager.players.reserve(joinedCount);
+    for(int i = 0; i < joinedCount; i++){
+        if(playerSlot[i].presetIndex < 0 && playerSlot[i].joystickId < 0) continue;
+
+        LocalBinding binding;
+        if(playerSlot[i].presetIndex >= 0){
+            binding.preset = presets[playerSlot[i].presetIndex];
+        }
+        binding.joystickId = playerSlot[i].joystickId;
+
+        mBindings.push_back(binding);
+    }
+
+    if(mIsClientOnly) return true;
+
+    mServer.world().playerManager.players.reserve(MAX_NET_PLAYERS);
 
     mThrustParticleConfig.load(mThrustParticleGameConfig);
 
     for(int i = 0; i < joinedCount; i++){
-        player::PlayerConfig cfg;
-
-        cfg.players = &mServer.world().playerManager.players;
-        cfg.skin = TextureManager::getInstance().getTexture(playerSlot[i].skinId);
-        cfg.hat = TextureManager::getInstance().getTexture(playerSlot[i].hatId);
-        cfg.skinId = playerSlot[i].skinId;
-        cfg.hatId = playerSlot[i].hatId;
-        cfg.audioManager = &audioManager;
-        cfg.events = &mServer.world().events;
-        cfg.particleManager = &particleManager;
-
-        cfg.ability = ScriptEngine::getInstance().createAbilityForHat(playerSlot[i].hatId, &mServer.world().context);
-
-        cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
-        cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
-        cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
-        cfg.deceleration = mConfig.getFloat("player_deceleration", 0.8f);
-        cfg.maxHealth = mConfig.getInt("player_health", 100);
-        cfg.bounce = mConfig.getBool("player_bounce", true);
-        cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
-        cfg.showCollider = mConfig.getBool("show_player_collider", false);
-        cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
-        
-
-        if(playerSlot[i].presetIndex >= 0){
-            cfg.keyPreset = presets[playerSlot[i].presetIndex];
-        }
-        cfg.joystickId = playerSlot[i].joystickId;
-        cfg.thrustParticleConfig = mThrustParticleConfig;
-        cfg.screenWidth = mServer.world().screenWidth;
-        cfg.screenHeight = mServer.world().effectiveHeight;
-
-        PlayerInfo info;
-        info.skinId = playerSlot[i].skinId;
-        info.hatId = playerSlot[i].hatId;
-        info.maxLife = cfg.maxHealth;
-        info.colliderW = cfg.collider.w;
-        info.colliderH = cfg.collider.h;
-        info.showCollider = cfg.showCollider;
-        mPlayerInfos.push_back(info);
-        mOwnedPlayers.push_back((uint8_t)i);
-
-        mServer.world().playerManager.addPlayer(std::move(cfg));
+        addPlayer(playerSlot[i]);
     }
+
+    std::unordered_map<int, std::vector<uint8_t>> ownership;
+    for(int i = 0; i < joinedCount; i++){
+        ownership[playerSlot[i].ownerClientId].push_back((uint8_t)i);
+    }
+
+    for(const auto& entry : ownership){
+        mServer.setOwnership(entry.first, entry.second);
+        mClientIds.push_back(entry.first);
+    }
+
+    rebuildWelcome();
 
     return true;
 }
@@ -110,8 +109,8 @@ bool Game::init(SDL_Renderer* renderer, SDL_Window* window, PlayerSlot* playerSl
 bool Game::loadMedia() {
     TextureManager& tm = TextureManager::getInstance();
     
-    tm.loadDirectory("assets/hats/", "hat_");
-    tm.loadDirectory("assets/skins/", "skin_");
+    mHatIds = tm.loadDirectory("assets/hats/", "hat_");
+    mSkinIds = tm.loadDirectory("assets/skins/", "skin_");
 
     int success = true;
 
@@ -148,8 +147,16 @@ void Game::start(){
     LTexture* bg = TextureManager::getInstance().getTexture("bg");
     if(bg) mServer.world().backgroundWidth = bg->getWidth();
 
+    if(!mIsClientOnly){
+        rebuildWelcome();
+
+        for(int clientId : mClientIds){
+            sendOwnership(clientId);
+        }
+    }
+
+    mStatTimer.start();
     mServer.world().start();
-    mClient.setOwnedPlayers(mOwnedPlayers);
 }
 
 void Game::handleEvents(const SDL_Event& e) {
@@ -168,22 +175,60 @@ void Game::update(float realDeltaTime){
     const Uint8* keys = SDL_GetKeyboardState(NULL);
 
     std::vector<PlayerInput> inputs;
-    inputs.reserve(mServer.world().playerManager.players.size());
-    for(auto& player : mServer.world().playerManager.players){
-        inputs.push_back(input::sample(player.getKeyPreset(), player.getJoystickId(), keys));
+    inputs.reserve(mBindings.size());
+    for(const LocalBinding& binding : mBindings){
+        inputs.push_back(input::sample(binding.preset, binding.joystickId, keys));
     }
 
     mClient.sendInputs(inputs);
 
-    mServer.update(realDeltaTime);
+    if(!mIsClientOnly){
+        handleJoinRequests();
+        mServer.update(realDeltaTime);
+    }
 
     mClient.poll();
+
+    if(mClient.hasWelcome()){
+        const WelcomeData& welcome = mClient.welcome();
+
+        AssetIds::getInstance().loadTable(welcome.assets);
+        mPlayerInfos = welcome.players;
+        mAssetsReady = true;
+
+        printf("[net] welcome : %zu players, %zu assets\n", welcome.players.size(), welcome.assets.size());
+
+        mClient.clearWelcome();
+    }
 
     particleManager.update(realDeltaTime);
     effectManager.update(realDeltaTime);
 
-    if(mClient.hasSnapshot()){
+    if(mClient.hasSnapshot() && mAssetsReady){
         drainEvents(mClient.snapshot().events);
+    }
+
+    if(mClient.hasSnapshot()){
+        const Snapshot& snap = mClient.snapshot();
+
+        if(snap.tick != mLastSeenTick){
+            if(snap.tick > mLastSeenTick + 1 && mLastSeenTick != 0){
+                printf("[net] snapshot jump : tick %u -> %u (%u missed)\n",
+                        mLastSeenTick, snap.tick, snap.tick - mLastSeenTick - 1);
+            }
+
+            mLastSeenTick = snap.tick;
+            mSnapshotsThisSecond++;
+        }
+
+        if(mStatTimer.getTicks() >= 1000){
+            printf("[net] %u snapshots/s, tick %u, %zu players, %zu projectiles, owned %zu\n",
+                    mSnapshotsThisSecond, snap.tick, snap.players.size(), snap.projectiles.size(),
+                    mClient.ownedCount());
+
+            mSnapshotsThisSecond = 0;
+            mStatTimer.start();
+        }
     }
 }
 
@@ -226,6 +271,82 @@ void Game::render(){
     if(!mClient.hasSnapshot()) return;
 
     renderSnapshot(mClient.snapshot());
+}
+
+int Game::addPlayer(const PlayerSlot& slot){
+    World& world = mServer.world();
+
+    if(world.playerManager.players.size() >= MAX_NET_PLAYERS){
+        printf("[net] player rejected : %u players max\n", MAX_NET_PLAYERS);
+        return -1;
+    }
+
+    player::PlayerConfig cfg;
+
+    cfg.players = &world.playerManager.players;
+    cfg.skin = TextureManager::getInstance().getTexture(slot.skinId);
+    cfg.hat = TextureManager::getInstance().getTexture(slot.hatId);
+    cfg.skinId = slot.skinId;
+    cfg.hatId = slot.hatId;
+    cfg.audioManager = &audioManager;
+    cfg.events = &world.events;
+    cfg.particleManager = &particleManager;
+
+    cfg.ability = ScriptEngine::getInstance().createAbilityForHat(slot.hatId, &world.context);
+
+    cfg.jetpackForce = mConfig.getFloat("player_jetpack_force", 700.f);
+    cfg.maxVx = mConfig.getFloat("player_max_vx", 1000.f);
+    cfg.acceleration = mConfig.getFloat("player_acceleration", 1000.f);
+    cfg.deceleration = mConfig.getFloat("player_deceleration", 0.8f);
+    cfg.maxHealth = mConfig.getInt("player_health", 100);
+    cfg.bounce = mConfig.getBool("player_bounce", true);
+    cfg.bounceRestitution = mConfig.getFloat("bounce_restitution", 0.4f);
+    cfg.showCollider = mConfig.getBool("show_player_collider", false);
+    cfg.gravityForce = mConfig.getFloat("gravity", -500.f);
+
+    cfg.thrustParticleConfig = mThrustParticleConfig;
+    cfg.screenWidth = world.screenWidth;
+    cfg.screenHeight = world.effectiveHeight;
+
+    PlayerInfo info;
+    info.skinId = slot.skinId;
+    info.hatId = slot.hatId;
+    info.maxLife = cfg.maxHealth;
+    info.colliderW = cfg.collider.w;
+    info.colliderH = cfg.collider.h;
+    info.showCollider = cfg.showCollider;
+
+    int index = (int)world.playerManager.players.size();
+
+    mPlayerInfos.push_back(info);
+    world.playerManager.addPlayer(std::move(cfg));
+
+    return index;
+}
+
+void Game::handleJoinRequests(){
+    for(int clientId : mServer.takeJoinRequests()){
+        printf("[net] join from client %d ignored : match already started\n", clientId);
+    }
+}
+
+void Game::sendOwnership(int clientId){
+    ByteWriter w;
+    writeOwnershipMessage(w, mServer.ownership(clientId));
+
+    mServer.sendTo(clientId, w.data(), true);
+}
+
+void Game::rebuildWelcome(){
+    WelcomeData welcome;
+    welcome.players = mPlayerInfos;
+    welcome.assets = AssetIds::getInstance().names();
+
+    ByteWriter w;
+    writeWelcomeMessage(w, welcome);
+
+    mServer.setWelcomePayload(w.data());
+    mServer.broadcast(w.data(), true);
 }
 
 void Game::renderSnapshot(const Snapshot& snap){

@@ -2,6 +2,7 @@
 #include "MenuScene.hpp"
 #include "LTimer.hpp"
 #include "TextureManager.hpp"
+#include "NetConfig.hpp"
 #include "ScriptEngine.hpp"
 
 #include <SDL2/SDL.h>
@@ -13,9 +14,19 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
+#include <cstdlib>
+#include <enet/enet.h>
 #include <map>
 
 int main(int argc, char* args[]){
+    parseNetArgs(argc, args);
+
+    if(enet_initialize() != 0){
+        printf("[net] enet_initialize failed\n");
+        return 1;
+    }
+    atexit(enet_deinitialize);
+
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
     IMG_Init(IMG_INIT_PNG);
     Mix_OpenAudio(48000, MIX_DEFAULT_FORMAT, 2, 2048);

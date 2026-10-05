@@ -2,7 +2,10 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <vector>
+
+static constexpr uint16_t MAX_STR = 256;
 
 class ByteWriter{
 public:
@@ -25,6 +28,13 @@ public:
         uint32_t bits;
         std::memcpy(&bits, &v, sizeof(bits));
         u32(bits);
+    }
+
+    void str(const std::string& v){
+        uint16_t len = (uint16_t)(v.size() > MAX_STR ? MAX_STR : v.size());
+
+        u16(len);
+        for(uint16_t i = 0; i < len; i++) u8((uint8_t)v[i]);
     }
 
     const std::vector<uint8_t>& data() const { return mData; }
@@ -63,6 +73,17 @@ public:
         float v = 0.f;
         std::memcpy(&v, &bits, sizeof(v));
         return v;
+    }
+
+    std::string str(){
+        uint16_t len = u16();
+        if(!mOk || len > MAX_STR){ mOk = false; return {}; }
+        if(mPos + len > mSize){ mOk = false; return {}; }
+
+        std::string out((const char*)(mData + mPos), len);
+        mPos += len;
+
+        return out;
     }
 
     bool ok() const { return mOk; }

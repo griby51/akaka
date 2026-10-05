@@ -1,6 +1,7 @@
 #include "Protocol.hpp"
 
 #include <algorithm>
+#include <cstdio>
 
 void writeInput(ByteWriter& w, const PlayerInput& in){
     uint8_t bits = 0;
@@ -192,3 +193,180 @@ bool readInputMessage(ByteReader& r, std::vector<uint8_t>& outIndices, std::vect
 
     return r.ok();
 }
+
+void writeWelcomeMessage(ByteWriter& w, const WelcomeData& data){
+    w.u8((uint8_t)MsgType::Welcome);
+    w.u16(PROTOCOL_VERSION);
+
+    uint8_t playerCount = (uint8_t)std::min(data.players.size(), (size_t)MAX_NET_PLAYERS);
+    w.u8(playerCount);
+
+    for(uint8_t i = 0; i < playerCount; i++){
+        const PlayerInfo& info = data.players[i];
+
+        w.str(info.skinId);
+        w.str(info.hatId);
+        w.i16((int16_t)info.maxLife);
+        w.u16((uint16_t)info.colliderW);
+        w.u16((uint16_t)info.colliderH);
+    }
+
+    uint16_t assetCount = (uint16_t)std::min(data.assets.size(), (size_t)MAX_NET_ASSETS);
+    w.u16(assetCount);
+
+    for(uint16_t i = 0; i < assetCount; i++){
+        w.str(data.assets[i]);
+    }
+}
+
+bool readWelcome(ByteReader& r, WelcomeData& out){
+    uint16_t version = r.u16();
+    if(!r.ok()) return false;
+
+    if(version != PROTOCOL_VERSION){
+        printf("[net] protocol mismatch : %u expected, %u received\n", PROTOCOL_VERSION, version);
+        return false;
+    }
+
+    out = WelcomeData();
+
+    uint8_t playerCount = r.u8();
+    if(!r.ok() || playerCount > MAX_NET_PLAYERS) return false;
+
+    for(uint8_t i = 0; i < playerCount; i++){
+        PlayerInfo info;
+        info.skinId = r.str();
+        info.hatId = r.str();
+        info.maxLife = r.i16();
+        info.colliderW = r.u16();
+        info.colliderH = r.u16();
+
+        if(!r.ok()) return false;
+
+        out.players.push_back(info);
+    }
+
+    uint16_t assetCount = r.u16();
+    if(!r.ok() || assetCount > MAX_NET_ASSETS) return false;
+
+    for(uint16_t i = 0; i < assetCount; i++){
+        out.assets.push_back(r.str());
+        if(!r.ok()) return false;
+    }
+
+    return r.ok();
+}
+
+void writeJoinPlayerMessage(ByteWriter& w){
+    w.u8((uint8_t)MsgType::JoinPlayer);
+    w.u16(PROTOCOL_VERSION);
+}
+
+bool readJoinPlayer(ByteReader& r){
+    uint16_t version = r.u16();
+    if(!r.ok()) return false;
+
+    if(version != PROTOCOL_VERSION){
+        printf("[net] protocol mismatch : %u expected, %u received\n", PROTOCOL_VERSION, version);
+        return false;
+    }
+
+    return true;
+}
+
+void writeOwnershipMessage(ByteWriter& w, const std::vector<uint8_t>& indices){
+    uint8_t count = (uint8_t)std::min(indices.size(), (size_t)MAX_NET_PLAYERS);
+
+    w.u8((uint8_t)MsgType::Ownership);
+    w.u8(count);
+
+    for(uint8_t i = 0; i < count; i++){
+        w.u8(indices[i]);
+    }
+}
+
+bool readOwnership(ByteReader& r, std::vector<uint8_t>& out){
+    uint8_t count = r.u8();
+    if(!r.ok() || count > MAX_NET_PLAYERS) return false;
+
+    out.clear();
+    for(uint8_t i = 0; i < count; i++){
+        out.push_back(r.u8());
+        if(!r.ok()) return false;
+    }
+
+    return r.ok();
+}
+
+static void writeLobbySlots(ByteWriter& w, const std::vector<LobbySlot>& slots){
+    uint8_t count = (uint8_t)std::min(slots.size(), (size_t)MAX_NET_PLAYERS);
+    w.u8(count);
+
+    for(uint8_t i = 0; i < count; i++){
+        const LobbySlot& slot = slots[i];
+
+        w.u8(slot.ownerClientId);
+        w.u8(slot.skinIndex);
+        w.u8(slot.hatIndex);
+        w.u8(slot.ready ? 1 : 0);
+    }
+}
+
+void writeLobbyStateMessage(ByteWriter& w, const std::vector<LobbySlot>& slots){
+    w.u8((uint8_t)MsgType::LobbyState);
+    writeLobbySlots(w, slots);
+}
+
+void writeStartMatchMessage(ByteWriter& w, const std::vector<LobbySlot>& slots){
+    w.u8((uint8_t)MsgType::StartMatch);
+    writeLobbySlots(w, slots);
+}
+
+bool readLobbySlots(ByteReader& r, std::vector<LobbySlot>& out){
+    uint8_t count = r.u8();
+    if(!r.ok() || count > MAX_NET_PLAYERS) return false;
+
+    out.clear();
+    for(uint8_t i = 0; i < count; i++){
+        LobbySlot slot;
+        slot.ownerClientId = r.u8();
+        slot.skinIndex = r.u8();
+        slot.hatIndex = r.u8();
+        slot.ready = r.u8() != 0;
+
+        if(!r.ok()) return false;
+
+        out.push_back(slot);
+    }
+
+    return r.ok();
+}
+
+void writeSlotUpdateMessage(ByteWriter& w, uint8_t slotIndex, uint8_t skinIndex, uint8_t hatIndex, bool ready){
+    w.u8((uint8_t)MsgType::SlotUpdate);
+    w.u8(slotIndex);
+    w.u8(skinIndex);
+    w.u8(hatIndex);
+    w.u8(ready ? 1 : 0);
+}
+
+bool readSlotUpdate(ByteReader& r, uint8_t& slotIndex, uint8_t& skinIndex, uint8_t& hatIndex, bool& ready){
+    slotIndex = r.u8();
+    skinIndex = r.u8();
+    hatIndex = r.u8();
+    ready = r.u8() != 0;
+
+    return r.ok();
+}
+
+void writeSlotAssignedMessage(ByteWriter& w, uint8_t slotIndex){
+    w.u8((uint8_t)MsgType::SlotAssigned);
+    w.u8(slotIndex);
+}
+
+bool readSlotAssigned(ByteReader& r, uint8_t& slotIndex){
+    slotIndex = r.u8();
+
+    return r.ok();
+}
+

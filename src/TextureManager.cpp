@@ -1,4 +1,5 @@
 #include "TextureManager.hpp"
+#include "AssetIds.hpp"
 #include "LTexture.hpp"
 #include <filesystem>
 #include <vector>
@@ -19,6 +20,8 @@ bool TextureManager::loadTexture(const std::string& id, const std::string& path)
     }
 
     mTextureMap[id] = std::move(newTexture);
+    AssetIds::getInstance().id(id);
+
     return true;
 }
 

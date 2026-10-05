@@ -59,3 +59,15 @@ std::vector<NetMessage> LoopbackServer::receive(){
 
     return mLink->takeServerMessages();
 }
+
+std::vector<int> LoopbackServer::takeConnected(){
+    if(mReported) return {};
+
+    mReported = true;
+    return { mClientId };
+}
+
+std::vector<int> LoopbackServer::takeDisconnected(){
+    return {};
+}
+

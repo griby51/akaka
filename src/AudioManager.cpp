@@ -1,4 +1,5 @@
 #include "AudioManager.hpp"
+#include "AssetIds.hpp"
 #include <SDL2/SDL_mixer.h>
 
 AudioManager::AudioManager(){}
@@ -39,6 +40,7 @@ bool AudioManager::loadMusic(const std::string& id, const std::string& path){
 };
 
 bool AudioManager::loadSFX(const std::string& id, const std::string& path){
+    AssetIds::getInstance().id(id);
     if(sfxMap.find(id) != sfxMap.end()){
         return true;
     }
